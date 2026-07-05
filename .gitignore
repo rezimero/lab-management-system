@@ -1,0 +1,73 @@
+# ===========================
+# Environment
+# ===========================
+.env
+.env.*
+!.env.example
+
+# ===========================
+# Logs
+# ===========================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===========================
+# Laravel
+# ===========================
+/vendor
+/node_modules
+
+/public/build
+/public/hot
+/public/storage
+
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitignore
+
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
+
+# ===========================
+# React
+# ===========================
+lab-frontend/node_modules
+lab-frontend/build
+lab-frontend/.env
+
+# ===========================
+# IDE
+# ===========================
+.vscode/
+.idea/
+.zed/
+.cursor/
+.codex/
+.nova/
+
+# ===========================
+# OS
+# ===========================
+.DS_Store
+Thumbs.db
+
+# ===========================
+# PHP
+# ===========================
+.phpunit.cache
+.phpunit.result.cache
+.phpactor.json
+_ide_helper.php
+
+# ===========================
+# Authentication
+# ===========================
+auth.json
+
+# ===========================
+# Homestead
+# ===========================
+Homestead.json
+Homestead.yaml
