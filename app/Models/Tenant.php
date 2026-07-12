@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Spatie\Multitenancy\Models\Tenant as BaseTenant;
 
 class Tenant extends BaseTenant
@@ -28,68 +26,28 @@ class Tenant extends BaseTenant
         'subscription_ends_at' => 'datetime',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
     /**
-     * Create the tenant database and run migrations
+     * Laboratory profile.
      */
-    public static function createTenant(array $data)
+    public function profile()
     {
-        $databaseName = 'tenant_' . uniqid() . '_' . strtolower(str_replace(' ', '-', $data['domain']));
-        $databaseName = preg_replace('/[^a-zA-Z0-9_-]/', '', $databaseName);
-
-        // Create database
-        DB::statement("CREATE DATABASE IF NOT EXISTS `{$databaseName}`");
-
-        // Create tenant record
-        $tenant = self::create([
-            'name' => $data['name'],
-            'domain' => $data['domain'],
-            'database' => $databaseName,
-            'is_active' => true,
-            'trial_ends_at' => now()->addDays(30),
-        ]);
-
-        // Switch to tenant database and run migrations
-        $tenant->makeCurrent();
-        config(['database.connections.tenant.database' => $databaseName]);
-        DB::purge('tenant');
-        DB::connection('tenant')->reconnect();
-
-        // Run migrations for tenant
-        \Artisan::call('migrate', [
-            '--database' => 'tenant',
-            '--path' => 'database/migrations/tenant',
-            '--force' => true,
-        ]);
-
-        // Create Sanctum tables in tenant database
-        $tenant->createSanctumTables();
-
-        return $tenant;
+        return $this->hasOne(TenantProfile::class);
     }
 
-    /**
-     * Create Sanctum tables in tenant database
-     */
-    public function createSanctumTables(): void
-    {
-        $schema = Schema::connection('tenant');
-        
-        if (!$schema->hasTable('personal_access_tokens')) {
-            $schema->create('personal_access_tokens', function ($table) {
-                $table->id();
-                $table->morphs('tokenable');
-                $table->string('name');
-                $table->string('token', 64)->unique();
-                $table->text('abilities')->nullable();
-                $table->timestamp('last_used_at')->nullable();
-                $table->timestamp('expires_at')->nullable();
-                $table->timestamps();
-            });
-        }
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | Current Tenant
+    |--------------------------------------------------------------------------
+    */
 
     /**
-     * Switch to this tenant - FIXED return type to match parent
+     * Switch the application into this tenant's context.
      */
     public function makeCurrent(): static
     {
@@ -97,15 +55,16 @@ class Tenant extends BaseTenant
             'database.connections.tenant.database' => $this->database,
             'database.default' => 'tenant',
         ]);
-        
+
         DB::purge('tenant');
         DB::connection('tenant')->reconnect();
-        
+
         parent::makeCurrent();
-        
-        // Set the auth guard to tenant
-        config(['auth.defaults.guard' => 'tenant']);
-        
+
+        config([
+            'auth.defaults.guard' => 'tenant',
+        ]);
+
         return $this;
     }
 }
