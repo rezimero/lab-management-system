@@ -4,6 +4,8 @@ namespace Tests\Feature\Landlord\Tenant;
 
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Tests\Support\Landlord\TenantManagementTestCase;
@@ -76,9 +78,7 @@ class LandlordTenantProvisioningTest extends TenantManagementTestCase
 
         $admin = $this->runInTenant(
             $tenant,
-            function () use (
-                $adminEmail
-            ): array {
+            function () use ($adminEmail): array {
                 $this->assertTrue(
                     Schema::connection('tenant')
                         ->hasTable('users')
@@ -145,5 +145,89 @@ class LandlordTenantProvisioningTest extends TenantManagementTestCase
             'admin_password',
             $errors
         );
+    }
+
+    public function test_failed_migration_removes_the_tenant_and_database(): void
+    {
+        $domain = $this->uniqueManagedDomain('failed');
+        $adminEmail = $domain.'@example.test';
+
+        $this->trackManagedTenantDomain($domain);
+
+        $headers = $this->superadminHeaders();
+
+        Artisan::shouldReceive('call')
+            ->once()
+            ->with('migrate', [
+                '--database' => 'tenant',
+                '--path' => 'database/migrations/tenant',
+                '--force' => true,
+            ])
+            ->andReturn(1);
+
+        Artisan::shouldReceive('output')
+            ->once()
+            ->andReturn('Forced migration failure.');
+
+        $this->withHeaders($headers)
+            ->postJson('/api/landlord/tenants', [
+                'name' => 'Failed Landlord Test Laboratory',
+                'domain' => $domain,
+                'admin_name' => 'Failed Administrator',
+                'admin_email' => $adminEmail,
+                'admin_password' => 'Password123!',
+            ])
+            ->assertStatus(500)
+            ->assertJsonPath(
+                'message',
+                'Failed to create tenant: '
+                .'Tenant migration failed: '
+                .'Forced migration failure.'
+            );
+
+        $this->restoreLandlordContext();
+
+        $this->assertDatabaseMissing(
+            'tenants',
+            [
+                'domain' => $domain,
+            ],
+            'landlord'
+        );
+
+        $this->assertSame(
+            [],
+            $this->databasesEndingWith($domain),
+            'Failed landlord provisioning left an orphan database.'
+        );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function databasesEndingWith(
+        string $domain
+    ): array {
+        $rows = DB::connection('landlord')->select(
+            'SELECT SCHEMA_NAME
+             FROM INFORMATION_SCHEMA.SCHEMATA
+             WHERE SCHEMA_NAME LIKE ?',
+            ['tenant\_%']
+        );
+
+        return collect($rows)
+            ->map(
+                static fn (object $row): string =>
+                    (string) $row->SCHEMA_NAME
+            )
+            ->filter(
+                static fn (string $database): bool =>
+                    str_ends_with(
+                        $database,
+                        '_'.$domain
+                    )
+            )
+            ->values()
+            ->all();
     }
 }
