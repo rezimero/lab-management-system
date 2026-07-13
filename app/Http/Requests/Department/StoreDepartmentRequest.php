@@ -2,12 +2,14 @@
 
 namespace App\Http\Requests\Department;
 
+use App\Models\Department;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreDepartmentRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Determine whether the current user may create departments.
      */
     public function authorize(): bool
     {
@@ -15,23 +17,37 @@ class StoreDepartmentRequest extends FormRequest
     }
 
     /**
-     * Prepare the data for validation.
+     * Normalize input and provide application defaults.
      */
     protected function prepareForValidation(): void
     {
         $this->merge([
             'name' => $this->filled('name')
-                ? trim($this->input('name'))
-                : null,
+                ? trim((string) $this->input('name'))
+                : $this->input('name'),
 
             'code' => $this->filled('code')
-                ? strtoupper(trim($this->input('code')))
-                : null,
+                ? strtoupper(trim((string) $this->input('code')))
+                : $this->input('code'),
+
+            'description' => $this->filled('description')
+                ? trim((string) $this->input('description'))
+                : $this->input('description'),
+
+            'sort_order' => $this->has('sort_order')
+                ? $this->input('sort_order')
+                : 0,
+
+            'is_active' => $this->has('is_active')
+                ? $this->input('is_active')
+                : true,
         ]);
     }
 
     /**
-     * Get the validation rules.
+     * Validation rules.
+     *
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
@@ -39,15 +55,15 @@ class StoreDepartmentRequest extends FormRequest
             'name' => [
                 'required',
                 'string',
-                'max:255',
-                'unique:departments,name',
+                'max:150',
+                Rule::unique(Department::class, 'name'),
             ],
 
             'code' => [
                 'required',
                 'string',
-                'max:50',
-                'unique:departments,code',
+                'max:30',
+                Rule::unique(Department::class, 'code'),
             ],
 
             'description' => [
@@ -57,13 +73,13 @@ class StoreDepartmentRequest extends FormRequest
             ],
 
             'sort_order' => [
-                'nullable',
+                'required',
                 'integer',
                 'min:0',
             ],
 
             'is_active' => [
-                'sometimes',
+                'required',
                 'boolean',
             ],
         ];
@@ -71,37 +87,28 @@ class StoreDepartmentRequest extends FormRequest
 
     /**
      * Custom validation messages.
+     *
+     * @return array<string, string>
      */
     public function messages(): array
     {
         return [
             'name.required' => 'Department name is required.',
             'name.unique' => 'A department with this name already exists.',
-            'name.max' => 'Department name may not be greater than 255 characters.',
+            'name.max' => 'Department name may not be greater than 150 characters.',
 
             'code.required' => 'Department code is required.',
             'code.unique' => 'A department with this code already exists.',
-            'code.max' => 'Department code may not be greater than 50 characters.',
+            'code.max' => 'Department code may not be greater than 30 characters.',
 
             'description.max' => 'Description may not be greater than 1000 characters.',
 
+            'sort_order.required' => 'Sort order is required.',
             'sort_order.integer' => 'Sort order must be a whole number.',
             'sort_order.min' => 'Sort order cannot be negative.',
 
+            'is_active.required' => 'Active status is required.',
             'is_active.boolean' => 'Active status must be true or false.',
         ];
-    }
-
-    /**
-     * Return validated data with application defaults.
-     */
-    public function validated($key = null, $default = null): array
-    {
-        $validated = parent::validated();
-
-        $validated['is_active'] = $validated['is_active'] ?? true;
-        $validated['sort_order'] = $validated['sort_order'] ?? 0;
-
-        return $validated;
     }
 }
