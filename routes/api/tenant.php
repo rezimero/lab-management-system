@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\LabTestController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\Tenant\DepartmentController;
+use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
 use App\Http\Controllers\Api\TestResultController;
 use App\Http\Controllers\Api\UserController;
@@ -128,6 +129,15 @@ Route::middleware([
     Route::delete('/lab-tests/{labTest}', [
         LabTestController::class,
         'destroy',
+    ]);
+
+    // ============================================
+    // LABORATORY ORDERS
+    // ============================================
+
+    Route::post('/laboratory-orders', [
+        LaboratoryOrderController::class,
+        'store',
     ]);
 
     // ============================================
