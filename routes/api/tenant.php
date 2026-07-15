@@ -135,9 +135,19 @@ Route::middleware([
     // LABORATORY ORDERS
     // ============================================
 
+    Route::get('/laboratory-orders', [
+        LaboratoryOrderController::class,
+        'index',
+    ]);
+
     Route::post('/laboratory-orders', [
         LaboratoryOrderController::class,
         'store',
+    ]);
+
+    Route::get('/laboratory-orders/{laboratoryOrder}', [
+        LaboratoryOrderController::class,
+        'show',
     ]);
 
     // ============================================

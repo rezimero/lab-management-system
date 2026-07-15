@@ -5,6 +5,7 @@ namespace Tests\Support\Tenant;
 use App\Models\LaboratoryOrder;
 use App\Models\Patient;
 use App\Models\Tenant;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 abstract class LaboratoryOrderManagementTestCase extends LabTestManagementTestCase
@@ -67,6 +68,80 @@ abstract class LaboratoryOrderManagementTestCase extends LabTestManagementTestCa
     }
 
     /**
+     * Create an order directly inside a tenant database.
+     *
+     * @param array<string, mixed> $attributes
+     * @param array<int, array<string, mixed>> $items
+     */
+    protected function createLaboratoryOrder(
+        Tenant $tenant,
+        Patient $patient,
+        array $attributes = [],
+        array $items = []
+    ): LaboratoryOrder {
+        return $this->runInTenant(
+            $tenant,
+            function () use (
+                $patient,
+                $attributes,
+                $items
+            ): LaboratoryOrder {
+                $order = LaboratoryOrder::query()
+                    ->create(
+                        array_merge(
+                            [
+                                'order_number' => (
+                                    'LAB-TEST-'
+                                    .strtoupper(
+                                        Str::random(12)
+                                    )
+                                ),
+                                'patient_id' => $patient->id,
+                                'ordered_by' => null,
+                                'referring_clinician' => null,
+                                'priority' => 'routine',
+                                'status' => 'pending',
+                                'clinical_notes' => null,
+                                'total_amount' => '0.00',
+                                'ordered_at' => now(),
+                            ],
+                            $attributes
+                        )
+                    );
+
+                foreach ($items as $item) {
+                    $order->items()->create(
+                        array_merge(
+                            [
+                                'lab_test_id' => null,
+                                'test_name_snapshot' => (
+                                    'Laboratory Test'
+                                ),
+                                'test_category_snapshot' => (
+                                    'General'
+                                ),
+                                'price_snapshot' => '0.00',
+                                'turnaround_time_hours_snapshot' => null,
+                                'parameters_snapshot' => null,
+                                'status' => 'pending',
+                            ],
+                            $item
+                        )
+                    );
+                }
+
+                return $order
+                    ->fresh()
+                    ->load([
+                        'patient',
+                        'orderedBy',
+                        'items',
+                    ]);
+            }
+        );
+    }
+
+    /**
      * Find an order by public UUID.
      */
     protected function findLaboratoryOrder(
@@ -94,8 +169,7 @@ abstract class LaboratoryOrderManagementTestCase extends LabTestManagementTestCa
         return $this->runInTenant(
             $tenant,
             static fn (): int => (
-                (int) \Illuminate\Support\Facades\DB
-                    ::connection('tenant')
+                (int) DB::connection('tenant')
                     ->table($table)
                     ->count()
             )
