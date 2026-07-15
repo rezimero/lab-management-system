@@ -7,18 +7,50 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Create the tenant laboratory test catalogue.
      */
     public function up(): void
     {
-        Schema::create('lab_tests', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        Schema::create(
+            'lab_tests',
+            function (Blueprint $table): void {
+                $table->id();
+
+                $table->string('name', 255);
+
+                $table->text('description')
+                    ->nullable();
+
+                $table->string('category', 100);
+
+                $table->decimal('price', 12, 2)
+                    ->nullable()
+                    ->default(0);
+
+                $table->unsignedInteger(
+                    'turnaround_time_hours'
+                )->nullable();
+
+                $table->json('parameters')
+                    ->nullable();
+
+                $table->boolean('is_active')
+                    ->default(true);
+
+                $table->timestamps();
+
+                $table->index('category');
+                $table->index('is_active');
+                $table->index([
+                    'category',
+                    'is_active',
+                ]);
+            }
+        );
     }
 
     /**
-     * Reverse the migrations.
+     * Drop the tenant laboratory test catalogue.
      */
     public function down(): void
     {

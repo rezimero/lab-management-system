@@ -10,11 +10,24 @@ use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, UsesTenantConnection;
+    use HasApiTokens;
+    use HasFactory;
+    use Notifiable;
+    use UsesTenantConnection;
 
+    /**
+     * Tenant database connection.
+     */
     protected $connection = 'tenant';
+
+    /**
+     * Table name.
+     */
     protected $table = 'users';
 
+    /**
+     * Mass assignable attributes.
+     */
     protected $fillable = [
         'name',
         'email',
@@ -23,33 +36,48 @@ class User extends Authenticatable
         'is_active',
     ];
 
+    /**
+     * Hidden attributes.
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password' => 'hashed',
-        'is_active' => 'boolean',
-    ];
+    /**
+     * Attribute casting.
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password'          => 'hashed',
+            'is_active'         => 'boolean',
+        ];
+    }
 
-    public function isAdmin()
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
-    public function isLabTechnician()
+    public function isLabTechnician(): bool
     {
         return $this->role === 'lab_technician';
     }
 
-    public function isDoctor()
+    public function isDoctor(): bool
     {
         return $this->role === 'doctor';
     }
 
-    public function isReceptionist()
+    public function isReceptionist(): bool
     {
         return $this->role === 'receptionist';
     }

@@ -3,25 +3,55 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\Response;
 
 class CheckPermission
 {
-    public function handle(Request $request, Closure $next, $permission)
+    /**
+     * Require the supplied permission.
+     *
+     * Landlord superadmins bypass ordinary permission restrictions.
+     */
+    public function handle(
+        Request $request,
+        Closure $next,
+        string $permission
+    ): Response {
+        $user = $request->user();
+
+        if (! $user) {
+            return $this->unauthenticatedResponse();
+        }
+
+        if ($this->hasSuperAdminOverride()) {
+            return $next($request);
+        }
+
+        if (
+            method_exists($user, 'hasPermissionTo') &&
+            $user->hasPermissionTo($permission)
+        ) {
+            return $next($request);
+        }
+
+        return response()->json([
+            'message' => 'Access denied. You do not have the required permission.',
+            'required_permission' => $permission,
+        ], Response::HTTP_FORBIDDEN);
+    }
+
+    private function hasSuperAdminOverride(): bool
     {
-        if (!Auth::guard('sanctum')->check()) {
-            return response()->json(['message' => 'Unauthenticated'], 401);
-        }
+        return app()->bound('superadmin.override') &&
+            app('superadmin.override') === true;
+    }
 
-        $user = Auth::guard('sanctum')->user();
-
-        if (!$user->hasPermissionTo($permission)) {
-            return response()->json([
-                'message' => 'Unauthorized. You do not have permission: ' . $permission
-            ], 403);
-        }
-
-        return $next($request);
+    private function unauthenticatedResponse(): JsonResponse
+    {
+        return response()->json([
+            'message' => 'Unauthenticated.',
+        ], Response::HTTP_UNAUTHORIZED);
     }
 }
