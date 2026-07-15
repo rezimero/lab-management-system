@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\Tenant;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LaboratoryOrder\IndexLaboratoryOrderRequest;
 use App\Http\Requests\LaboratoryOrder\StoreLaboratoryOrderRequest;
+use App\Http\Requests\LaboratoryOrder\UpdateLaboratoryOrderStatusRequest;
 use App\Http\Resources\LaboratoryOrderResource;
 use App\Services\Tenant\LaboratoryOrder\LaboratoryOrderCreationService;
 use App\Services\Tenant\LaboratoryOrder\LaboratoryOrderQueryService;
+use App\Services\Tenant\LaboratoryOrder\LaboratoryOrderStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +19,7 @@ class LaboratoryOrderController extends Controller
     public function __construct(
         protected LaboratoryOrderQueryService $queryService,
         protected LaboratoryOrderCreationService $creationService,
+        protected LaboratoryOrderStatusService $statusService,
     ) {
     }
 
@@ -69,6 +72,31 @@ class LaboratoryOrderController extends Controller
             ->setStatusCode(
                 Response::HTTP_CREATED
             );
+    }
+
+    /**
+     * Update an order through its controlled lifecycle.
+     */
+    public function updateStatus(
+        UpdateLaboratoryOrderStatusRequest $request,
+        string $laboratoryOrder
+    ): JsonResponse {
+        $validated = $request->validated();
+
+        $order = $this->statusService->transition(
+            $laboratoryOrder,
+            $validated['status']
+        );
+
+        return (new LaboratoryOrderResource(
+            $order
+        ))
+            ->additional([
+                'message' => (
+                    'Laboratory order status updated successfully.'
+                ),
+            ])
+            ->response();
     }
 
     /**

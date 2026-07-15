@@ -145,6 +145,14 @@ Route::middleware([
         'store',
     ]);
 
+    Route::patch(
+        '/laboratory-orders/{laboratoryOrder}/status',
+        [
+            LaboratoryOrderController::class,
+            'updateStatus',
+        ]
+    );
+
     Route::get('/laboratory-orders/{laboratoryOrder}', [
         LaboratoryOrderController::class,
         'show',
