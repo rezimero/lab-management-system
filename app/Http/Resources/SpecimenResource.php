@@ -31,6 +31,63 @@ class SpecimenResource extends JsonResource
             'volume_unit' => $this->volume_unit,
             'status' => $this->status,
 
+            'order' => $this->when(
+                $this->relationLoaded('order'),
+                function (): ?array {
+                    if ($this->order === null) {
+                        return null;
+                    }
+
+                    $patient = null;
+
+                    if (
+                        $this->order
+                            ->relationLoaded('patient')
+                        && $this->order->patient !== null
+                    ) {
+                        $patient = [
+                            'id' => (
+                                $this->order->patient->id
+                            ),
+                            'medical_record_number' => (
+                                $this->order
+                                    ->patient
+                                    ->medical_record_number
+                            ),
+                            'first_name' => (
+                                $this->order
+                                    ->patient
+                                    ->first_name
+                            ),
+                            'last_name' => (
+                                $this->order
+                                    ->patient
+                                    ->last_name
+                            ),
+                            'full_name' => (
+                                $this->order
+                                    ->patient
+                                    ->full_name
+                            ),
+                        ];
+                    }
+
+                    return [
+                        'uuid' => $this->order->uuid,
+                        'order_number' => (
+                            $this->order->order_number
+                        ),
+                        'priority' => (
+                            $this->order->priority
+                        ),
+                        'status' => (
+                            $this->order->status
+                        ),
+                        'patient' => $patient,
+                    ];
+                }
+            ),
+
             'collected_by' => $this->when(
                 $this->relationLoaded(
                     'collectedBy'
@@ -59,6 +116,34 @@ class SpecimenResource extends JsonResource
                 fn (): array => (
                     $this->orderItems
                         ->pluck('uuid')
+                        ->values()
+                        ->all()
+                )
+            ),
+
+            'order_items' => $this->when(
+                $this->relationLoaded(
+                    'orderItems'
+                ),
+                fn (): array => (
+                    $this->orderItems
+                        ->map(
+                            fn ($item): array => [
+                                'uuid' => $item->uuid,
+                                'test_name' => (
+                                    $item
+                                        ->test_name_snapshot
+                                ),
+                                'test_category' => (
+                                    $item
+                                        ->test_category_snapshot
+                                ),
+                                'price' => (
+                                    $item->price_snapshot
+                                ),
+                                'status' => $item->status,
+                            ]
+                        )
                         ->values()
                         ->all()
                 )

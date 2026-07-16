@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\Tenant\DepartmentController;
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
 use App\Http\Controllers\Api\Tenant\SpecimenCollectionController;
+use App\Http\Controllers\Api\Tenant\SpecimenController;
 use App\Http\Controllers\Api\Tenant\SpecimenStatusController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
 use App\Http\Controllers\Api\TestResultController;
@@ -134,7 +135,7 @@ Route::middleware([
     ]);
 
     // ============================================
-    // LABORATORY ORDERS AND SPECIMENS
+    // LABORATORY ORDERS
     // ============================================
 
     Route::get('/laboratory-orders', [
@@ -165,6 +166,25 @@ Route::middleware([
 
     Route::get('/laboratory-orders/{laboratoryOrder}', [
         LaboratoryOrderController::class,
+        'show',
+    ]);
+
+    // ============================================
+    // SPECIMENS
+    // ============================================
+
+    Route::get('/specimens', [
+        SpecimenController::class,
+        'index',
+    ]);
+
+    Route::get('/specimens/stats', [
+        SpecimenController::class,
+        'stats',
+    ]);
+
+    Route::get('/specimens/{specimen}', [
+        SpecimenController::class,
         'show',
     ]);
 
