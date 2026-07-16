@@ -94,6 +94,12 @@ class LaboratoryOrderResource extends JsonResource
                 )
             ),
 
+            'specimens' => (
+                SpecimenResource::collection(
+                    $this->whenLoaded('specimens')
+                )
+            ),
+
             'created_at' => (
                 $this->created_at
                     ?->toISOString()

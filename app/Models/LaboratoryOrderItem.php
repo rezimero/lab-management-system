@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class LaboratoryOrderItem extends Model
@@ -70,14 +71,24 @@ class LaboratoryOrderItem extends Model
 
     /**
      * Current catalogue record.
-     *
-     * The relationship may become null after a catalogue
-     * record is deleted, while snapshot fields remain.
      */
     public function labTest(): BelongsTo
     {
         return $this->belongsTo(
             LabTest::class
         );
+    }
+
+    /**
+     * Specimens associated with this order item.
+     */
+    public function specimens(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Specimen::class,
+            'laboratory_order_item_specimen',
+            'laboratory_order_item_id',
+            'specimen_id'
+        )->withTimestamps();
     }
 }

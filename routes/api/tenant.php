@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\LabTestController;
 use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\Tenant\DepartmentController;
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
+use App\Http\Controllers\Api\Tenant\SpecimenCollectionController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
 use App\Http\Controllers\Api\TestResultController;
 use App\Http\Controllers\Api\UserController;
@@ -144,6 +145,14 @@ Route::middleware([
         LaboratoryOrderController::class,
         'store',
     ]);
+
+    Route::post(
+        '/laboratory-orders/{laboratoryOrder}/specimens',
+        [
+            SpecimenCollectionController::class,
+            'store',
+        ]
+    );
 
     Route::patch(
         '/laboratory-orders/{laboratoryOrder}/status',

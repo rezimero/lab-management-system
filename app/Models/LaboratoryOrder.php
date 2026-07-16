@@ -99,6 +99,16 @@ class LaboratoryOrder extends Model
     }
 
     /**
+     * Specimens collected for the order.
+     */
+    public function specimens(): HasMany
+    {
+        return $this->hasMany(
+            Specimen::class
+        );
+    }
+
+    /**
      * Use UUID for public route model binding.
      */
     public function getRouteKeyName(): string
