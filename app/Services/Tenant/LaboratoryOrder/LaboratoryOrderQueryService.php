@@ -113,6 +113,8 @@ class LaboratoryOrderQueryService
                 'patient',
                 'orderedBy',
                 'items',
+                'specimens.collectedBy',
+                'specimens.orderItems',
             ])
             ->where('uuid', $uuid)
             ->firstOrFail();

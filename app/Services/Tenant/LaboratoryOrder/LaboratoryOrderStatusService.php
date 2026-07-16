@@ -15,7 +15,6 @@ class LaboratoryOrderStatusService
      */
     private const TRANSITIONS = [
         'pending' => [
-            'sample_collected',
             'cancelled',
         ],
 
@@ -72,15 +71,16 @@ class LaboratoryOrderStatusService
                     );
 
                     $order->save();
-                    $order->refresh();
 
-                    $order->load([
-                        'patient',
-                        'orderedBy',
-                        'items',
-                    ]);
-
-                    return $order;
+                    return $order
+                        ->fresh()
+                        ->load([
+                            'patient',
+                            'orderedBy',
+                            'items',
+                            'specimens.collectedBy',
+                            'specimens.orderItems',
+                        ]);
                 },
                 3
             );
@@ -93,6 +93,14 @@ class LaboratoryOrderStatusService
         string $currentStatus,
         string $nextStatus
     ): void {
+        if ($nextStatus === 'sample_collected') {
+            throw ValidationException::withMessages([
+                'status' => [
+                    'Record the specimens before marking the order as sample collected.',
+                ],
+            ]);
+        }
+
         $allowedStatuses = (
             self::TRANSITIONS[$currentStatus]
             ?? []
@@ -128,10 +136,6 @@ class LaboratoryOrderStatusService
         string $status
     ): array {
         return match ($status) {
-            'sample_collected' => [
-                'sample_collected_at' => now(),
-            ],
-
             'completed' => [
                 'completed_at' => now(),
             ],
