@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Tenant\DepartmentController;
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
 use App\Http\Controllers\Api\Tenant\SpecimenCollectionController;
 use App\Http\Controllers\Api\Tenant\SpecimenController;
+use App\Http\Controllers\Api\Tenant\SpecimenReplacementController;
 use App\Http\Controllers\Api\Tenant\SpecimenStatusController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
 use App\Http\Controllers\Api\TestResultController;
@@ -183,10 +184,13 @@ Route::middleware([
         'stats',
     ]);
 
-    Route::get('/specimens/{specimen}', [
-        SpecimenController::class,
-        'show',
-    ]);
+    Route::post(
+        '/specimens/{specimen}/replacement',
+        [
+            SpecimenReplacementController::class,
+            'store',
+        ]
+    );
 
     Route::patch(
         '/specimens/{specimen}/status',
@@ -195,6 +199,11 @@ Route::middleware([
             'update',
         ]
     );
+
+    Route::get('/specimens/{specimen}', [
+        SpecimenController::class,
+        'show',
+    ]);
 
     // ============================================
     // TEST RESULTS

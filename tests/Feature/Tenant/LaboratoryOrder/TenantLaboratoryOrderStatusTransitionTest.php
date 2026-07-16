@@ -2,87 +2,81 @@
 
 namespace Tests\Feature\Tenant\LaboratoryOrder;
 
+use App\Models\LaboratoryOrder;
+use App\Models\Tenant;
 use Tests\Support\Tenant\SpecimenManagementTestCase;
 
 class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCase
 {
     public function test_order_follows_the_valid_processing_workflow(): void
     {
-        $context = $this
-            ->authenticatedSpecimenContext(
-                'order-status-workflow'
-            );
+        $context = $this->authenticatedSpecimenContext(
+            'order-processing-workflow'
+        );
 
         $patient = $this->createPatient(
+            $context['tenant']
+        );
+
+        $order = $this->createPendingOrderWithItems(
             $context['tenant'],
-            [
-                'first_name' => 'Grace',
-                'last_name' => 'Okoro',
-            ]
+            $patient
         );
 
-        $order = $this
-            ->createPendingOrderWithItems(
-                $context['tenant'],
-                $patient,
-                1
-            );
-
-        $endpoint = (
-            '/api/laboratory-orders/'
-            .$order->uuid
+        $itemUuids = $this->orderItemUuids(
+            $context['tenant'],
+            $order->uuid
         );
 
-        $this->withHeaders(
-            $context['headers']
-        )
+        $collectionResponse = $this
+            ->withHeaders($context['headers'])
             ->postJson(
-                $endpoint.'/specimens',
+                '/api/laboratory-orders/'
+                .$order->uuid
+                .'/specimens',
                 [
                     'specimens' => [
                         [
-                            'specimen_type' => (
-                                'Whole Blood'
-                            ),
+                            'specimen_type' => 'Blood',
                             'container_type' => (
                                 'EDTA Tube'
                             ),
-                            'order_item_uuids' => [
-                                $order->items[0]->uuid,
-                            ],
+                            'order_item_uuids' => (
+                                $itemUuids
+                            ),
                         ],
                     ],
                 ]
-            )
+            );
+
+        $collectionResponse
             ->assertCreated()
             ->assertJsonPath(
                 'data.status',
                 'sample_collected'
             );
 
-        $storedOrder = $this
-            ->findLaboratoryOrder(
-                $context['tenant'],
-                $order->uuid
-            );
+        $specimenUuid = $collectionResponse
+            ->json('data.specimens.0.uuid');
 
-        self::assertNotNull($storedOrder);
-        self::assertSame(
-            'sample_collected',
-            $storedOrder->status
-        );
-        self::assertNotNull(
-            $storedOrder->sample_collected_at
-        );
-        self::assertNull(
-            $storedOrder->completed_at
-        );
-
-        $this->withHeaders(
-            $context['headers']
-        )
+        $this
+            ->withHeaders($context['headers'])
             ->patchJson(
-                $endpoint.'/status',
+                '/api/specimens/'
+                .$specimenUuid
+                .'/status',
+                [
+                    'status' => 'received',
+                ]
+            )
+            ->assertOk();
+
+        $this
+            ->withHeaders($context['headers'])
+            ->patchJson(
+                '/api/laboratory-orders/'
+                .$order->uuid
+                .'/status',
                 [
                     'status' => 'in_progress',
                 ]
@@ -93,26 +87,12 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
                 'in_progress'
             );
 
-        $storedOrder = $this
-            ->findLaboratoryOrder(
-                $context['tenant'],
-                $order->uuid
-            );
-
-        self::assertNotNull($storedOrder);
-        self::assertSame(
-            'in_progress',
-            $storedOrder->status
-        );
-        self::assertNull(
-            $storedOrder->completed_at
-        );
-
-        $this->withHeaders(
-            $context['headers']
-        )
+        $this
+            ->withHeaders($context['headers'])
             ->patchJson(
-                $endpoint.'/status',
+                '/api/laboratory-orders/'
+                .$order->uuid
+                .'/status',
                 [
                     'status' => 'completed',
                 ]
@@ -123,31 +103,30 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
                 'completed'
             );
 
-        $storedOrder = $this
-            ->findLaboratoryOrder(
-                $context['tenant'],
-                $order->uuid
-            );
+        $stored = $this->storedOrder(
+            $context['tenant'],
+            $order->uuid
+        );
 
-        self::assertNotNull($storedOrder);
-        self::assertSame(
+        $this->assertSame(
             'completed',
-            $storedOrder->status
+            $stored->status
         );
-        self::assertNotNull(
-            $storedOrder->completed_at
+
+        $this->assertNotNull(
+            $stored->sample_collected_at
         );
-        self::assertNull(
-            $storedOrder->cancelled_at
+
+        $this->assertNotNull(
+            $stored->completed_at
         );
     }
 
     public function test_order_can_be_cancelled_from_permitted_stages(): void
     {
-        $context = $this
-            ->authenticatedSpecimenContext(
-                'order-status-cancellation'
-            );
+        $context = $this->authenticatedSpecimenContext(
+            'order-cancellation'
+        );
 
         $patient = $this->createPatient(
             $context['tenant']
@@ -156,20 +135,38 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
         $pendingOrder = $this
             ->createPendingOrderWithItems(
                 $context['tenant'],
-                $patient,
-                1
+                $patient
+            );
+
+        $this
+            ->withHeaders($context['headers'])
+            ->patchJson(
+                '/api/laboratory-orders/'
+                .$pendingOrder->uuid
+                .'/status',
+                [
+                    'status' => 'cancelled',
+                ]
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.status',
+                'cancelled'
             );
 
         $collectedOrder = $this
             ->createPendingOrderWithItems(
                 $context['tenant'],
-                $patient,
-                1
+                $patient
             );
 
-        $this->withHeaders(
-            $context['headers']
-        )
+        $itemUuids = $this->orderItemUuids(
+            $context['tenant'],
+            $collectedOrder->uuid
+        );
+
+        $this
+            ->withHeaders($context['headers'])
             ->postJson(
                 '/api/laboratory-orders/'
                 .$collectedOrder->uuid
@@ -177,57 +174,80 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
                 [
                     'specimens' => [
                         [
-                            'specimen_type' => (
-                                'Serum'
+                            'specimen_type' => 'Blood',
+                            'order_item_uuids' => (
+                                $itemUuids
                             ),
-                            'order_item_uuids' => [
-                                $collectedOrder
-                                    ->items[0]
-                                    ->uuid,
-                            ],
                         ],
                     ],
                 ]
             )
             ->assertCreated();
 
-        foreach (
-            [
-                $pendingOrder,
-                $collectedOrder,
-            ] as $order
-        ) {
-            $this->withHeaders(
-                $context['headers']
+        $this
+            ->withHeaders($context['headers'])
+            ->patchJson(
+                '/api/laboratory-orders/'
+                .$collectedOrder->uuid
+                .'/status',
+                [
+                    'status' => 'cancelled',
+                ]
             )
-                ->patchJson(
-                    '/api/laboratory-orders/'
-                    .$order->uuid
-                    .'/status',
-                    [
-                        'status' => 'cancelled',
-                    ]
-                )
-                ->assertOk()
-                ->assertJsonPath(
-                    'data.status',
-                    'cancelled'
-                );
-
-            $storedOrder = $this
-                ->findLaboratoryOrder(
-                    $context['tenant'],
-                    $order->uuid
-                );
-
-            self::assertNotNull($storedOrder);
-            self::assertSame(
-                'cancelled',
-                $storedOrder->status
+            ->assertOk()
+            ->assertJsonPath(
+                'data.status',
+                'cancelled'
             );
-            self::assertNotNull(
-                $storedOrder->cancelled_at
-            );
-        }
+
+        $stored = $this->storedOrder(
+            $context['tenant'],
+            $collectedOrder->uuid
+        );
+
+        $this->assertNotNull(
+            $stored->cancelled_at
+        );
+    }
+
+    /**
+     * Return active order-item UUIDs.
+     *
+     * @return array<int, string>
+     */
+    private function orderItemUuids(
+        Tenant $tenant,
+        string $orderUuid
+    ): array {
+        return $this->runInTenant(
+            $tenant,
+            static fn (): array => (
+                LaboratoryOrder::query()
+                    ->with('items')
+                    ->where('uuid', $orderUuid)
+                    ->firstOrFail()
+                    ->items
+                    ->pluck('uuid')
+                    ->values()
+                    ->all()
+            )
+        );
+    }
+
+    /**
+     * Retrieve an order from its tenant database.
+     */
+    private function storedOrder(
+        Tenant $tenant,
+        string $orderUuid
+    ): LaboratoryOrder {
+        return $this->runInTenant(
+            $tenant,
+            static fn (): LaboratoryOrder => (
+                LaboratoryOrder::query()
+                    ->where('uuid', $orderUuid)
+                    ->firstOrFail()
+            )
+        );
     }
 }

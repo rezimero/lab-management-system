@@ -57,10 +57,14 @@ class SpecimenController extends Controller
     public function show(
         string $specimen
     ): SpecimenResource {
-        return new SpecimenResource(
-            $this->queryService->find(
-                $specimen
-            )
-        );
+        $model = $this->queryService
+            ->find($specimen);
+
+        $model->loadMissing([
+            'replaces',
+            'replacement',
+        ]);
+
+        return new SpecimenResource($model);
     }
 }

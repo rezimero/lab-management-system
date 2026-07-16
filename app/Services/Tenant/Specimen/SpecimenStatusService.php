@@ -69,8 +69,11 @@ class SpecimenStatusService
                     return $specimen
                         ->fresh()
                         ->load([
+                            'order.patient',
                             'collectedBy',
                             'orderItems',
+                            'replaces',
+                            'replacement',
                         ]);
                 },
                 3
