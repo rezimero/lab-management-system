@@ -5,6 +5,9 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\Tenant\DepartmentController;
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
 use App\Http\Controllers\Api\Tenant\SpecimenCollectionController;
+use App\Http\Controllers\Api\Tenant\SpecimenController;
+use App\Http\Controllers\Api\Tenant\SpecimenReplacementController;
+use App\Http\Controllers\Api\Tenant\SpecimenStatusController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
 use App\Http\Controllers\Api\TestResultController;
 use App\Http\Controllers\Api\UserController;
@@ -164,6 +167,41 @@ Route::middleware([
 
     Route::get('/laboratory-orders/{laboratoryOrder}', [
         LaboratoryOrderController::class,
+        'show',
+    ]);
+
+    // ============================================
+    // SPECIMENS
+    // ============================================
+
+    Route::get('/specimens', [
+        SpecimenController::class,
+        'index',
+    ]);
+
+    Route::get('/specimens/stats', [
+        SpecimenController::class,
+        'stats',
+    ]);
+
+    Route::post(
+        '/specimens/{specimen}/replacement',
+        [
+            SpecimenReplacementController::class,
+            'store',
+        ]
+    );
+
+    Route::patch(
+        '/specimens/{specimen}/status',
+        [
+            SpecimenStatusController::class,
+            'update',
+        ]
+    );
+
+    Route::get('/specimens/{specimen}', [
+        SpecimenController::class,
         'show',
     ]);
 

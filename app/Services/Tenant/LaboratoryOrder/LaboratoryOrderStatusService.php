@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 class LaboratoryOrderStatusService
 {
     /**
-     * Permitted order-level status transitions.
+     * Permitted laboratory-order transitions.
      *
      * @var array<string, array<int, string>>
      */
@@ -46,6 +46,9 @@ class LaboratoryOrderStatusService
                     $nextStatus
                 ): LaboratoryOrder {
                     $order = LaboratoryOrder::query()
+                        ->with([
+                            'items.specimens',
+                        ])
                         ->where('uuid', $uuid)
                         ->lockForUpdate()
                         ->firstOrFail();
@@ -54,10 +57,29 @@ class LaboratoryOrderStatusService
                         (string) $order->status
                     );
 
+                    if ($nextStatus === 'sample_collected') {
+                        throw ValidationException::withMessages([
+                            'status' => [
+                                'Record the specimens before marking the order as sample collected.',
+                            ],
+                        ]);
+                    }
+
                     $this->assertTransitionAllowed(
                         $currentStatus,
                         $nextStatus
                     );
+
+                    if (
+                        $currentStatus
+                            === 'sample_collected'
+                        && $nextStatus
+                            === 'in_progress'
+                    ) {
+                        $this->assertReadyForProcessing(
+                            $order
+                        );
+                    }
 
                     $order->forceFill(
                         array_merge(
@@ -68,9 +90,7 @@ class LaboratoryOrderStatusService
                                 $nextStatus
                             )
                         )
-                    );
-
-                    $order->save();
+                    )->save();
 
                     return $order
                         ->fresh()
@@ -93,14 +113,6 @@ class LaboratoryOrderStatusService
         string $currentStatus,
         string $nextStatus
     ): void {
-        if ($nextStatus === 'sample_collected') {
-            throw ValidationException::withMessages([
-                'status' => [
-                    'Record the specimens before marking the order as sample collected.',
-                ],
-            ]);
-        }
-
         $allowedStatuses = (
             self::TRANSITIONS[$currentStatus]
             ?? []
@@ -128,7 +140,53 @@ class LaboratoryOrderStatusService
     }
 
     /**
-     * Return the timestamp belonging to the new status.
+     * Require received specimen coverage for every active item.
+     */
+    private function assertReadyForProcessing(
+        LaboratoryOrder $order
+    ): void {
+        $activeItems = $order->items
+            ->where(
+                'status',
+                '!=',
+                'cancelled'
+            );
+
+        if ($activeItems->isEmpty()) {
+            throw ValidationException::withMessages([
+                'status' => [
+                    'The order has no active items available for processing.',
+                ],
+            ]);
+        }
+
+        $unreadyItems = $activeItems->filter(
+            fn ($item): bool => (
+                ! $item->specimens->contains(
+                    fn ($specimen): bool => (
+                        $specimen->status
+                            === 'received'
+                    )
+                )
+            )
+        );
+
+        if ($unreadyItems->isEmpty()) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'status' => [
+                sprintf(
+                    '%d active order item(s) do not have a received specimen.',
+                    $unreadyItems->count()
+                ),
+            ],
+        ]);
+    }
+
+    /**
+     * Return timestamps belonging to the new status.
      *
      * @return array<string, mixed>
      */

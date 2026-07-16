@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class Specimen extends Model
@@ -23,6 +24,7 @@ class Specimen extends Model
     protected $fillable = [
         'uuid',
         'laboratory_order_id',
+        'replaces_specimen_id',
         'accession_number',
         'specimen_type',
         'container_type',
@@ -59,7 +61,9 @@ class Specimen extends Model
         static::creating(
             function (Specimen $specimen): void {
                 if (blank($specimen->uuid)) {
-                    $specimen->uuid = (string) Str::uuid();
+                    $specimen->uuid = (
+                        (string) Str::uuid()
+                    );
                 }
             }
         );
@@ -73,6 +77,28 @@ class Specimen extends Model
         return $this->belongsTo(
             LaboratoryOrder::class,
             'laboratory_order_id'
+        );
+    }
+
+    /**
+     * Rejected specimen replaced by this specimen.
+     */
+    public function replaces(): BelongsTo
+    {
+        return $this->belongsTo(
+            self::class,
+            'replaces_specimen_id'
+        );
+    }
+
+    /**
+     * Direct replacement collected for this specimen.
+     */
+    public function replacement(): HasOne
+    {
+        return $this->hasOne(
+            self::class,
+            'replaces_specimen_id'
         );
     }
 
