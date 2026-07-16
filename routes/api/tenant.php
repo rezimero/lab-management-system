@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PatientController;
 use App\Http\Controllers\Api\Tenant\DepartmentController;
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
 use App\Http\Controllers\Api\Tenant\SpecimenCollectionController;
+use App\Http\Controllers\Api\Tenant\SpecimenStatusController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
 use App\Http\Controllers\Api\TestResultController;
 use App\Http\Controllers\Api\UserController;
@@ -133,7 +134,7 @@ Route::middleware([
     ]);
 
     // ============================================
-    // LABORATORY ORDERS
+    // LABORATORY ORDERS AND SPECIMENS
     // ============================================
 
     Route::get('/laboratory-orders', [
@@ -166,6 +167,14 @@ Route::middleware([
         LaboratoryOrderController::class,
         'show',
     ]);
+
+    Route::patch(
+        '/specimens/{specimen}/status',
+        [
+            SpecimenStatusController::class,
+            'update',
+        ]
+    );
 
     // ============================================
     // TEST RESULTS
