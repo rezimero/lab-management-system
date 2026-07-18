@@ -8,20 +8,22 @@ use Tests\Support\Tenant\SpecimenManagementTestCase;
 
 class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCase
 {
-    public function test_order_follows_the_valid_processing_workflow(): void
+    public function test_order_reaches_processing_after_specimen_receiving(): void
     {
-        $context = $this->authenticatedSpecimenContext(
-            'order-processing-workflow'
-        );
+        $context = $this
+            ->authenticatedSpecimenContext(
+                'order-processing-workflow'
+            );
 
         $patient = $this->createPatient(
             $context['tenant']
         );
 
-        $order = $this->createPendingOrderWithItems(
-            $context['tenant'],
-            $patient
-        );
+        $order = $this
+            ->createPendingOrderWithItems(
+                $context['tenant'],
+                $patient
+            );
 
         $itemUuids = $this->orderItemUuids(
             $context['tenant'],
@@ -57,7 +59,13 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
             );
 
         $specimenUuid = $collectionResponse
-            ->json('data.specimens.0.uuid');
+            ->json(
+                'data.specimens.0.uuid'
+            );
+
+        $this->assertIsString(
+            $specimenUuid
+        );
 
         $this
             ->withHeaders($context['headers'])
@@ -97,11 +105,10 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
                     'status' => 'completed',
                 ]
             )
-            ->assertOk()
-            ->assertJsonPath(
-                'data.status',
-                'completed'
-            );
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'status',
+            ]);
 
         $stored = $this->storedOrder(
             $context['tenant'],
@@ -109,7 +116,7 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
         );
 
         $this->assertSame(
-            'completed',
+            'in_progress',
             $stored->status
         );
 
@@ -117,16 +124,17 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
             $stored->sample_collected_at
         );
 
-        $this->assertNotNull(
+        $this->assertNull(
             $stored->completed_at
         );
     }
 
     public function test_order_can_be_cancelled_from_permitted_stages(): void
     {
-        $context = $this->authenticatedSpecimenContext(
-            'order-cancellation'
-        );
+        $context = $this
+            ->authenticatedSpecimenContext(
+                'order-cancellation'
+            );
 
         $patient = $this->createPatient(
             $context['tenant']
@@ -245,7 +253,10 @@ class TenantLaboratoryOrderStatusTransitionTest extends SpecimenManagementTestCa
             $tenant,
             static fn (): LaboratoryOrder => (
                 LaboratoryOrder::query()
-                    ->where('uuid', $orderUuid)
+                    ->where(
+                        'uuid',
+                        $orderUuid
+                    )
                     ->firstOrFail()
             )
         );

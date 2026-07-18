@@ -22,9 +22,7 @@ class LaboratoryOrderItemResource extends JsonResource
             'category' => (
                 $this->test_category_snapshot
             ),
-            'price' => (
-                $this->price_snapshot
-            ),
+            'price' => $this->price_snapshot,
             'turnaround_time_hours' => (
                 $this
                     ->turnaround_time_hours_snapshot
@@ -33,6 +31,54 @@ class LaboratoryOrderItemResource extends JsonResource
                 $this->parameters_snapshot
             ),
             'status' => $this->status,
+
+            'processing_started_by' => (
+                $this->when(
+                    $this->relationLoaded(
+                        'processingStartedBy'
+                    ),
+                    fn (): ?array => (
+                        $this->processingStartedBy
+                            === null
+                                ? null
+                                : [
+                                    'id' => (
+                                        $this
+                                            ->processingStartedBy
+                                            ->id
+                                    ),
+                                    'name' => (
+                                        $this
+                                            ->processingStartedBy
+                                            ->name
+                                    ),
+                                    'email' => (
+                                        $this
+                                            ->processingStartedBy
+                                            ->email
+                                    ),
+                                ]
+                    )
+                )
+            ),
+
+            'processing_started_at' => (
+                $this->processing_started_at
+                    ?->toISOString()
+            ),
+            'completed_at' => (
+                $this->completed_at
+                    ?->toISOString()
+            ),
+
+            'test_result' => (
+                new TestResultResource(
+                    $this->whenLoaded(
+                        'testResult'
+                    )
+                )
+            ),
+
             'created_at' => (
                 $this->created_at
                     ?->toISOString()
