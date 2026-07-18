@@ -3,6 +3,7 @@
 namespace App\Services\Tenant\LaboratoryOrder;
 
 use App\Models\LaboratoryOrder;
+use App\Models\TestResult;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -39,71 +40,81 @@ class LaboratoryOrderStatusService
         string $uuid,
         string $nextStatus
     ): LaboratoryOrder {
-        return DB::connection('tenant')
-            ->transaction(
-                function () use (
-                    $uuid,
+        return DB::connection('tenant')->transaction(
+            function () use (
+                $uuid,
+                $nextStatus
+            ): LaboratoryOrder {
+                $order = LaboratoryOrder::query()
+                    ->with([
+                        'items.specimens',
+                        'items.testResult',
+                    ])
+                    ->where('uuid', $uuid)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $currentStatus = (
+                    (string) $order->status
+                );
+
+                if ($nextStatus === 'sample_collected') {
+                    throw ValidationException::withMessages([
+                        'status' => [
+                            'Record the specimens before marking the order as sample collected.',
+                        ],
+                    ]);
+                }
+
+                $this->assertTransitionAllowed(
+                    $currentStatus,
                     $nextStatus
-                ): LaboratoryOrder {
-                    $order = LaboratoryOrder::query()
-                        ->with([
-                            'items.specimens',
-                        ])
-                        ->where('uuid', $uuid)
-                        ->lockForUpdate()
-                        ->firstOrFail();
+                );
 
-                    $currentStatus = (
-                        (string) $order->status
+                if (
+                    $currentStatus === 'sample_collected'
+                    && $nextStatus === 'in_progress'
+                ) {
+                    $this->assertReadyForProcessing(
+                        $order
                     );
+                }
 
-                    if ($nextStatus === 'sample_collected') {
-                        throw ValidationException::withMessages([
-                            'status' => [
-                                'Record the specimens before marking the order as sample collected.',
-                            ],
-                        ]);
-                    }
-
-                    $this->assertTransitionAllowed(
-                        $currentStatus,
-                        $nextStatus
+                if (
+                    $currentStatus === 'in_progress'
+                    && $nextStatus === 'completed'
+                ) {
+                    $this->assertReadyForCompletion(
+                        $order
                     );
+                }
 
-                    if (
-                        $currentStatus
-                            === 'sample_collected'
-                        && $nextStatus
-                            === 'in_progress'
-                    ) {
-                        $this->assertReadyForProcessing(
-                            $order
-                        );
-                    }
-
-                    $order->forceFill(
-                        array_merge(
-                            [
-                                'status' => $nextStatus,
-                            ],
-                            $this->timestampAttributes(
-                                $nextStatus
-                            )
+                $order->forceFill(
+                    array_merge(
+                        [
+                            'status' => $nextStatus,
+                        ],
+                        $this->timestampAttributes(
+                            $nextStatus
                         )
-                    )->save();
+                    )
+                )->save();
 
-                    return $order
-                        ->fresh()
-                        ->load([
-                            'patient',
-                            'orderedBy',
-                            'items',
-                            'specimens.collectedBy',
-                            'specimens.orderItems',
-                        ]);
-                },
-                3
-            );
+                return $order
+                    ->fresh()
+                    ->load([
+                        'patient',
+                        'orderedBy',
+                        'items.processingStartedBy',
+                        'items.testResult.enteredBy',
+                        'items.testResult.submittedBy',
+                        'items.testResult.reviewedBy',
+                        'specimens.collectedBy',
+                        'specimens.orderItems',
+                    ]);
+            },
+            3
+        );
     }
 
     /**
@@ -140,25 +151,14 @@ class LaboratoryOrderStatusService
     }
 
     /**
-     * Require received specimen coverage for every active item.
+     * Require received-specimen coverage.
      */
     private function assertReadyForProcessing(
         LaboratoryOrder $order
     ): void {
-        $activeItems = $order->items
-            ->where(
-                'status',
-                '!=',
-                'cancelled'
-            );
-
-        if ($activeItems->isEmpty()) {
-            throw ValidationException::withMessages([
-                'status' => [
-                    'The order has no active items available for processing.',
-                ],
-            ]);
-        }
+        $activeItems = $this->activeItems(
+            $order
+        );
 
         $unreadyItems = $activeItems->filter(
             fn ($item): bool => (
@@ -181,6 +181,62 @@ class LaboratoryOrderStatusService
                     '%d active order item(s) do not have a received specimen.',
                     $unreadyItems->count()
                 ),
+            ],
+        ]);
+    }
+
+    /**
+     * Require approved results for all active items.
+     */
+    private function assertReadyForCompletion(
+        LaboratoryOrder $order
+    ): void {
+        $activeItems = $this->activeItems(
+            $order
+        );
+
+        $incompleteItems = $activeItems->filter(
+            fn ($item): bool => (
+                $item->status !== 'completed'
+                || $item->testResult === null
+                || $item->testResult->status
+                    !== TestResult::STATUS_APPROVED
+            )
+        );
+
+        if ($incompleteItems->isEmpty()) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'status' => [
+                sprintf(
+                    '%d active order item(s) do not have approved results.',
+                    $incompleteItems->count()
+                ),
+            ],
+        ]);
+    }
+
+    /**
+     * Return non-cancelled order items.
+     */
+    private function activeItems(
+        LaboratoryOrder $order
+    ) {
+        $activeItems = $order->items->where(
+            'status',
+            '!=',
+            'cancelled'
+        );
+
+        if ($activeItems->isNotEmpty()) {
+            return $activeItems;
+        }
+
+        throw ValidationException::withMessages([
+            'status' => [
+                'The order has no active items available for processing.',
             ],
         ]);
     }

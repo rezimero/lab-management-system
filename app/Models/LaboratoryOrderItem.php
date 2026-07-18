@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class LaboratoryOrderItem extends Model
@@ -30,6 +31,9 @@ class LaboratoryOrderItem extends Model
         'turnaround_time_hours_snapshot',
         'parameters_snapshot',
         'status',
+        'processing_started_by',
+        'processing_started_at',
+        'completed_at',
     ];
 
     /**
@@ -38,8 +42,12 @@ class LaboratoryOrderItem extends Model
     protected $casts = [
         'uuid' => 'string',
         'price_snapshot' => 'decimal:2',
-        'turnaround_time_hours_snapshot' => 'integer',
+        'turnaround_time_hours_snapshot' => (
+            'integer'
+        ),
         'parameters_snapshot' => 'array',
+        'processing_started_at' => 'datetime',
+        'completed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -50,9 +58,13 @@ class LaboratoryOrderItem extends Model
     protected static function booted(): void
     {
         static::creating(
-            function (LaboratoryOrderItem $item): void {
+            function (
+                LaboratoryOrderItem $item
+            ): void {
                 if (blank($item->uuid)) {
-                    $item->uuid = (string) Str::uuid();
+                    $item->uuid = (
+                        (string) Str::uuid()
+                    );
                 }
             }
         );
@@ -70,7 +82,7 @@ class LaboratoryOrderItem extends Model
     }
 
     /**
-     * Current catalogue record.
+     * Current test-catalogue record.
      */
     public function labTest(): BelongsTo
     {
@@ -80,7 +92,7 @@ class LaboratoryOrderItem extends Model
     }
 
     /**
-     * Specimens associated with this order item.
+     * Specimens associated with this item.
      */
     public function specimens(): BelongsToMany
     {
@@ -90,5 +102,35 @@ class LaboratoryOrderItem extends Model
             'laboratory_order_item_id',
             'specimen_id'
         )->withTimestamps();
+    }
+
+    /**
+     * Result belonging to this order item.
+     */
+    public function testResult(): HasOne
+    {
+        return $this->hasOne(
+            TestResult::class,
+            'laboratory_order_item_id'
+        );
+    }
+
+    /**
+     * User who started processing the item.
+     */
+    public function processingStartedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'processing_started_by'
+        );
+    }
+
+    /**
+     * Use UUID for public route model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 }

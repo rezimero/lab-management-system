@@ -4,42 +4,150 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class TestResult extends Model
 {
-    use HasFactory, UsesTenantConnection;
+    use HasFactory;
 
+    public const STATUS_DRAFT = 'draft';
+
+    public const STATUS_SUBMITTED = 'submitted';
+
+    public const STATUS_APPROVED = 'approved';
+
+    public const STATUS_REJECTED = 'rejected';
+
+    /**
+     * Tenant database connection.
+     */
+    protected $connection = 'tenant';
+
+    /**
+     * Mass-assignable attributes.
+     */
     protected $fillable = [
-        'patient_id',
-        'lab_test_id',
-        'user_id',
-        'test_date',
+        'uuid',
+        'laboratory_order_item_id',
         'results_data',
         'notes',
         'status',
-        'completed_at',
+        'entered_by',
+        'submitted_by',
+        'reviewed_by',
+        'submitted_at',
+        'reviewed_at',
+        'rejection_reason',
     ];
 
+    /**
+     * Attribute casts.
+     */
     protected $casts = [
-        'test_date' => 'date',
-        'results_data' => 'json',
-        'completed_at' => 'datetime',
+        'uuid' => 'string',
+        'results_data' => 'array',
+        'submitted_at' => 'datetime',
+        'reviewed_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    // Relationships
-    public function patient()
+    /**
+     * Generate the public UUID.
+     */
+    protected static function booted(): void
     {
-        return $this->belongsTo(Patient::class);
+        static::creating(
+            function (TestResult $result): void {
+                if (blank($result->uuid)) {
+                    $result->uuid = (
+                        (string) Str::uuid()
+                    );
+                }
+            }
+        );
     }
 
-    public function labTest()
+    /**
+     * Order item represented by this result.
+     */
+    public function orderItem(): BelongsTo
     {
-        return $this->belongsTo(LabTest::class);
+        return $this->belongsTo(
+            LaboratoryOrderItem::class,
+            'laboratory_order_item_id'
+        );
     }
 
-    public function user()
+    /**
+     * User who initially entered the result.
+     */
+    public function enteredBy(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(
+            User::class,
+            'entered_by'
+        );
+    }
+
+    /**
+     * User who submitted the result.
+     */
+    public function submittedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'submitted_by'
+        );
+    }
+
+    /**
+     * User who approved or rejected the result.
+     */
+    public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'reviewed_by'
+        );
+    }
+
+    /**
+     * Legacy patient relationship.
+     */
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(
+            Patient::class
+        );
+    }
+
+    /**
+     * Legacy test-catalogue relationship.
+     */
+    public function labTest(): BelongsTo
+    {
+        return $this->belongsTo(
+            LabTest::class
+        );
+    }
+
+    /**
+     * Legacy result-entry user relationship.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class
+        );
+    }
+
+    /**
+     * Use UUID for public route model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
     }
 }

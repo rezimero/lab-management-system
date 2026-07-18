@@ -2,6 +2,7 @@
 
 namespace App\Models\Tenant;
 
+use App\Support\Tenant\TenantUserPermissionCatalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -26,7 +27,7 @@ class User extends Authenticatable
     protected $table = 'users';
 
     /**
-     * Mass assignable attributes.
+     * Mass-assignable attributes.
      */
     protected $fillable = [
         'name',
@@ -51,32 +52,54 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_active'         => 'boolean',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helpers
-    |--------------------------------------------------------------------------
-    */
+    /**
+     * Determine whether this user has a tenant permission.
+     */
+    public function hasPermission(
+        string $permission
+    ): bool {
+        if (! $this->is_active) {
+            return false;
+        }
 
+        return TenantUserPermissionCatalog::allows(
+            $this->role,
+            $permission
+        );
+    }
+
+    /**
+     * Determine whether this user is an administrator.
+     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
 
+    /**
+     * Determine whether this user is a laboratory technician.
+     */
     public function isLabTechnician(): bool
     {
         return $this->role === 'lab_technician';
     }
 
+    /**
+     * Determine whether this user is a doctor.
+     */
     public function isDoctor(): bool
     {
         return $this->role === 'doctor';
     }
 
+    /**
+     * Determine whether this user is a receptionist.
+     */
     public function isReceptionist(): bool
     {
         return $this->role === 'receptionist';

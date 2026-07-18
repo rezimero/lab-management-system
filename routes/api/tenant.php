@@ -9,7 +9,6 @@ use App\Http\Controllers\Api\Tenant\SpecimenController;
 use App\Http\Controllers\Api\Tenant\SpecimenReplacementController;
 use App\Http\Controllers\Api\Tenant\SpecimenStatusController;
 use App\Http\Controllers\Api\Tenant\TenantProfileController;
-use App\Http\Controllers\Api\TestResultController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Middleware\SetTenantContext;
 use Illuminate\Support\Facades\Route;
@@ -206,43 +205,10 @@ Route::middleware([
     ]);
 
     // ============================================
-    // TEST RESULTS
+    // TEST PROCESSING AND RESULTS
     // ============================================
 
-    Route::get('/test-results', [
-        TestResultController::class,
-        'index',
-    ]);
-
-    Route::get('/test-results/stats', [
-        TestResultController::class,
-        'stats',
-    ]);
-
-    Route::get('/test-results/patient/{patientId}', [
-        TestResultController::class,
-        'getByPatient',
-    ]);
-
-    Route::get('/test-results/{testResult}', [
-        TestResultController::class,
-        'show',
-    ]);
-
-    Route::post('/test-results', [
-        TestResultController::class,
-        'store',
-    ]);
-
-    Route::put('/test-results/{testResult}', [
-        TestResultController::class,
-        'update',
-    ]);
-
-    Route::delete('/test-results/{testResult}', [
-        TestResultController::class,
-        'destroy',
-    ]);
+    require __DIR__.'/tenant/test-results.php';
 
     // ============================================
     // USERS AND ROLES
