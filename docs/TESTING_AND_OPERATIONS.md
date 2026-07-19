@@ -186,20 +186,37 @@ Latest result:
 
 ---
 
-## 10. Pending Focused Result Tests
+## 10. Laboratory Reporting Validation
 
-After the remaining files are implemented:
-
-    php artisan test `
-        tests\Feature\Tenant\TestResult `
-        --stop-on-failure
-
-Then run related regressions:
+Focused reporting suite:
 
     php artisan test `
-        tests\Feature\Tenant\LaboratoryOrder `
-        tests\Feature\Tenant\Specimen `
-        --stop-on-failure
+        tests/Feature/Tenant/LaboratoryReport
+
+Latest focused result:
+
+    11 tests passed
+    430 assertions
+    81.83 seconds
+
+Adjacent clinical regression suite:
+
+    php artisan test `
+        tests/Feature/Tenant/TestResult `
+        tests/Feature/Tenant/LaboratoryOrder `
+        tests/Feature/Tenant/Specimen
+
+Latest regression result:
+
+    49 tests passed
+    1,501 assertions
+    549.69 seconds
+
+Latest full project result:
+
+    112 tests passed
+    2,953 assertions
+    1,208.24 seconds
 
 ---
 
@@ -317,13 +334,13 @@ Required order:
 
 Current milestone branch:
 
-    feature/test-processing-results
+    feature/laboratory-reporting
 
 Previous completed baseline:
 
-    baseline-specimen-lifecycle-2130
+    baseline-test-processing-results-2523
 
-Do not tag the current milestone until the full result and regression suites pass.
+The reporting milestone has passed its focused, regression and full project suites. Tag only after documentation review, commit, push, pull request and merge.
 
 ---
 

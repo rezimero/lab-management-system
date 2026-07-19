@@ -42,10 +42,13 @@ Route::middleware([
         'uploadFavicon',
     ]);
 
-    Route::post('/tenant/profile/director-signature', [
-        TenantProfileController::class,
-        'uploadDirectorSignature',
-    ]);
+    Route::post(
+        '/tenant/profile/director-signature',
+        [
+            TenantProfileController::class,
+            'uploadDirectorSignature',
+        ]
+    );
 
     // ============================================
     // DEPARTMENTS
@@ -56,15 +59,21 @@ Route::middleware([
         DepartmentController::class
     );
 
-    Route::patch('/departments/{department}/activate', [
-        DepartmentController::class,
-        'activate',
-    ]);
+    Route::patch(
+        '/departments/{department}/activate',
+        [
+            DepartmentController::class,
+            'activate',
+        ]
+    );
 
-    Route::patch('/departments/{department}/deactivate', [
-        DepartmentController::class,
-        'deactivate',
-    ]);
+    Route::patch(
+        '/departments/{department}/deactivate',
+        [
+            DepartmentController::class,
+            'deactivate',
+        ]
+    );
 
     // ============================================
     // PATIENTS
@@ -164,10 +173,13 @@ Route::middleware([
         ]
     );
 
-    Route::get('/laboratory-orders/{laboratoryOrder}', [
-        LaboratoryOrderController::class,
-        'show',
-    ]);
+    Route::get(
+        '/laboratory-orders/{laboratoryOrder}',
+        [
+            LaboratoryOrderController::class,
+            'show',
+        ]
+    );
 
     // ============================================
     // SPECIMENS
@@ -209,6 +221,13 @@ Route::middleware([
     // ============================================
 
     require __DIR__.'/tenant/test-results.php';
+
+    // ============================================
+    // LABORATORY REPORTS
+    // ============================================
+
+    require __DIR__
+        .'/tenant/laboratory-reports.php';
 
     // ============================================
     // USERS AND ROLES

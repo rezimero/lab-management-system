@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
@@ -59,9 +60,13 @@ class LaboratoryOrder extends Model
     protected static function booted(): void
     {
         static::creating(
-            function (LaboratoryOrder $order): void {
+            function (
+                LaboratoryOrder $order
+            ): void {
                 if (blank($order->uuid)) {
-                    $order->uuid = (string) Str::uuid();
+                    $order->uuid = (
+                        (string) Str::uuid()
+                    );
                 }
             }
         );
@@ -105,6 +110,17 @@ class LaboratoryOrder extends Model
     {
         return $this->hasMany(
             Specimen::class
+        );
+    }
+
+    /**
+     * Issued immutable report for this order.
+     */
+    public function report(): HasOne
+    {
+        return $this->hasOne(
+            LaboratoryReport::class,
+            'laboratory_order_id'
         );
     }
 

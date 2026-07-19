@@ -20,8 +20,16 @@ final class TenantUserPermissionCatalog
         'approve_test_results'
     );
 
+    public const VIEW_LABORATORY_REPORTS = (
+        'view_laboratory_reports'
+    );
+
+    public const GENERATE_LABORATORY_REPORTS = (
+        'generate_laboratory_reports'
+    );
+
     /**
-     * Permissions currently enforced by the tenant result workflow.
+     * Permissions enforced by tenant clinical workflows.
      *
      * @var array<string, array<int, string>>
      */
@@ -31,6 +39,8 @@ final class TenantUserPermissionCatalog
             self::CREATE_TEST_RESULTS,
             self::EDIT_TEST_RESULTS,
             self::APPROVE_TEST_RESULTS,
+            self::VIEW_LABORATORY_REPORTS,
+            self::GENERATE_LABORATORY_REPORTS,
         ],
 
         'admin' => [
@@ -38,21 +48,28 @@ final class TenantUserPermissionCatalog
             self::CREATE_TEST_RESULTS,
             self::EDIT_TEST_RESULTS,
             self::APPROVE_TEST_RESULTS,
+            self::VIEW_LABORATORY_REPORTS,
+            self::GENERATE_LABORATORY_REPORTS,
         ],
 
         'lab_technician' => [
             self::VIEW_TEST_RESULTS,
             self::CREATE_TEST_RESULTS,
             self::EDIT_TEST_RESULTS,
+            self::VIEW_LABORATORY_REPORTS,
+            self::GENERATE_LABORATORY_REPORTS,
         ],
 
         'receptionist' => [
             self::VIEW_TEST_RESULTS,
+            self::VIEW_LABORATORY_REPORTS,
         ],
 
         'doctor' => [
             self::VIEW_TEST_RESULTS,
             self::APPROVE_TEST_RESULTS,
+            self::VIEW_LABORATORY_REPORTS,
+            self::GENERATE_LABORATORY_REPORTS,
         ],
     ];
 

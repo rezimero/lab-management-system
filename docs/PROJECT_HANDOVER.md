@@ -16,7 +16,7 @@ Primary remote:
 
 Current backend milestone:
 
-    Test processing and test-result workflow
+    Laboratory reporting - implementation complete
 
 ---
 
@@ -41,9 +41,9 @@ The system manages the operational lifecycle of a diagnostic laboratory, includi
 - order completion
 - reporting
 
-The backend is currently the development priority.
+The next development priority is the frontend Vite migration, followed by result and report API integration.
 
-Frontend integration will continue after the backend result and reporting workflows are stable.
+The backend result and reporting workflows are stable. Frontend build-tool migration and API integration are the next planned milestones.
 
 ---
 
@@ -70,7 +70,7 @@ Frontend:
 
 - React 19
 - Create React App currently
-- Vite migration planned after backend reporting
+- Vite migration is the next planned milestone
 
 ---
 
@@ -270,7 +270,7 @@ Completed:
 
 ### Test processing and results
 
-Implemented in the current branch:
+Implemented in the completed result-processing milestone:
 
 - start processing an order item
 - one result per laboratory order item
@@ -511,12 +511,29 @@ Current frontend status:
 
 Planned sequence:
 
-1. complete backend result workflow
-2. complete backend reporting
-3. migrate frontend build tooling to Vite
-4. integrate frontend with the new APIs
+1. backend result workflow - completed
+2. backend laboratory reporting - completed
+3. migrate frontend build tooling to Vite - next
+4. integrate frontend with the result and report APIs
 
-Do not interrupt the backend milestone for broad frontend refactoring.
+Do not perform broad frontend refactoring beyond the planned Vite migration and API integration.
+
+### Backend laboratory reporting
+
+The backend supports one immutable report record per completed laboratory order.
+
+Active routes:
+
+    POST /api/laboratory-orders/{laboratoryOrder}/report
+    GET  /api/laboratory-orders/{laboratoryOrder}/report
+    GET  /api/laboratory-reports
+    GET  /api/laboratory-reports/{laboratoryReport}
+
+Report generation requires every active order item to be completed with an approved result.
+
+The report persists laboratory, patient, order and approved-result snapshots. It also records the generating tenant user and generation timestamp.
+
+Report records have no update or delete API. PDF rendering and export are deferred until a compatible renderer is deliberately selected.
 
 ---
 
@@ -531,9 +548,9 @@ Known but non-blocking items:
 - frontend result screens use the legacy model
 - the frontend API client logs authorization headers
 - some test-support files are near or slightly above the preferred 300-line review threshold
-- reporting is not yet implemented
+- PDF rendering and export are not yet implemented; issued reports currently use immutable JSON snapshots
 
-Do not perform broad cleanup while completing the current result milestone.
+Do not perform broad cleanup while completing and handing over the reporting milestone.
 
 Refactor only when:
 

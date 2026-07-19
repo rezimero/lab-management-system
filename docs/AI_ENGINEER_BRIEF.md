@@ -216,12 +216,11 @@ Do not expose bearer tokens in messages, logs or documentation.
 
 Current priority:
 
-1. backend result workflow
-2. backend reporting
-3. frontend Vite migration
-4. frontend result integration
+1. frontend Vite migration
+2. frontend result and report API integration
+3. PDF rendering and export after a compatible renderer is selected
 
-Do not begin broad frontend work while the backend result milestone is unfinished.
+The backend result and immutable-reporting milestones are complete and fully validated.
 
 Do not begin broad legacy cleanup unless it blocks the current milestone.
 
