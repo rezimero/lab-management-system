@@ -420,7 +420,7 @@ One substantial milestone should normally produce:
 
 Current branch:
 
-    feature/test-processing-results
+    feature/laboratory-reporting
 
 ---
 
@@ -446,3 +446,49 @@ Conversation history and account memory are not portable or reliable project sto
 Consequence:
 
 `docs/CURRENT_STATE.md` must be updated before each milestone is committed or handed over.
+
+---
+
+## ADR-019: Immutable Laboratory Report Snapshots
+
+Status:
+
+    Accepted
+
+Decision:
+
+Each completed laboratory order may issue one immutable laboratory report stored in the tenant database.
+
+Report generation requires:
+
+- a completed laboratory order
+- at least one active order item
+- every active order item to be completed
+- every active order item to have an approved test result
+- no previously issued report for the order
+
+The report snapshots:
+
+- landlord-side laboratory profile and branding
+- patient identity
+- source order information
+- approved result values
+- result-entry, submission and review audit users
+
+The report record also stores the generating tenant-user relationship and generation timestamp.
+
+Issued report records are not updated or deleted when source records later change.
+
+The active reporting API returns JSON resources. PDF generation is deferred until a dedicated and compatible PDF renderer is selected.
+
+Report authorization uses `TenantUserPermissionCatalog`:
+
+- superadmin: view and generate
+- admin: view and generate
+- lab technician: view and generate
+- doctor: view and generate
+- receptionist: view only
+
+Consequence:
+
+Historical report data remains reproducible and tenant isolated. Future PDF output must render from the persisted report snapshot rather than live mutable clinical records.

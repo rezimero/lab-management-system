@@ -2,7 +2,7 @@
 
 Updated:
 
-    18 July 2026
+    19 July 2026
 
 This document is the current repository handover snapshot.
 
@@ -22,26 +22,26 @@ Remote:
 
 Current branch:
 
-    feature/test-processing-results
+    feature/laboratory-reporting
 
 Branch base:
 
-    ec25955
-    Merge pull request #6 from rezimero/feature/specimen-receiving
+    560b359
+    Merge pull request #7 from rezimero/feature/test-processing-results
 
 Previous completed milestone tag:
 
-    baseline-specimen-lifecycle-2130
+    baseline-test-processing-results-2523
 
 Previous tag target:
 
-    18cd6c3
+    560b359
 
-The current result-processing milestone is implemented and fully validated on the milestone branch.
+The previous result-processing milestone was merged and tagged. The current laboratory-reporting milestone is implemented and fully validated on this milestone branch.
 
 ---
 
-## 2. Current Milestone
+## 2. Previous Completed Result Milestone
 
 Milestone:
 
@@ -49,13 +49,11 @@ Milestone:
 
 Milestone status:
 
-    Implementation complete
-    Focused tests passed
-    Regression tests passed
-    Full project suite passed
-    Development tenant migrated
-    Development API smoke test passed
-    Ready for Git milestone completion
+    Completed
+    Merged into develop
+    Baseline tag baseline-test-processing-results-2523 created
+    Focused, regression and full project suites passed
+    Development tenant migration and API smoke test completed
 
 ---
 
@@ -421,9 +419,9 @@ No confirmed regression was introduced by the result workflow.
 
 Latest complete project result:
 
-    101 tests passed
-    2,523 assertions
-    1,128.35 seconds
+    112 tests passed
+    2,953 assertions
+    1,208.24 seconds
 
 Validated modules:
 
@@ -442,6 +440,7 @@ Validated modules:
 - specimens
 - test processing
 - test results
+- laboratory reports
 
 There are no failing automated tests.
 
@@ -472,6 +471,7 @@ New implementation areas include:
         LaboratoryOrderItemProcessingController.php
         TestResultController.php
         TestResultWorkflowController.php
+        LaboratoryReportController.php
 
     app/Http/Requests/TestResult/
 
@@ -488,14 +488,18 @@ New implementation areas include:
 
     database/migrations/tenant/
         result workflow migrations
+        2026_07_18_162846_create_laboratory_reports_table.php
 
     routes/api/tenant/
         test-results.php
+        laboratory-reports.php
 
     tests/Feature/Tenant/TestResult/
+    tests/Feature/Tenant/LaboratoryReport/
 
     tests/Support/Tenant/
         TestResultManagementTestCase.php
+        LaboratoryReportTestCase.php
 
 Use `git status --short` as the authoritative final file list.
 
@@ -538,7 +542,7 @@ Known but non-blocking items:
 - frontend result screens still use the legacy result structure
 - frontend API client authorization-header logging must be removed before production
 - some test-support files exceed the preferred line-count target
-- backend reporting is not yet implemented
+- PDF rendering and export are not yet implemented; issued reports currently use immutable JSON snapshots
 
 Do not perform broad cleanup before the next planned milestone.
 
@@ -547,6 +551,78 @@ Do not perform broad cleanup before the next planned milestone.
 ## 17. Current Blockers
 
 No confirmed production blocker exists.
+
+---
+
+## 18. Current Laboratory Reporting Milestone
+
+Branch:
+
+    feature/laboratory-reporting
+
+Status:
+
+    Implementation complete
+    Focused report suite passed
+    Adjacent clinical regression suite passed
+    Full project suite passed
+    Development tenant migration completed
+    Manual report API smoke test not yet performed
+    Ready for documentation review and Git milestone completion
+
+Implemented API:
+
+    POST /api/laboratory-orders/{laboratoryOrder}/report
+    GET  /api/laboratory-orders/{laboratoryOrder}/report
+    GET  /api/laboratory-reports
+    GET  /api/laboratory-reports/{laboratoryReport}
+
+Persistence migration:
+
+    2026_07_18_162846_create_laboratory_reports_table.php
+
+Development tenant migration:
+
+    tenant_s4d0mhau_development
+    batch 6
+    table laboratory_reports verified
+    all 12 expected columns verified
+
+Report rules:
+
+- one issued report per laboratory order
+- UUID public route binding
+- unique report number
+- completed orders only
+- at least one active order item
+- all active order items must be completed
+- all active order items must have approved results
+- laboratory, patient, order and result data are snapshotted
+- issued report models are immutable
+- report retrieval is tenant isolated
+- receptionist users may view but not generate reports
+- lab technicians, doctors and administrators may generate reports
+- PDF rendering is deferred
+
+Focused report result:
+
+    11 tests passed
+    430 assertions
+    81.83 seconds
+
+Adjacent clinical regression result:
+
+    49 tests passed
+    1,501 assertions
+    549.69 seconds
+
+Latest full project result:
+
+    112 tests passed
+    2,953 assertions
+    1,208.24 seconds
+
+No confirmed regression was introduced by the laboratory-reporting milestone.
 
 No automated test failure exists.
 
