@@ -1,145 +1,483 @@
-import React, { useState } from 'react';
+import EngineeringRounded from '@mui/icons-material/EngineeringRounded';
+import LoginRounded from '@mui/icons-material/LoginRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
+import ShieldRounded from '@mui/icons-material/ShieldRounded';
+
 import {
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  CircularProgress,
   Alert,
-  Snackbar,
   Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  InputAdornment,
+  List,
+  ListItemButton,
+  ListItemText,
+  TextField,
+  Typography,
 } from '@mui/material';
-import { VpnKey, Login as LoginIcon } from '@mui/icons-material';
+
+import {
+  alpha,
+} from '@mui/material/styles';
+
+import {
+  useMemo,
+  useState,
+} from 'react';
+
+import toast from 'react-hot-toast';
+
+import {
+  useNavigate,
+} from 'react-router-dom';
+
 import api from '../../api/client';
 
-interface Tenant {
+import {
+  useAuth,
+} from '../../contexts/AuthContext';
+
+interface TenantSummary {
   id: number;
   name: string;
   domain: string;
+  is_active: boolean;
 }
 
-const ImpersonateButton: React.FC = () => {
-  const [open, setOpen] = useState<boolean>(false);
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+interface TenantListResponse {
+  tenants:
+    | TenantSummary[]
+    | {
+        data: TenantSummary[];
+      };
+}
 
-  const fetchTenants = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/landlord/tenants');
-      setTenants(res.data.tenants || []);
-    } catch (error) {
-      console.error('Error fetching tenants:', error);
-      setSnackbar({ open: true, message: 'Failed to fetch tenants', severity: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+const ImpersonateButton = () => {
+  const navigate = useNavigate();
 
-  const handleOpen = async () => {
-    await fetchTenants();
-    setOpen(true);
-  };
+  const {
+    startImpersonation,
+  } = useAuth();
 
-  const handleImpersonate = async (tenantId: number, tenantName: string) => {
-    try {
-      const res = await api.post(`/landlord/impersonate/${tenantId}`);
-      const { token, user, tenant } = res.data;
+  const [
+    open,
+    setOpen,
+  ] = useState(false);
 
-      // Store impersonation data
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('tenant', JSON.stringify(tenant));
-      localStorage.setItem('tenant_domain', tenant.domain);
-      localStorage.setItem('is_superadmin', 'false');
-      localStorage.setItem('is_impersonating', 'true');
-      localStorage.setItem('role', user.role);
+  const [
+    tenants,
+    setTenants,
+  ] = useState<TenantSummary[]>([]);
 
-      setSnackbar({
-        open: true,
-        message: `Now impersonating ${tenantName}`,
-        severity: 'success',
-      });
+  const [
+    search,
+    setSearch,
+  ] = useState('');
 
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1500);
-    } catch (error) {
-      console.error('Error impersonating:', error);
-      setSnackbar({ open: true, message: 'Failed to impersonate tenant', severity: 'error' });
-    }
-    setOpen(false);
-  };
+  const [
+    loading,
+    setLoading,
+  ] = useState(false);
+
+  const [
+    enteringTenantId,
+    setEnteringTenantId,
+  ] = useState<number | null>(null);
+
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(null);
+
+  const filteredTenants =
+    useMemo(() => {
+      const query =
+        search.trim().toLowerCase();
+
+      if (!query) {
+        return tenants;
+      }
+
+      return tenants.filter(
+        (tenant) =>
+          tenant.name
+            .toLowerCase()
+            .includes(query) ||
+          tenant.domain
+            .toLowerCase()
+            .includes(query)
+      );
+    }, [search, tenants]);
+
+  const fetchTenants =
+    async (): Promise<void> => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response =
+          await api.get<TenantListResponse>(
+            '/landlord/tenants'
+          );
+
+        const tenantPayload =
+          response.data.tenants;
+
+        const tenantList =
+          Array.isArray(tenantPayload)
+            ? tenantPayload
+            : tenantPayload?.data ?? [];
+
+        setTenants(tenantList);
+      } catch {
+        setError(
+          'Rezhel could not load the tenant directory.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  const handleOpen =
+    async (): Promise<void> => {
+      setOpen(true);
+      setSearch('');
+
+      await fetchTenants();
+    };
+
+  const handleImpersonate =
+    async (
+      tenant: TenantSummary
+    ): Promise<void> => {
+      setEnteringTenantId(tenant.id);
+      setError(null);
+
+      try {
+        await startImpersonation(
+          tenant.id
+        );
+
+        toast.success(
+          `Maintenance access opened for ${tenant.name}.`
+        );
+
+        setOpen(false);
+
+        navigate('/dashboard', {
+          replace: true,
+        });
+      } catch (caughtError) {
+        const message =
+          caughtError instanceof Error
+            ? caughtError.message
+            : 'Rezhel could not open the tenant maintenance session.';
+
+        setError(message);
+      } finally {
+        setEnteringTenantId(null);
+      }
+    };
 
   return (
-    <Box>
+    <>
       <Button
         variant="contained"
-        color="secondary"
-        startIcon={<VpnKey />}
-        onClick={handleOpen}
+        startIcon={
+          <EngineeringRounded />
+        }
+        onClick={() => {
+          void handleOpen();
+        }}
+        sx={{
+          color: '#FFFFFF',
+          background:
+            'linear-gradient(135deg, #7F56D9 0%, #6941C6 100%)',
+          boxShadow:
+            '0 10px 25px rgba(127,86,217,0.24)',
+
+          '&:hover': {
+            boxShadow:
+              '0 14px 32px rgba(127,86,217,0.32)',
+          },
+        }}
       >
-        Impersonate Tenant
+        Tenant maintenance
       </Button>
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          <LoginIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Enter a Tenant
+      <Dialog
+        open={open}
+        onClose={() => {
+          if (!enteringTenantId) {
+            setOpen(false);
+          }
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            pb: 1.25,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.4,
+            }}
+          >
+            <Box
+              sx={{
+                width: 44,
+                height: 44,
+                display: 'grid',
+                placeItems: 'center',
+                borderRadius: 2.8,
+                color: '#6941C6',
+                backgroundColor:
+                  alpha('#7F56D9', 0.09),
+              }}
+            >
+              <ShieldRounded />
+            </Box>
+
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '1rem',
+                  fontWeight: 710,
+                }}
+              >
+                Enter tenant maintenance mode
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.25,
+                  color: 'text.secondary',
+                  fontSize: '0.7rem',
+                }}
+              >
+                Open a secure tenant-scoped session
+                for support and maintenance.
+              </Typography>
+            </Box>
+          </Box>
         </DialogTitle>
+
         <DialogContent>
+          {error && (
+            <Alert
+              severity="error"
+              sx={{
+                mb: 2,
+              }}
+            >
+              {error}
+            </Alert>
+          )}
+
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search laboratories or domains"
+            value={search}
+            onChange={(event) => {
+              setSearch(
+                event.target.value
+              );
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded
+                      sx={{
+                        color: 'text.disabled',
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              mb: 2,
+            }}
+          />
+
           {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <Box
+              sx={{
+                minHeight: 220,
+                display: 'grid',
+                placeItems: 'center',
+              }}
+            >
               <CircularProgress />
             </Box>
-          ) : (
-            <List>
-              {tenants.map((tenant) => (
-                <ListItem
-                  key={tenant.id}
-                  onClick={() => handleImpersonate(tenant.id, tenant.name)}
+          ) : filteredTenants.length === 0 ? (
+            <Box
+              sx={{
+                minHeight: 190,
+                display: 'grid',
+                placeItems: 'center',
+                textAlign: 'center',
+                px: 3,
+              }}
+            >
+              <Box>
+                <Typography
                   sx={{
-                    '&:hover': { backgroundColor: 'rgba(67, 97, 238, 0.08)' },
-                    borderRadius: 1,
-                    my: 0.5,
-                    cursor: 'pointer',
+                    fontWeight: 670,
                   }}
                 >
-                  <ListItemText
-                    primary={tenant.name}
-                    secondary={tenant.domain}
-                  />
-                  <Button size="small" variant="outlined">
-                    Enter
-                  </Button>
-                </ListItem>
-              ))}
+                  No matching laboratories
+                </Typography>
+
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    color: 'text.secondary',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  Try a different laboratory name
+                  or domain.
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <List
+              disablePadding
+              sx={{
+                display: 'grid',
+                gap: 0.75,
+              }}
+            >
+              {filteredTenants.map(
+                (tenant) => {
+                  const entering =
+                    enteringTenantId ===
+                    tenant.id;
+
+                  return (
+                    <ListItemButton
+                      key={tenant.id}
+                      disabled={
+                        !tenant.is_active ||
+                        Boolean(
+                          enteringTenantId
+                        )
+                      }
+                      onClick={() => {
+                        void handleImpersonate(
+                          tenant
+                        );
+                      }}
+                      sx={{
+                        minHeight: 68,
+                        px: 1.5,
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: 'divider',
+
+                        '&:hover': {
+                          borderColor:
+                            alpha(
+                              '#7F56D9',
+                              0.22
+                            ),
+                          backgroundColor:
+                            alpha(
+                              '#7F56D9',
+                              0.035
+                            ),
+                        },
+                      }}
+                    >
+                      <ListItemText
+                        primary={
+                          tenant.name
+                        }
+                        secondary={
+                          tenant.domain
+                        }
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontSize:
+                                '0.8rem',
+                              fontWeight:
+                                660,
+                            },
+                          },
+
+                          secondary: {
+                            sx: {
+                              mt: 0.25,
+                              fontSize:
+                                '0.67rem',
+                            },
+                          },
+                        }}
+                      />
+
+                      {!tenant.is_active ? (
+                        <Chip
+                          label="Suspended"
+                          size="small"
+                          color="error"
+                        />
+                      ) : entering ? (
+                        <CircularProgress
+                          size={20}
+                        />
+                      ) : (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={
+                            <LoginRounded />
+                          }
+                          component="span"
+                        >
+                          Enter
+                        </Button>
+                      )}
+                    </ListItemButton>
+                  );
+                }
+              )}
             </List>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2.5,
+          }}
+        >
+          <Button
+            variant="outlined"
+            disabled={Boolean(
+              enteringTenantId
+            )}
+            onClick={() => {
+              setOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
         </DialogActions>
       </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
-    </Box>
+    </>
   );
 };
 

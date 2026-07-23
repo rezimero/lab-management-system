@@ -1,251 +1,1539 @@
-import React, { useEffect, useState } from 'react';
 import {
+  useMemo,
+  useState,
+} from 'react';
+
+import AddBusinessRounded from '@mui/icons-material/AddBusinessRounded';
+import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
+import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
+import BiotechRounded from '@mui/icons-material/BiotechRounded';
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded';
+import EditRounded from '@mui/icons-material/EditRounded';
+import EngineeringRounded from '@mui/icons-material/EngineeringRounded';
+import LockResetRounded from '@mui/icons-material/LockResetRounded';
+import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
+import PowerSettingsNewRounded from '@mui/icons-material/PowerSettingsNewRounded';
+import RefreshRounded from '@mui/icons-material/RefreshRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
+import VerifiedRounded from '@mui/icons-material/VerifiedRounded';
+
+import {
+  Alert,
+  Avatar,
   Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Button,
+  Card,
+  CardContent,
   Chip,
   CircularProgress,
-  TextField,
-  InputAdornment,
-  IconButton,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
-  Button,
-  Alert,
-  Snackbar,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  InputAdornment,
+  Menu,
+  MenuItem,
+  Paper,
+  Skeleton,
+  TextField,
+  Tooltip,
+  Typography,
+  alpha,
 } from '@mui/material';
-import { Search, Delete, Refresh, CheckCircle, Cancel } from '@mui/icons-material';
+
+import MoreHorizRounded from '@mui/icons-material/MoreHorizRounded';
+
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+import {
+  useNavigate,
+} from 'react-router-dom';
+
 import api from '../../api/client';
 
-interface Tenant {
-  id: number;
-  name: string;
-  domain: string;
-  is_active: boolean;
-  trial_ends_at: string | null;
-  created_at: string;
-  stats?: {
-    users: number;
-    patients: number;
-    lab_tests: number;
-    test_results: number;
-  };
+import {
+  useAuth,
+} from '../../contexts/AuthContext';
+
+import TenantFormDialog, {
+  CreateTenantPayload,
+  TenantRecord,
+  UpdateTenantPayload,
+} from './TenantFormDialog';
+
+import TenantPasswordResetDialog from './TenantPasswordResetDialog';
+
+interface TenantIndexResponse {
+  tenants:
+    | TenantRecord[]
+    | {
+        data: TenantRecord[];
+      };
+
+  total?: number;
 }
 
-const AllTenants: React.FC = () => {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [search, setSearch] = useState<string>('');
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [suspendDialogOpen, setSuspendDialogOpen] = useState<boolean>(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+interface PasswordResetPayload {
+  email: string;
+  new_password: string;
+}
 
-  const fetchTenants = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/landlord/tenants');
-      setTenants(res.data.tenants || []);
-    } catch (error) {
-      console.error('Error fetching tenants:', error);
-    } finally {
-      setLoading(false);
+type ConfirmationAction =
+  | 'suspend'
+  | 'activate'
+  | 'delete'
+  | null;
+
+const safeNumber = (
+  value: unknown
+): number => {
+  const parsedValue = Number(value);
+
+  return Number.isFinite(parsedValue)
+    ? parsedValue
+    : 0;
+};
+
+const getErrorMessage = (
+  error: unknown
+): string => {
+  if (axios.isAxiosError(error)) {
+    const responseData =
+      error.response?.data as
+        | {
+            message?: string;
+            errors?: Record<
+              string,
+              string[]
+            >;
+          }
+        | undefined;
+
+    if (responseData?.errors) {
+      const firstError =
+        Object.values(
+          responseData.errors
+        )
+          .flat()
+          .find(Boolean);
+
+      if (firstError) {
+        return firstError;
+      }
     }
+
+    if (responseData?.message) {
+      return responseData.message;
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'The requested operation could not be completed.';
+};
+
+const fetchTenants =
+  async (): Promise<TenantRecord[]> => {
+    const response =
+      await api.get<TenantIndexResponse>(
+        '/landlord/tenants'
+      );
+
+    const payload =
+      response.data.tenants;
+
+    if (Array.isArray(payload)) {
+      return payload;
+    }
+
+    return payload?.data ?? [];
   };
 
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+const AllTenants = () => {
+  const navigate = useNavigate();
+  const queryClient =
+    useQueryClient();
 
-  const handleSuspend = async () => {
-    if (!selectedTenant) return;
-    try {
-      const endpoint = selectedTenant.is_active
-        ? `/landlord/tenants/${selectedTenant.id}/suspend`
-        : `/landlord/tenants/${selectedTenant.id}/activate`;
+  const {
+    startImpersonation,
+  } = useAuth();
 
-      await api.post(endpoint);
-      setSnackbar({
-        open: true,
-        message: `Tenant ${selectedTenant.is_active ? 'suspended' : 'activated'} successfully`,
-        severity: 'success',
-      });
-      fetchTenants();
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to update tenant status', severity: 'error' });
-    }
-    setSuspendDialogOpen(false);
-    setSelectedTenant(null);
-  };
+  const [
+    search,
+    setSearch,
+  ] = useState('');
 
-  const handleDelete = async () => {
-    if (!selectedTenant) return;
-    try {
-      await api.delete(`/landlord/tenants/${selectedTenant.id}`);
-      setSnackbar({ open: true, message: 'Tenant deleted successfully', severity: 'success' });
-      fetchTenants();
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to delete tenant', severity: 'error' });
-    }
-    setDeleteDialogOpen(false);
-    setSelectedTenant(null);
-  };
+  const [
+    formOpen,
+    setFormOpen,
+  ] = useState(false);
 
-  const filteredTenants = tenants.filter((tenant) =>
-    tenant.name.toLowerCase().includes(search.toLowerCase()) ||
-    tenant.domain.toLowerCase().includes(search.toLowerCase())
+  const [
+    editingTenant,
+    setEditingTenant,
+  ] = useState<TenantRecord | null>(
+    null
   );
 
-  if (loading) return <CircularProgress />;
+  const [
+    passwordTenant,
+    setPasswordTenant,
+  ] = useState<TenantRecord | null>(
+    null
+  );
 
-  return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h5">🏢 All Tenants</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            size="small"
-            placeholder="Search tenants..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              },
+  const [
+    confirmationTenant,
+    setConfirmationTenant,
+  ] = useState<TenantRecord | null>(
+    null
+  );
+
+  const [
+    confirmationAction,
+    setConfirmationAction,
+  ] = useState<ConfirmationAction>(
+    null
+  );
+
+  const [
+    deleteConfirmation,
+    setDeleteConfirmation,
+  ] = useState('');
+
+  const [
+    formError,
+    setFormError,
+  ] = useState<string | null>(null);
+
+  const [
+    passwordError,
+    setPasswordError,
+  ] = useState<string | null>(null);
+
+  const [
+    menuAnchor,
+    setMenuAnchor,
+  ] = useState<HTMLElement | null>(
+    null
+  );
+
+  const [
+    menuTenant,
+    setMenuTenant,
+  ] = useState<TenantRecord | null>(
+    null
+  );
+
+  const {
+    data: tenants = [],
+    isPending,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      'rezhel-landlord-tenants',
+    ],
+    queryFn: fetchTenants,
+    staleTime: 20_000,
+  });
+
+  const refreshTenants =
+    async (): Promise<void> => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'rezhel-landlord-tenants',
+        ],
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: [
+          'rezhel-landlord-dashboard',
+        ],
+      });
+    };
+
+  const createMutation =
+    useMutation({
+      mutationFn: async (
+        payload: CreateTenantPayload
+      ) => {
+        return api.post(
+          '/landlord/tenants',
+          payload
+        );
+      },
+
+      onSuccess: async () => {
+        toast.success(
+          'Laboratory tenant provisioned successfully.'
+        );
+
+        setFormOpen(false);
+        setEditingTenant(null);
+        setFormError(null);
+
+        await refreshTenants();
+      },
+
+      onError: (error) => {
+        setFormError(
+          getErrorMessage(error)
+        );
+      },
+    });
+
+  const updateMutation =
+    useMutation({
+      mutationFn: async ({
+        tenantId,
+        payload,
+      }: {
+        tenantId: number;
+        payload: UpdateTenantPayload;
+      }) => {
+        return api.put(
+          `/landlord/tenants/${tenantId}`,
+          payload
+        );
+      },
+
+      onSuccess: async () => {
+        toast.success(
+          'Tenant details updated.'
+        );
+
+        setFormOpen(false);
+        setEditingTenant(null);
+        setFormError(null);
+
+        await refreshTenants();
+      },
+
+      onError: (error) => {
+        setFormError(
+          getErrorMessage(error)
+        );
+      },
+    });
+
+  const statusMutation =
+    useMutation({
+      mutationFn: async ({
+        tenant,
+        action,
+      }: {
+        tenant: TenantRecord;
+        action:
+          | 'suspend'
+          | 'activate';
+      }) => {
+        return api.post(
+          `/landlord/tenants/${tenant.id}/${action}`
+        );
+      },
+
+      onSuccess: async (
+        _response,
+        variables
+      ) => {
+        toast.success(
+          variables.action ===
+            'suspend'
+            ? 'Tenant suspended.'
+            : 'Tenant activated.'
+        );
+
+        setConfirmationTenant(null);
+        setConfirmationAction(null);
+
+        await refreshTenants();
+      },
+
+      onError: (error) => {
+        toast.error(
+          getErrorMessage(error)
+        );
+      },
+    });
+
+  const deleteMutation =
+    useMutation({
+      mutationFn: async (
+        tenant: TenantRecord
+      ) => {
+        return api.delete(
+          `/landlord/tenants/${tenant.id}`
+        );
+      },
+
+      onSuccess: async () => {
+        toast.success(
+          'Tenant deleted permanently.'
+        );
+
+        setConfirmationTenant(null);
+        setConfirmationAction(null);
+        setDeleteConfirmation('');
+
+        await refreshTenants();
+      },
+
+      onError: (error) => {
+        toast.error(
+          getErrorMessage(error)
+        );
+      },
+    });
+
+  const passwordMutation =
+    useMutation({
+      mutationFn: async ({
+        tenantId,
+        payload,
+      }: {
+        tenantId: number;
+        payload: PasswordResetPayload;
+      }) => {
+        return api.post(
+          `/landlord/tenants/${tenantId}/reset-admin-password`,
+          payload
+        );
+      },
+
+      onSuccess: () => {
+        toast.success(
+          'Administrator password reset successfully.'
+        );
+
+        setPasswordTenant(null);
+        setPasswordError(null);
+      },
+
+      onError: (error) => {
+        setPasswordError(
+          getErrorMessage(error)
+        );
+      },
+    });
+
+  const impersonationMutation =
+    useMutation({
+      mutationFn: async (
+        tenant: TenantRecord
+      ) => {
+        await startImpersonation(
+          tenant.id
+        );
+
+        return tenant;
+      },
+
+      onSuccess: (tenant) => {
+        toast.success(
+          `Maintenance access opened for ${tenant.name}.`
+        );
+
+        navigate('/dashboard', {
+          replace: true,
+        });
+      },
+
+      onError: (error) => {
+        toast.error(
+          getErrorMessage(error)
+        );
+      },
+    });
+
+  const filteredTenants =
+    useMemo(() => {
+      const query =
+        search.trim().toLowerCase();
+
+      if (!query) {
+        return tenants;
+      }
+
+      return tenants.filter(
+        (tenant) =>
+          tenant.name
+            .toLowerCase()
+            .includes(query) ||
+          tenant.domain
+            .toLowerCase()
+            .includes(query) ||
+          (
+            tenant.database ?? ''
+          )
+            .toLowerCase()
+            .includes(query)
+      );
+    }, [search, tenants]);
+
+  const totals = useMemo(() => {
+    return tenants.reduce(
+      (
+        accumulator,
+        tenant
+      ) => {
+        accumulator.users +=
+          safeNumber(
+            tenant.stats?.users
+          );
+
+        accumulator.patients +=
+          safeNumber(
+            tenant.stats?.patients
+          );
+
+        accumulator.tests +=
+          safeNumber(
+            tenant.stats?.lab_tests
+          );
+
+        accumulator.results +=
+          safeNumber(
+            tenant.stats?.test_results
+          );
+
+        return accumulator;
+      },
+      {
+        users: 0,
+        patients: 0,
+        tests: 0,
+        results: 0,
+      }
+    );
+  }, [tenants]);
+
+  const activeTenants =
+    tenants.filter(
+      (tenant) => tenant.is_active
+    ).length;
+
+  const closeMenu = () => {
+    setMenuAnchor(null);
+    setMenuTenant(null);
+  };
+
+  const openMenu = (
+    event: React.MouseEvent<HTMLElement>,
+    tenant: TenantRecord
+  ) => {
+    setMenuAnchor(
+      event.currentTarget
+    );
+
+    setMenuTenant(tenant);
+  };
+
+  const openCreateDialog = () => {
+    setEditingTenant(null);
+    setFormError(null);
+    setFormOpen(true);
+  };
+
+  const openEditDialog = (
+    tenant: TenantRecord
+  ) => {
+    closeMenu();
+    setEditingTenant(tenant);
+    setFormError(null);
+    setFormOpen(true);
+  };
+
+  const openPasswordDialog = (
+    tenant: TenantRecord
+  ) => {
+    closeMenu();
+    setPasswordError(null);
+    setPasswordTenant(tenant);
+  };
+
+  const openConfirmation = (
+    tenant: TenantRecord,
+    action: Exclude<
+      ConfirmationAction,
+      null
+    >
+  ) => {
+    closeMenu();
+    setDeleteConfirmation('');
+    setConfirmationTenant(tenant);
+    setConfirmationAction(action);
+  };
+
+  if (isPending) {
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gap: 2.5,
+        }}
+      >
+        <Skeleton
+          variant="rounded"
+          height={190}
+          sx={{
+            borderRadius: 4,
+          }}
+        />
+
+        {[0, 1, 2].map((item) => (
+          <Skeleton
+            key={item}
+            variant="rounded"
+            height={125}
+            sx={{
+              borderRadius: 4,
             }}
           />
-          <Button variant="contained" startIcon={<Refresh />} onClick={fetchTenants}>
-            Refresh
+        ))}
+      </Box>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box
+        sx={{
+          minHeight: 480,
+          display: 'grid',
+          placeItems: 'center',
+        }}
+      >
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="inherit"
+              startIcon={
+                <RefreshRounded />
+              }
+              onClick={() => {
+                void refetch();
+              }}
+            >
+              Retry
+            </Button>
+          }
+          sx={{
+            width: '100%',
+            maxWidth: 760,
+          }}
+        >
+          Rezhel could not load the tenant
+          portfolio.
+        </Alert>
+      </Box>
+    );
+  }
+
+  const confirmationTitle =
+    confirmationAction === 'delete'
+      ? 'Delete tenant permanently'
+      : confirmationAction ===
+          'suspend'
+        ? 'Suspend laboratory tenant'
+        : 'Activate laboratory tenant';
+
+  const confirmationBusy =
+    statusMutation.isPending ||
+    deleteMutation.isPending;
+
+  const deleteConfirmed =
+    confirmationAction !== 'delete' ||
+    deleteConfirmation ===
+      confirmationTenant?.domain;
+
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 3,
+      }}
+    >
+      <Card
+        sx={{
+          overflow: 'hidden',
+          color: '#FFFFFF',
+          border: 0,
+          borderRadius: 5,
+          background:
+            'linear-gradient(135deg, #07111F 0%, #171334 50%, #0B3042 100%)',
+          boxShadow:
+            '0 26px 70px rgba(7,17,31,0.18)',
+        }}
+      >
+        <CardContent
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              lg: 'minmax(0,1fr) auto',
+            },
+            alignItems: 'center',
+            gap: 3,
+            p: {
+              xs: 3,
+              sm: 4,
+            },
+          }}
+        >
+          <Box>
+            <Chip
+              icon={<VerifiedRounded />}
+              label="Landlord-controlled provisioning"
+              sx={{
+                mb: 2,
+                color: '#DDD6FE',
+                backgroundColor:
+                  'rgba(127,86,217,0.14)',
+
+                '& .MuiChip-icon': {
+                  color: '#C4B5FD',
+                },
+              }}
+            />
+
+            <Typography
+              component="h2"
+              sx={{
+                maxWidth: 760,
+                fontSize: {
+                  xs: '1.8rem',
+                  sm: '2.35rem',
+                },
+                lineHeight: 1.08,
+                fontWeight: 750,
+                letterSpacing: '-0.045em',
+              }}
+            >
+              Govern every laboratory
+              tenant from one command surface.
+            </Typography>
+
+            <Typography
+              sx={{
+                maxWidth: 690,
+                mt: 1.5,
+                color:
+                  'rgba(255,255,255,0.57)',
+                fontSize: '0.84rem',
+                lineHeight: 1.7,
+              }}
+            >
+              Provision laboratories, manage
+              availability, secure administrator
+              access and enter tenant maintenance
+              sessions without weakening tenant
+              isolation.
+            </Typography>
+          </Box>
+
+          <Button
+            variant="contained"
+            size="large"
+            startIcon={
+              <AddBusinessRounded />
+            }
+            onClick={openCreateDialog}
+            sx={{
+              minWidth: 210,
+              minHeight: 54,
+              color: '#FFFFFF',
+              background:
+                'linear-gradient(135deg, #7F56D9, #6941C6)',
+              boxShadow:
+                '0 14px 35px rgba(127,86,217,0.3)',
+            }}
+          >
+            Create laboratory
           </Button>
-        </Box>
+        </CardContent>
+      </Card>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, minmax(0,1fr))',
+            xl: 'repeat(5, minmax(0,1fr))',
+          },
+          gap: 1.5,
+        }}
+      >
+        {[
+          {
+            label: 'Tenants',
+            value: tenants.length,
+            icon: <ApartmentRounded />,
+            accent: '#7F56D9',
+          },
+          {
+            label: 'Active',
+            value: activeTenants,
+            icon:
+              <PowerSettingsNewRounded />,
+            accent: '#079455',
+          },
+          {
+            label: 'Users',
+            value: totals.users,
+            icon: <PeopleAltRounded />,
+            accent: '#246BFD',
+          },
+          {
+            label: 'Tests',
+            value: totals.tests,
+            icon: <BiotechRounded />,
+            accent: '#0891B2',
+          },
+          {
+            label: 'Results',
+            value: totals.results,
+            icon:
+              <AssignmentTurnedInRounded />,
+            accent: '#DC6803',
+          },
+        ].map((metric) => (
+          <Paper
+            key={metric.label}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.25,
+              p: 1.75,
+              borderRadius: 3.25,
+            }}
+          >
+            <Box
+              sx={{
+                width: 39,
+                height: 39,
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+                borderRadius: 2.5,
+                color: metric.accent,
+                backgroundColor:
+                  alpha(
+                    metric.accent,
+                    0.075
+                  ),
+
+                '& svg': {
+                  fontSize: 20,
+                },
+              }}
+            >
+              {metric.icon}
+            </Box>
+
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '1.25rem',
+                  lineHeight: 1,
+                  fontWeight: 730,
+                }}
+              >
+                {metric.value.toLocaleString()}
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.4,
+                  color: 'text.secondary',
+                  fontSize: '0.62rem',
+                }}
+              >
+                {metric.label}
+              </Typography>
+            </Box>
+          </Paper>
+        ))}
       </Box>
 
-      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-        Total: {filteredTenants.length} tenants
-      </Typography>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Domain</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Users</TableCell>
-              <TableCell>Patients</TableCell>
-              <TableCell>Tests</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredTenants.map((tenant) => (
-              <TableRow key={tenant.id} hover>
-                <TableCell>{tenant.name}</TableCell>
-                <TableCell>{tenant.domain}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={tenant.is_active ? 'Active' : 'Suspended'}
-                    color={tenant.is_active ? 'success' : 'error'}
-                    size="small"
-                    icon={tenant.is_active ? <CheckCircle /> : <Cancel />}
-                  />
-                </TableCell>
-                <TableCell>{tenant.stats?.users || 0}</TableCell>
-                <TableCell>{tenant.stats?.patients || 0}</TableCell>
-                <TableCell>{tenant.stats?.lab_tests || 0}</TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    color={tenant.is_active ? 'warning' : 'success'}
-                    onClick={() => {
-                      setSelectedTenant(tenant);
-                      setSuspendDialogOpen(true);
-                    }}
-                  >
-                    {tenant.is_active ? <Cancel /> : <CheckCircle />}
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => {
-                      setSelectedTenant(tenant);
-                      setDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Suspend/Activate Dialog */}
-      <Dialog open={suspendDialogOpen} onClose={() => setSuspendDialogOpen(false)}>
-        <DialogTitle>{selectedTenant?.is_active ? 'Suspend' : 'Activate'} Tenant</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to {selectedTenant?.is_active ? 'suspend' : 'activate'}
-            tenant &quot;{selectedTenant?.name}&quot;?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSuspendDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleSuspend}
-            variant="contained"
-            color={selectedTenant?.is_active ? 'warning' : 'success'}
+      <Card>
+        <CardContent>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: {
+                xs: 'stretch',
+                sm: 'center',
+              },
+              justifyContent:
+                'space-between',
+              flexDirection: {
+                xs: 'column',
+                sm: 'row',
+              },
+              gap: 2,
+              mb: 2.5,
+            }}
           >
-            {selectedTenant?.is_active ? 'Suspend' : 'Activate'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Box>
+              <Typography
+                variant="overline"
+                sx={{
+                  color: '#6941C6',
+                }}
+              >
+                Tenant portfolio
+              </Typography>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography color="error">
-            ⚠️ Warning: This will permanently delete the tenant and all its data!
-          </Typography>
-          <Typography sx={{ mt: 2 }}>
-            Are you sure you want to delete tenant &quot;{selectedTenant?.name}&quot;? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} variant="contained" color="error">
-            Delete Permanently
-          </Button>
-        </DialogActions>
-      </Dialog>
+              <Typography
+                component="h3"
+                sx={{
+                  mt: 0.45,
+                  fontSize: '1.3rem',
+                  fontWeight: 710,
+                  letterSpacing: '-0.025em',
+                }}
+              >
+                Managed laboratories
+              </Typography>
+            </Box>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <TextField
+                size="small"
+                placeholder="Search tenants"
+                value={search}
+                onChange={(event) => {
+                  setSearch(
+                    event.target.value
+                  );
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchRounded />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+
+              <Tooltip title="Refresh tenants">
+                <IconButton
+                  disabled={isFetching}
+                  onClick={() => {
+                    void refetch();
+                  }}
+                >
+                  {isFetching ? (
+                    <CircularProgress
+                      size={20}
+                    />
+                  ) : (
+                    <RefreshRounded />
+                  )}
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {filteredTenants.length ===
+          0 ? (
+            <Box
+              sx={{
+                minHeight: 290,
+                display: 'grid',
+                placeItems: 'center',
+                textAlign: 'center',
+              }}
+            >
+              <Box>
+                <ApartmentRounded
+                  sx={{
+                    color: 'text.disabled',
+                    fontSize: 48,
+                  }}
+                />
+
+                <Typography
+                  sx={{
+                    mt: 1.5,
+                    fontWeight: 680,
+                  }}
+                >
+                  No laboratories found
+                </Typography>
+
+                <Typography
+                  sx={{
+                    mt: 0.5,
+                    color: 'text.secondary',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  Create a new laboratory or
+                  revise the search term.
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                display: 'grid',
+                gap: 1.25,
+              }}
+            >
+              {filteredTenants.map(
+                (tenant) => (
+                  <Paper
+                    key={tenant.id}
+                    variant="outlined"
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: '1fr',
+                        lg: 'minmax(260px,1.4fr) repeat(4,minmax(70px,0.35fr)) auto',
+                      },
+                      alignItems: 'center',
+                      gap: {
+                        xs: 1.5,
+                        lg: 1,
+                      },
+                      p: 1.75,
+                      borderRadius: 3.25,
+                      transition:
+                        'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
+
+                      '&:hover': {
+                        transform:
+                          'translateY(-2px)',
+                        borderColor:
+                          alpha(
+                            '#7F56D9',
+                            0.2
+                          ),
+                        boxShadow:
+                          '0 12px 30px rgba(11,18,32,0.06)',
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        minWidth: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.35,
+                      }}
+                    >
+                      <Avatar
+                        sx={{
+                          width: 46,
+                          height: 46,
+                          flexShrink: 0,
+                          color: '#6941C6',
+                          background:
+                            'linear-gradient(145deg, rgba(127,86,217,0.13), rgba(8,145,178,0.08))',
+                        }}
+                      >
+                        <ApartmentRounded />
+                      </Avatar>
+
+                      <Box sx={{ minWidth: 0 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: 0.75,
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              overflow:
+                                'hidden',
+                              fontSize:
+                                '0.82rem',
+                              fontWeight: 680,
+                              textOverflow:
+                                'ellipsis',
+                              whiteSpace:
+                                'nowrap',
+                            }}
+                          >
+                            {tenant.name}
+                          </Typography>
+
+                          <Chip
+                            label={
+                              tenant.is_active
+                                ? 'Active'
+                                : 'Suspended'
+                            }
+                            size="small"
+                            color={
+                              tenant.is_active
+                                ? 'success'
+                                : 'error'
+                            }
+                            sx={{
+                              height: 23,
+                              fontSize:
+                                '0.59rem',
+                            }}
+                          />
+                        </Box>
+
+                        <Typography
+                          sx={{
+                            mt: 0.35,
+                            color:
+                              'text.secondary',
+                            fontSize: '0.67rem',
+                          }}
+                        >
+                          {tenant.domain}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {[
+                      {
+                        label: 'Users',
+                        value:
+                          tenant.stats?.users,
+                      },
+                      {
+                        label: 'Patients',
+                        value:
+                          tenant.stats
+                            ?.patients,
+                      },
+                      {
+                        label: 'Tests',
+                        value:
+                          tenant.stats
+                            ?.lab_tests,
+                      },
+                      {
+                        label: 'Results',
+                        value:
+                          tenant.stats
+                            ?.test_results,
+                      },
+                    ].map((item) => (
+                      <Box
+                        key={item.label}
+                        sx={{
+                          textAlign: {
+                            xs: 'left',
+                            lg: 'center',
+                          },
+                        }}
+                      >
+                        <Typography
+                          sx={{
+                            fontSize: '0.82rem',
+                            fontWeight: 690,
+                          }}
+                        >
+                          {safeNumber(
+                            item.value
+                          ).toLocaleString()}
+                        </Typography>
+
+                        <Typography
+                          sx={{
+                            mt: 0.15,
+                            color:
+                              'text.secondary',
+                            fontSize: '0.58rem',
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                      </Box>
+                    ))}
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: {
+                          xs: 'flex-start',
+                          lg: 'flex-end',
+                        },
+                        gap: 0.75,
+                      }}
+                    >
+                      <Tooltip title="Enter maintenance mode">
+                        <span>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            disabled={
+                              !tenant.is_active ||
+                              impersonationMutation.isPending
+                            }
+                            startIcon={
+                              <EngineeringRounded />
+                            }
+                            onClick={() => {
+                              impersonationMutation.mutate(
+                                tenant
+                              );
+                            }}
+                          >
+                            Maintain
+                          </Button>
+                        </span>
+                      </Tooltip>
+
+                      <IconButton
+                        aria-label={`Manage ${tenant.name}`}
+                        onClick={(event) => {
+                          openMenu(
+                            event,
+                            tenant
+                          );
+                        }}
+                      >
+                        <MoreHorizRounded />
+                      </IconButton>
+                    </Box>
+                  </Paper>
+                )
+              )}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+
+      <Menu
+        anchorEl={menuAnchor}
+        open={Boolean(menuAnchor)}
+        onClose={closeMenu}
       >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+        <MenuItem
+          onClick={() => {
+            if (menuTenant) {
+              openEditDialog(
+                menuTenant
+              );
+            }
+          }}
+        >
+          <EditRounded
+            sx={{
+              mr: 1.25,
+              fontSize: 20,
+            }}
+          />
+          Edit tenant
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (menuTenant) {
+              openPasswordDialog(
+                menuTenant
+              );
+            }
+          }}
+        >
+          <LockResetRounded
+            sx={{
+              mr: 1.25,
+              fontSize: 20,
+            }}
+          />
+          Reset admin password
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (menuTenant) {
+              openConfirmation(
+                menuTenant,
+                menuTenant.is_active
+                  ? 'suspend'
+                  : 'activate'
+              );
+            }
+          }}
+        >
+          <PowerSettingsNewRounded
+            sx={{
+              mr: 1.25,
+              fontSize: 20,
+            }}
+          />
+          {menuTenant?.is_active
+            ? 'Suspend tenant'
+            : 'Activate tenant'}
+        </MenuItem>
+
+        <MenuItem
+          sx={{
+            color: 'error.main',
+          }}
+          onClick={() => {
+            if (menuTenant) {
+              openConfirmation(
+                menuTenant,
+                'delete'
+              );
+            }
+          }}
+        >
+          <DeleteOutlineRounded
+            sx={{
+              mr: 1.25,
+              fontSize: 20,
+            }}
+          />
+          Delete tenant
+        </MenuItem>
+      </Menu>
+
+      <TenantFormDialog
+        open={formOpen}
+        tenant={editingTenant}
+        submitting={
+          createMutation.isPending ||
+          updateMutation.isPending
+        }
+        serverError={formError}
+        onClose={() => {
+          setFormOpen(false);
+          setEditingTenant(null);
+          setFormError(null);
+        }}
+        onCreate={async (payload) => {
+          await createMutation.mutateAsync(
+            payload
+          );
+        }}
+        onUpdate={async (
+          tenantId,
+          payload
+        ) => {
+          await updateMutation.mutateAsync({
+            tenantId,
+            payload,
+          });
+        }}
+      />
+
+      <TenantPasswordResetDialog
+        open={Boolean(passwordTenant)}
+        tenant={passwordTenant}
+        submitting={
+          passwordMutation.isPending
+        }
+        serverError={passwordError}
+        onClose={() => {
+          setPasswordTenant(null);
+          setPasswordError(null);
+        }}
+        onSubmit={async (
+          tenantId,
+          payload
+        ) => {
+          await passwordMutation.mutateAsync({
+            tenantId,
+            payload,
+          });
+        }}
+      />
+
+      <Dialog
+        open={Boolean(
+          confirmationTenant &&
+            confirmationAction
+        )}
+        onClose={
+          confirmationBusy
+            ? undefined
+            : () => {
+                setConfirmationTenant(null);
+                setConfirmationAction(null);
+                setDeleteConfirmation('');
+              }
+        }
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {confirmationTitle}
+        </DialogTitle>
+
+        <DialogContent>
+          {confirmationAction ===
+          'delete' ? (
+            <>
+              <Alert
+                severity="error"
+                sx={{
+                  mb: 2,
+                }}
+              >
+                This permanently removes the
+                tenant record and its database.
+                This action cannot be undone.
+              </Alert>
+
+              <Typography
+                sx={{
+                  mb: 1.5,
+                  color: 'text.secondary',
+                  fontSize: '0.76rem',
+                  lineHeight: 1.6,
+                }}
+              >
+                Type{' '}
+                <Box
+                  component="strong"
+                  sx={{
+                    color: 'text.primary',
+                  }}
+                >
+                  {confirmationTenant?.domain}
+                </Box>{' '}
+                to confirm deletion.
+              </Typography>
+
+              <TextField
+                fullWidth
+                autoFocus
+                label="Tenant domain"
+                value={
+                  deleteConfirmation
+                }
+                onChange={(event) => {
+                  setDeleteConfirmation(
+                    event.target.value
+                  );
+                }}
+              />
+            </>
+          ) : (
+            <Alert
+              severity={
+                confirmationAction ===
+                'suspend'
+                  ? 'warning'
+                  : 'info'
+              }
+            >
+              {confirmationAction ===
+              'suspend'
+                ? `${confirmationTenant?.name} will be prevented from operating normally until reactivated.`
+                : `${confirmationTenant?.name} will be restored to active platform status.`}
+            </Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2.5,
+          }}
+        >
+          <Button
+            variant="outlined"
+            disabled={confirmationBusy}
+            onClick={() => {
+              setConfirmationTenant(null);
+              setConfirmationAction(null);
+              setDeleteConfirmation('');
+            }}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            color={
+              confirmationAction ===
+              'delete'
+                ? 'error'
+                : confirmationAction ===
+                    'suspend'
+                  ? 'warning'
+                  : 'success'
+            }
+            disabled={
+              confirmationBusy ||
+              !deleteConfirmed
+            }
+            startIcon={
+              confirmationBusy ? (
+                <CircularProgress
+                  size={16}
+                  color="inherit"
+                />
+              ) : confirmationAction ===
+                'delete' ? (
+                <DeleteOutlineRounded />
+              ) : (
+                <PowerSettingsNewRounded />
+              )
+            }
+            onClick={() => {
+              if (
+                !confirmationTenant ||
+                !confirmationAction
+              ) {
+                return;
+              }
+
+              if (
+                confirmationAction ===
+                'delete'
+              ) {
+                deleteMutation.mutate(
+                  confirmationTenant
+                );
+
+                return;
+              }
+
+              statusMutation.mutate({
+                tenant:
+                  confirmationTenant,
+                action:
+                  confirmationAction,
+              });
+            }}
+          >
+            {confirmationAction ===
+            'delete'
+              ? 'Delete permanently'
+              : confirmationAction ===
+                  'suspend'
+                ? 'Suspend tenant'
+                : 'Activate tenant'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

@@ -1,204 +1,578 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import {
-  Container,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  InputAdornment,
-  IconButton,
-  Checkbox,
-  FormControlLabel,
-  Divider,
-} from '@mui/material';
-import { Visibility, VisibilityOff, Login as LoginIcon, AdminPanelSettings } from '@mui/icons-material';
-import { useAuth } from '../contexts/AuthContext';
-import { AuthResponse } from '../types';
+  FormEvent,
+  useMemo,
+  useState,
+} from 'react';
 
-interface LoginFormData {
+import AdminPanelSettingsRounded from '@mui/icons-material/AdminPanelSettingsRounded';
+import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
+import BusinessRounded from '@mui/icons-material/BusinessRounded';
+import DomainRounded from '@mui/icons-material/DomainRounded';
+import EmailRounded from '@mui/icons-material/EmailRounded';
+import LockRounded from '@mui/icons-material/LockRounded';
+import ShieldRounded from '@mui/icons-material/ShieldRounded';
+import VisibilityOffRounded from '@mui/icons-material/VisibilityOffRounded';
+import VisibilityRounded from '@mui/icons-material/VisibilityRounded';
+
+import axios from 'axios';
+
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  IconButton,
+  InputAdornment,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from '@mui/material';
+
+import {
+  alpha,
+} from '@mui/material/styles';
+
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+
+import AuthShell from '../components/auth/AuthShell';
+import { useAuth } from '../contexts/AuthContext';
+
+type AccessMode =
+  | 'laboratory'
+  | 'platform';
+
+interface LoginFormState {
   email: string;
   password: string;
   domain: string;
 }
 
-const Login: React.FC = () => {
+interface ApiErrorPayload {
+  message?: string;
+  errors?: Record<string, string[]>;
+}
+
+const initialFormState: LoginFormState = {
+  email: '',
+  password: '',
+  domain: '',
+};
+
+const extractErrorMessage = (
+  error: unknown
+): string => {
+  if (!axios.isAxiosError<ApiErrorPayload>(error)) {
+    return 'We could not sign you in. Please try again.';
+  }
+
+  const responseData = error.response?.data;
+
+  if (responseData?.message) {
+    return responseData.message;
+  }
+
+  const firstValidationMessage = Object.values(
+    responseData?.errors ?? {}
+  )
+    .flat()
+    .find(Boolean);
+
+  return (
+    firstValidationMessage ??
+    'We could not sign you in. Please verify your details.'
+  );
+};
+
+const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: '',
-    domain: '',
-  });
-  const [isSuperadmin, setIsSuperadmin] = useState<boolean>(false);
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const [accessMode, setAccessMode] =
+    useState<AccessMode>('laboratory');
+
+  const [form, setForm] =
+    useState<LoginFormState>(initialFormState);
+
+  const [showPassword, setShowPassword] =
+    useState(false);
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const isLaboratoryAccess =
+    accessMode === 'laboratory';
+
+  const modeDescription = useMemo(() => {
+    if (isLaboratoryAccess) {
+      return 'Enter your laboratory domain and account credentials to continue.';
+    }
+
+    return 'Use your platform administrator credentials to access tenant operations.';
+  }, [isLaboratoryAccess]);
+
+  const updateField = (
+    field: keyof LoginFormState,
+    value: string
+  ) => {
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+
+    if (error) {
+      setError(null);
+    }
+  };
+
+  const handleModeChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    value: AccessMode | null
+  ) => {
+    if (!value) {
+      return;
+    }
+
+    setAccessMode(value);
     setError(null);
-    setLoading(true);
+
+    if (value === 'platform') {
+      setForm((current) => ({
+        ...current,
+        domain: '',
+      }));
+    }
+  };
+
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setError(null);
+
+    const email = form.email.trim();
+    const domain = form.domain
+      .trim()
+      .toLowerCase();
+
+    if (
+      !email ||
+      !form.password ||
+      (isLaboratoryAccess && !domain)
+    ) {
+      setError(
+        isLaboratoryAccess
+          ? 'Enter your laboratory domain, email address and password.'
+          : 'Enter your email address and password.'
+      );
+
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
-      const payload: any = {
-        email: formData.email,
-        password: formData.password,
-      };
+      const payload = {
+        email,
+        password: form.password,
+        ...(isLaboratoryAccess
+          ? { domain }
+          : {}),
+      } as Parameters<typeof login>[0];
 
-      if (!isSuperadmin) {
-        payload.domain = formData.domain;
-      }
+      const response = await login(payload);
 
-      const response = await login(payload) as AuthResponse;
-
-      if (response?.is_superadmin) {
-        navigate('/landlord');
-      } else {
-        navigate('/dashboard');
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      navigate(
+        response.is_superadmin
+          ? '/landlord'
+          : '/dashboard',
+        {
+          replace: true,
+        }
+      );
+    } catch (caughtError) {
+      setError(
+        extractErrorMessage(caughtError)
+      );
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      }}
+    <AuthShell
+      eyebrow="Secure access"
+      title="Welcome back."
+      description={modeDescription}
     >
-      <Container maxWidth="sm">
-        <Paper sx={{ p: 4, borderRadius: 2 }}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-              🧪 Lab Manager
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {isSuperadmin ? '👑 Superadmin Login (God Mode)' : 'Sign in to your lab account'}
-            </Typography>
-          </Box>
+      <Box
+        component="form"
+        noValidate
+        onSubmit={handleSubmit}
+      >
+        <ToggleButtonGroup
+          exclusive
+          fullWidth
+          value={accessMode}
+          onChange={handleModeChange}
+          aria-label="Select access type"
+          sx={{
+            p: 0.6,
+            mb: 3.25,
+            gap: 0.5,
+            borderRadius: 3.25,
+            border: '1px solid',
+            borderColor: 'divider',
+            backgroundColor:
+              alpha('#0B1220', 0.025),
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+            '& .MuiToggleButtonGroup-grouped': {
+              minHeight: 54,
+              m: 0,
+              gap: 1.2,
+              border: 0,
+              borderRadius:
+                '11px !important',
+              color: 'text.secondary',
+              fontSize: '0.78rem',
+              fontWeight: 650,
+              textTransform: 'none',
+              transition:
+                'color 180ms ease, background-color 180ms ease, box-shadow 180ms ease',
 
-          <form onSubmit={handleSubmit}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              margin="normal"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              autoComplete="email"
+              '&.Mui-selected': {
+                color: 'text.primary',
+                backgroundColor:
+                  'background.paper',
+                boxShadow:
+                  '0 6px 18px rgba(11, 18, 32, 0.08)',
+
+                '&:hover': {
+                  backgroundColor:
+                    'background.paper',
+                },
+              },
+
+              '&:hover': {
+                backgroundColor:
+                  alpha('#246BFD', 0.045),
+              },
+            },
+          }}
+        >
+          <ToggleButton value="laboratory">
+            <BusinessRounded
+              sx={{
+                fontSize: 19,
+                color:
+                  isLaboratoryAccess
+                    ? 'primary.main'
+                    : 'text.disabled',
+              }}
             />
+            Laboratory
+          </ToggleButton>
 
+          <ToggleButton value="platform">
+            <AdminPanelSettingsRounded
+              sx={{
+                fontSize: 19,
+                color:
+                  !isLaboratoryAccess
+                    ? 'secondary.main'
+                    : 'text.disabled',
+              }}
+            />
+            Platform admin
+          </ToggleButton>
+        </ToggleButtonGroup>
+
+        {error && (
+          <Alert
+            severity="error"
+            sx={{
+              mb: 2.5,
+            }}
+          >
+            {error}
+          </Alert>
+        )}
+
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 2.15,
+          }}
+        >
+          {isLaboratoryAccess && (
             <TextField
               fullWidth
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              margin="normal"
               required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              autoComplete="current-password"
+              autoFocus
+              label="Laboratory domain"
+              placeholder="e.g. development"
+              value={form.domain}
+              onChange={(event) => {
+                updateField(
+                  'domain',
+                  event.target.value
+                    .toLowerCase()
+                    .replace(/\s+/g, '')
+                );
+              }}
+              autoComplete="organization"
               slotProps={{
                 input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                        edge="end"
-                        aria-label="toggle password visibility"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <DomainRounded
+                        sx={{
+                          color: 'text.disabled',
+                          fontSize: 20,
+                        }}
+                      />
                     </InputAdornment>
                   ),
                 },
               }}
             />
+          )}
 
-            <Box sx={{ mt: 2 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={isSuperadmin}
-                    onChange={(e) => {
-                      setIsSuperadmin(e.target.checked);
-                      if (e.target.checked) {
-                        setFormData({ ...formData, domain: '' });
+          <TextField
+            fullWidth
+            required
+            autoFocus={!isLaboratoryAccess}
+            label="Email address"
+            type="email"
+            placeholder="name@laboratory.com"
+            value={form.email}
+            onChange={(event) => {
+              updateField(
+                'email',
+                event.target.value
+              );
+            }}
+            autoComplete="email"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <EmailRounded
+                      sx={{
+                        color: 'text.disabled',
+                        fontSize: 20,
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
+          <TextField
+            fullWidth
+            required
+            label="Password"
+            type={
+              showPassword
+                ? 'text'
+                : 'password'
+            }
+            value={form.password}
+            onChange={(event) => {
+              updateField(
+                'password',
+                event.target.value
+              );
+            }}
+            autoComplete="current-password"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <LockRounded
+                      sx={{
+                        color: 'text.disabled',
+                        fontSize: 20,
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      edge="end"
+                      size="small"
+                      type="button"
+                      aria-label={
+                        showPassword
+                          ? 'Hide password'
+                          : 'Show password'
                       }
-                    }}
-                    color="primary"
-                    icon={<AdminPanelSettings />}
-                    checkedIcon={<AdminPanelSettings sx={{ color: '#764ba2' }} />}
-                  />
-                }
-                label={
-                  <Typography variant="body2" sx={{ fontWeight: isSuperadmin ? 'bold' : 'normal' }}>
-                    Login as Superadmin <span style={{ color: '#764ba2', fontSize: '0.8rem' }}>(God Mode)</span>
-                  </Typography>
-                }
-              />
-            </Box>
+                      onClick={() => {
+                        setShowPassword(
+                          (visible) => !visible
+                        );
+                      }}
+                    >
+                      {showPassword ? (
+                        <VisibilityOffRounded
+                          sx={{ fontSize: 20 }}
+                        />
+                      ) : (
+                        <VisibilityRounded
+                          sx={{ fontSize: 20 }}
+                        />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </Box>
 
-            {!isSuperadmin && (
-              <TextField
-                fullWidth
-                label="Lab Domain"
-                margin="normal"
-                required
-                placeholder="e.g., fego, rezi, keno"
-                helperText="Enter your lab's unique domain"
-                value={formData.domain}
-                onChange={(e) => setFormData({ ...formData, domain: e.target.value.toLowerCase() })}
-              />
-            )}
+        <Button
+          fullWidth
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={submitting}
+          endIcon={
+            submitting
+              ? undefined
+              : <ArrowForwardRounded />
+          }
+          sx={{
+            position: 'relative',
+            mt: 3,
+            minHeight: 52,
+            overflow: 'hidden',
+            background:
+              isLaboratoryAccess
+                ? 'linear-gradient(135deg, #246BFD 0%, #1D4ED8 100%)'
+                : 'linear-gradient(135deg, #0E7490 0%, #155E75 100%)',
 
-            {isSuperadmin && (
-              <Alert severity="info" sx={{ mt: 2 }}>
-                <Typography variant="body2">
-                  <strong>Superadmin Mode:</strong> No domain required. You will have access to all labs.
-                </Typography>
-              </Alert>
-            )}
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: '-110%',
+              width: '70%',
+              height: '100%',
+              transform: 'skewX(-22deg)',
+              background:
+                'linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)',
+              transition:
+                'left 620ms ease',
+            },
 
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              size="large"
-              sx={{ mt: 3 }}
-              disabled={loading}
-              startIcon={<LoginIcon />}
+            '&:hover::before': {
+              left: '140%',
+            },
+          }}
+        >
+          {submitting ? (
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1.25,
+              }}
             >
-              {loading ? 'Signing in...' : isSuperadmin ? 'Sign in as Superadmin' : 'Sign In'}
-            </Button>
-          </form>
+              <CircularProgress
+                size={18}
+                thickness={4}
+                sx={{
+                  color: 'inherit',
+                }}
+              />
+              Verifying access
+            </Box>
+          ) : isLaboratoryAccess ? (
+            'Enter laboratory workspace'
+          ) : (
+            'Open platform control'
+          )}
+        </Button>
 
-          <Box sx={{ mt: 2, textAlign: 'center' }}>
-            <Typography variant="body2">
-              Don't have an account?{' '}
-              <Button component={Link} to="/register" color="primary">
-                Register Now
-              </Button>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 1.25,
+            mt: 2.5,
+            px: 0.25,
+          }}
+        >
+          <ShieldRounded
+            sx={{
+              flexShrink: 0,
+              mt: 0.1,
+              color: 'success.main',
+              fontSize: 18,
+            }}
+          />
+
+          <Typography
+            sx={{
+              color: 'text.secondary',
+              fontSize: '0.73rem',
+              lineHeight: 1.58,
+            }}
+          >
+            Your session is protected and scoped to
+            your authorised laboratory environment.
+          </Typography>
+        </Box>
+
+        {isLaboratoryAccess && (
+          <Box
+            sx={{
+              mt: 4,
+              pt: 3,
+              textAlign: 'center',
+              borderTop: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontSize: '0.8rem',
+              }}
+            >
+              Setting up a new laboratory?{' '}
+              <Typography
+                component={Link}
+                to="/register"
+                sx={{
+                  color: 'primary.main',
+                  fontSize: 'inherit',
+                  fontWeight: 680,
+                  textDecoration: 'none',
+
+                  '&:hover': {
+                    textDecoration:
+                      'underline',
+                    textUnderlineOffset: 4,
+                  },
+                }}
+              >
+                Create a workspace
+              </Typography>
             </Typography>
           </Box>
-        </Paper>
-      </Container>
-    </Box>
+        )}
+      </Box>
+    </AuthShell>
   );
 };
 
