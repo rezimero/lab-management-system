@@ -542,7 +542,11 @@ describe('AllTenants characterization', () => {
         'Search tenants'
       );
 
-    await user.type(search, 'BETA');
+    fireEvent.change(search, {
+      target: {
+        value: 'BETA',
+      },
+    });
 
     expect(
       screen.getByText('Beta Medical Lab')
@@ -554,11 +558,11 @@ describe('AllTenants characterization', () => {
       )
     ).not.toBeInTheDocument();
 
-    await user.clear(search);
-    await user.type(
-      search,
-      'TENANT_ALPHA'
-    );
+    fireEvent.change(search, {
+      target: {
+        value: 'TENANT_ALPHA',
+      },
+    });
 
     expect(
       screen.getByText('Alpha Diagnostics')
