@@ -1,8 +1,3 @@
-import {
-  useMemo,
-  useState,
-} from 'react';
-
 import AddBusinessRounded from '@mui/icons-material/AddBusinessRounded';
 import ApartmentRounded from '@mui/icons-material/ApartmentRounded';
 import AssignmentTurnedInRounded from '@mui/icons-material/AssignmentTurnedInRounded';
@@ -44,537 +39,63 @@ import {
 
 import MoreHorizRounded from '@mui/icons-material/MoreHorizRounded';
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
-
-import axios from 'axios';
-import toast from 'react-hot-toast';
-
-import {
-  useNavigate,
-} from 'react-router-dom';
-
-import api from '../../api/client';
-
-import {
-  useAuth,
-} from '../../contexts/AuthContext';
-
-import TenantFormDialog, {
-  CreateTenantPayload,
-  TenantRecord,
-  UpdateTenantPayload,
-} from './TenantFormDialog';
-
+import TenantFormDialog from './TenantFormDialog';
 import TenantPasswordResetDialog from './TenantPasswordResetDialog';
 
-interface TenantIndexResponse {
-  tenants:
-    | TenantRecord[]
-    | {
-        data: TenantRecord[];
-      };
+import {
+  safeNumber,
+} from './tenantManagementSelectors';
 
-  total?: number;
-}
-
-interface PasswordResetPayload {
-  email: string;
-  new_password: string;
-}
-
-type ConfirmationAction =
-  | 'suspend'
-  | 'activate'
-  | 'delete'
-  | null;
-
-const safeNumber = (
-  value: unknown
-): number => {
-  const parsedValue = Number(value);
-
-  return Number.isFinite(parsedValue)
-    ? parsedValue
-    : 0;
-};
-
-const getErrorMessage = (
-  error: unknown
-): string => {
-  if (axios.isAxiosError(error)) {
-    const responseData =
-      error.response?.data as
-        | {
-            message?: string;
-            errors?: Record<
-              string,
-              string[]
-            >;
-          }
-        | undefined;
-
-    if (responseData?.errors) {
-      const firstError =
-        Object.values(
-          responseData.errors
-        )
-          .flat()
-          .find(Boolean);
-
-      if (firstError) {
-        return firstError;
-      }
-    }
-
-    if (responseData?.message) {
-      return responseData.message;
-    }
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return 'The requested operation could not be completed.';
-};
-
-const fetchTenants =
-  async (): Promise<TenantRecord[]> => {
-    const response =
-      await api.get<TenantIndexResponse>(
-        '/landlord/tenants'
-      );
-
-    const payload =
-      response.data.tenants;
-
-    if (Array.isArray(payload)) {
-      return payload;
-    }
-
-    return payload?.data ?? [];
-  };
+import {
+  useTenantManagement,
+} from './useTenantManagement';
 
 const AllTenants = () => {
-  const navigate = useNavigate();
-  const queryClient =
-    useQueryClient();
-
   const {
-    startImpersonation,
-  } = useAuth();
-
-  const [
     search,
     setSearch,
-  ] = useState('');
-
-  const [
     formOpen,
     setFormOpen,
-  ] = useState(false);
-
-  const [
     editingTenant,
     setEditingTenant,
-  ] = useState<TenantRecord | null>(
-    null
-  );
-
-  const [
     passwordTenant,
     setPasswordTenant,
-  ] = useState<TenantRecord | null>(
-    null
-  );
-
-  const [
     confirmationTenant,
     setConfirmationTenant,
-  ] = useState<TenantRecord | null>(
-    null
-  );
-
-  const [
     confirmationAction,
     setConfirmationAction,
-  ] = useState<ConfirmationAction>(
-    null
-  );
-
-  const [
     deleteConfirmation,
     setDeleteConfirmation,
-  ] = useState('');
-
-  const [
     formError,
     setFormError,
-  ] = useState<string | null>(null);
-
-  const [
     passwordError,
     setPasswordError,
-  ] = useState<string | null>(null);
-
-  const [
     menuAnchor,
-    setMenuAnchor,
-  ] = useState<HTMLElement | null>(
-    null
-  );
-
-  const [
     menuTenant,
-    setMenuTenant,
-  ] = useState<TenantRecord | null>(
-    null
-  );
-
-  const {
-    data: tenants = [],
+    tenants,
     isPending,
     isError,
     isFetching,
     refetch,
-  } = useQuery({
-    queryKey: [
-      'rezhel-landlord-tenants',
-    ],
-    queryFn: fetchTenants,
-    staleTime: 20_000,
-  });
-
-  const refreshTenants =
-    async (): Promise<void> => {
-      await queryClient.invalidateQueries({
-        queryKey: [
-          'rezhel-landlord-tenants',
-        ],
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: [
-          'rezhel-landlord-dashboard',
-        ],
-      });
-    };
-
-  const createMutation =
-    useMutation({
-      mutationFn: async (
-        payload: CreateTenantPayload
-      ) => {
-        return api.post(
-          '/landlord/tenants',
-          payload
-        );
-      },
-
-      onSuccess: async () => {
-        toast.success(
-          'Laboratory tenant provisioned successfully.'
-        );
-
-        setFormOpen(false);
-        setEditingTenant(null);
-        setFormError(null);
-
-        await refreshTenants();
-      },
-
-      onError: (error) => {
-        setFormError(
-          getErrorMessage(error)
-        );
-      },
-    });
-
-  const updateMutation =
-    useMutation({
-      mutationFn: async ({
-        tenantId,
-        payload,
-      }: {
-        tenantId: number;
-        payload: UpdateTenantPayload;
-      }) => {
-        return api.put(
-          `/landlord/tenants/${tenantId}`,
-          payload
-        );
-      },
-
-      onSuccess: async () => {
-        toast.success(
-          'Tenant details updated.'
-        );
-
-        setFormOpen(false);
-        setEditingTenant(null);
-        setFormError(null);
-
-        await refreshTenants();
-      },
-
-      onError: (error) => {
-        setFormError(
-          getErrorMessage(error)
-        );
-      },
-    });
-
-  const statusMutation =
-    useMutation({
-      mutationFn: async ({
-        tenant,
-        action,
-      }: {
-        tenant: TenantRecord;
-        action:
-          | 'suspend'
-          | 'activate';
-      }) => {
-        return api.post(
-          `/landlord/tenants/${tenant.id}/${action}`
-        );
-      },
-
-      onSuccess: async (
-        _response,
-        variables
-      ) => {
-        toast.success(
-          variables.action ===
-            'suspend'
-            ? 'Tenant suspended.'
-            : 'Tenant activated.'
-        );
-
-        setConfirmationTenant(null);
-        setConfirmationAction(null);
-
-        await refreshTenants();
-      },
-
-      onError: (error) => {
-        toast.error(
-          getErrorMessage(error)
-        );
-      },
-    });
-
-  const deleteMutation =
-    useMutation({
-      mutationFn: async (
-        tenant: TenantRecord
-      ) => {
-        return api.delete(
-          `/landlord/tenants/${tenant.id}`
-        );
-      },
-
-      onSuccess: async () => {
-        toast.success(
-          'Tenant deleted permanently.'
-        );
-
-        setConfirmationTenant(null);
-        setConfirmationAction(null);
-        setDeleteConfirmation('');
-
-        await refreshTenants();
-      },
-
-      onError: (error) => {
-        toast.error(
-          getErrorMessage(error)
-        );
-      },
-    });
-
-  const passwordMutation =
-    useMutation({
-      mutationFn: async ({
-        tenantId,
-        payload,
-      }: {
-        tenantId: number;
-        payload: PasswordResetPayload;
-      }) => {
-        return api.post(
-          `/landlord/tenants/${tenantId}/reset-admin-password`,
-          payload
-        );
-      },
-
-      onSuccess: () => {
-        toast.success(
-          'Administrator password reset successfully.'
-        );
-
-        setPasswordTenant(null);
-        setPasswordError(null);
-      },
-
-      onError: (error) => {
-        setPasswordError(
-          getErrorMessage(error)
-        );
-      },
-    });
-
-  const impersonationMutation =
-    useMutation({
-      mutationFn: async (
-        tenant: TenantRecord
-      ) => {
-        await startImpersonation(
-          tenant.id
-        );
-
-        return tenant;
-      },
-
-      onSuccess: (tenant) => {
-        toast.success(
-          `Maintenance access opened for ${tenant.name}.`
-        );
-
-        navigate('/dashboard', {
-          replace: true,
-        });
-      },
-
-      onError: (error) => {
-        toast.error(
-          getErrorMessage(error)
-        );
-      },
-    });
-
-  const filteredTenants =
-    useMemo(() => {
-      const query =
-        search.trim().toLowerCase();
-
-      if (!query) {
-        return tenants;
-      }
-
-      return tenants.filter(
-        (tenant) =>
-          tenant.name
-            .toLowerCase()
-            .includes(query) ||
-          tenant.domain
-            .toLowerCase()
-            .includes(query) ||
-          (
-            tenant.database ?? ''
-          )
-            .toLowerCase()
-            .includes(query)
-      );
-    }, [search, tenants]);
-
-  const totals = useMemo(() => {
-    return tenants.reduce(
-      (
-        accumulator,
-        tenant
-      ) => {
-        accumulator.users +=
-          safeNumber(
-            tenant.stats?.users
-          );
-
-        accumulator.patients +=
-          safeNumber(
-            tenant.stats?.patients
-          );
-
-        accumulator.tests +=
-          safeNumber(
-            tenant.stats?.lab_tests
-          );
-
-        accumulator.results +=
-          safeNumber(
-            tenant.stats?.test_results
-          );
-
-        return accumulator;
-      },
-      {
-        users: 0,
-        patients: 0,
-        tests: 0,
-        results: 0,
-      }
-    );
-  }, [tenants]);
-
-  const activeTenants =
-    tenants.filter(
-      (tenant) => tenant.is_active
-    ).length;
-
-  const closeMenu = () => {
-    setMenuAnchor(null);
-    setMenuTenant(null);
-  };
-
-  const openMenu = (
-    event: React.MouseEvent<HTMLElement>,
-    tenant: TenantRecord
-  ) => {
-    setMenuAnchor(
-      event.currentTarget
-    );
-
-    setMenuTenant(tenant);
-  };
-
-  const openCreateDialog = () => {
-    setEditingTenant(null);
-    setFormError(null);
-    setFormOpen(true);
-  };
-
-  const openEditDialog = (
-    tenant: TenantRecord
-  ) => {
-    closeMenu();
-    setEditingTenant(tenant);
-    setFormError(null);
-    setFormOpen(true);
-  };
-
-  const openPasswordDialog = (
-    tenant: TenantRecord
-  ) => {
-    closeMenu();
-    setPasswordError(null);
-    setPasswordTenant(tenant);
-  };
-
-  const openConfirmation = (
-    tenant: TenantRecord,
-    action: Exclude<
-      ConfirmationAction,
-      null
-    >
-  ) => {
-    closeMenu();
-    setDeleteConfirmation('');
-    setConfirmationTenant(tenant);
-    setConfirmationAction(action);
-  };
+    createMutation,
+    updateMutation,
+    statusMutation,
+    deleteMutation,
+    passwordMutation,
+    impersonationMutation,
+    filteredTenants,
+    totals,
+    activeTenants,
+    closeMenu,
+    openMenu,
+    openCreateDialog,
+    openEditDialog,
+    openPasswordDialog,
+    openConfirmation,
+    confirmationTitle,
+    confirmationBusy,
+    deleteConfirmed,
+  } = useTenantManagement();
 
   if (isPending) {
     return (
@@ -641,23 +162,6 @@ const AllTenants = () => {
       </Box>
     );
   }
-
-  const confirmationTitle =
-    confirmationAction === 'delete'
-      ? 'Delete tenant permanently'
-      : confirmationAction ===
-          'suspend'
-        ? 'Suspend laboratory tenant'
-        : 'Activate laboratory tenant';
-
-  const confirmationBusy =
-    statusMutation.isPending ||
-    deleteMutation.isPending;
-
-  const deleteConfirmed =
-    confirmationAction !== 'delete' ||
-    deleteConfirmation ===
-      confirmationTenant?.domain;
 
   return (
     <Box
