@@ -8,81 +8,64 @@ use App\Http\Requests\Tenant\User\StoreTenantUserRequest;
 use App\Http\Requests\Tenant\User\UpdateTenantUserRequest;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use App\Services\Tenant\User\TenantAdministratorGuard;
+use App\Services\Tenant\User\TenantUserAccountService;
 use App\Services\Tenant\User\TenantUserQueryService;
-use App\Services\Tenant\User\TenantUserService;
 use App\Support\Tenant\TenantUserRoleCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Throwable;
 
 class UserController extends Controller
 {
     public function __construct(
-        protected TenantUserQueryService $queryService,
-        protected TenantUserService $userService,
-        protected TenantUserRoleCatalog $roleCatalog,
+        protected TenantUserQueryService $queries,
+        protected TenantUserAccountService $accounts,
+        protected TenantAdministratorGuard $guard,
+        protected TenantUserRoleCatalog $roles,
     ) {
     }
 
     public function index(Request $request): JsonResponse
     {
-        try {
-            $tenant = Tenant::current();
+        $tenant = $this->currentTenant();
+        $currentUser = $this->authenticatedUser($request);
 
-            if (! $tenant) {
-                return response()->json([
-                    'users' => ['data' => [], 'total' => 0],
-                    'current_user_role' => 'guest',
-                    'is_superadmin' => false,
-                    'tenant_name' => null,
-                ]);
-            }
+        $this->guard->ensureCanManage($currentUser);
 
-            $currentUser = $request->user();
+        $users = $this->queries->paginate(
+            tenant: $tenant,
+            search: $request->input('search'),
+            perPage: (int) $request->input('per_page', 15),
+            page: (int) $request->input('page', 1),
+        );
 
-            if (! $currentUser instanceof TenantUser) {
-                return response()->json([
-                    'message' => 'Unauthenticated.',
-                ], 401);
-            }
-
-            $users = $this->queryService->paginate(
-                tenant: $tenant,
-                search: $request->input('search'),
-                perPage: (int) $request->input('per_page', 15),
-                page: (int) $request->input('page', 1),
-            );
-
-            return response()->json([
-                'users' => $users,
-                'available_roles' => $this->roleCatalog
-                    ->availableFor($currentUser->role),
-                'current_user_role' => $currentUser->role,
-                'is_superadmin' => $currentUser->role === 'superadmin',
-                'tenant_name' => $tenant->name,
-                'user_email' => $currentUser->email,
-                'user_id' => $currentUser->id,
-            ]);
-        } catch (Throwable $exception) {
-            Log::error('Failed to list tenant users.', [
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'users' => ['data' => [], 'total' => 0],
-                'error' => $exception->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'users' => $users,
+            'available_roles' => $this->roles
+                ->availableFor($currentUser->role),
+            'current_user_role' => $currentUser->role,
+            'is_superadmin' => false,
+            'tenant_name' => $tenant->name,
+            'user_email' => $currentUser->email,
+            'user_id' => $currentUser->getKey(),
+        ]);
     }
 
-    public function show(int|string $user): JsonResponse
-    {
-        $target = $this->queryService->find($user);
+    public function show(
+        Request $request,
+        int|string $user
+    ): JsonResponse {
+        $currentUser = $this->authenticatedUser($request);
+        $target = $this->queries->find($user);
 
         if (! $target) {
             return $this->notFound();
         }
+
+        $this->guard->ensureCanView(
+            $currentUser,
+            $target
+        );
 
         return response()->json($target);
     }
@@ -90,158 +73,145 @@ class UserController extends Controller
     public function store(
         StoreTenantUserRequest $request
     ): JsonResponse {
-        try {
-            $data = $request->validated();
+        $tenant = $this->currentTenant();
+        $currentUser = $this->authenticatedUser($request);
 
-            if ($data['role'] === 'superadmin') {
-                return response()->json([
-                    'message' => 'Unauthorized to create superadmin user',
-                ], 403);
-            }
+        $user = $this->accounts->create(
+            $tenant,
+            $currentUser,
+            $request->validated()
+        );
 
-            $tenant = Tenant::current();
-
-            if (! $tenant) {
-                return response()->json([
-                    'message' => 'No tenant context',
-                ], 400);
-            }
-
-            $user = $this->userService->create($data);
-
-            return response()->json([
-                'message' => 'User created successfully',
-                'user' => $user,
-                'tenant' => [
-                    'id' => $tenant->id,
-                    'name' => $tenant->name,
-                    'domain' => $tenant->domain,
-                ],
-            ], 201);
-        } catch (Throwable $exception) {
-            Log::error('Failed to create tenant user.', [
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to create user: '
-                    .$exception->getMessage(),
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'User created successfully',
+            'user' => $user,
+            'tenant' => [
+                'id' => $tenant->getKey(),
+                'name' => $tenant->name,
+                'domain' => $tenant->domain,
+            ],
+        ], 201);
     }
 
     public function update(
         UpdateTenantUserRequest $request,
         int|string $user
     ): JsonResponse {
-        try {
-            $target = $this->queryService->find($user);
+        $tenant = $this->currentTenant();
+        $currentUser = $this->authenticatedUser($request);
+        $target = $this->queries->find($user);
 
-            if (! $target || $target->role === 'superadmin') {
-                return $this->notFound();
-            }
-
-            $data = $request->validated();
-
-            if (($data['role'] ?? null) === 'superadmin') {
-                return response()->json([
-                    'message' => 'Unauthorized',
-                ], 403);
-            }
-
-            return response()->json([
-                'message' => 'User updated successfully',
-                'user' => $this->userService->update(
-                    $target,
-                    $data
-                ),
-            ]);
-        } catch (Throwable $exception) {
-            Log::error('Failed to update tenant user.', [
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to update user',
-            ], 500);
+        if (
+            ! $target
+            || $target->role === 'superadmin'
+        ) {
+            return $this->notFound();
         }
+
+        $result = $this->accounts->update(
+            $request,
+            $tenant,
+            $currentUser,
+            $target,
+            $request->validated()
+        );
+
+        return response()->json([
+            'message' => $result['self_service']
+                ? 'Your account was updated successfully'
+                : 'User updated successfully',
+            'user' => $result['user'],
+            'self_service' => $result['self_service'],
+            'sessions_revoked' => $result['sessions_revoked'],
+        ]);
     }
 
     public function destroy(
         Request $request,
         int|string $user
     ): JsonResponse {
-        try {
-            $target = $this->queryService->find($user);
+        $tenant = $this->currentTenant();
+        $currentUser = $this->authenticatedUser($request);
+        $target = $this->queries->find($user);
 
-            if (! $target || $target->role === 'superadmin') {
-                return $this->notFound();
-            }
-
-            if ((int) $request->user()->id === (int) $target->id) {
-                return response()->json([
-                    'message' => 'Cannot delete your own account',
-                ], 422);
-            }
-
-            $this->userService->delete($target);
-
-            return response()->json([
-                'message' => 'User deleted successfully',
-            ]);
-        } catch (Throwable $exception) {
-            Log::error('Failed to delete tenant user.', [
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to delete user',
-            ], 500);
+        if (
+            ! $target
+            || $target->role === 'superadmin'
+        ) {
+            return $this->notFound();
         }
+
+        $this->accounts->delete(
+            $tenant,
+            $currentUser,
+            $target
+        );
+
+        return response()->json([
+            'message' => 'User deleted successfully',
+        ]);
     }
 
     public function assignRole(
         AssignTenantUserRoleRequest $request,
         int|string $user
     ): JsonResponse {
-        try {
-            $target = $this->queryService->find($user);
+        $tenant = $this->currentTenant();
+        $currentUser = $this->authenticatedUser($request);
+        $target = $this->queries->find($user);
 
-            if (! $target || $target->role === 'superadmin') {
-                return $this->notFound();
-            }
-
-            $role = $request->validated('role');
-
-            if ($role === 'superadmin') {
-                return response()->json([
-                    'message' => 'Unauthorized',
-                ], 403);
-            }
-
-            return response()->json([
-                'message' => 'Role assigned successfully',
-                'user' => $this->userService->assignRole(
-                    $target,
-                    $role
-                ),
-            ]);
-        } catch (Throwable $exception) {
-            Log::error('Failed to assign tenant-user role.', [
-                'exception' => $exception->getMessage(),
-            ]);
-
-            return response()->json([
-                'message' => 'Failed to assign role',
-            ], 500);
+        if (
+            ! $target
+            || $target->role === 'superadmin'
+        ) {
+            return $this->notFound();
         }
+
+        $result = $this->accounts->assignRole(
+            $tenant,
+            $currentUser,
+            $target,
+            $request->validated('role')
+        );
+
+        return response()->json([
+            'message' => 'Role assigned successfully',
+            'user' => $result['user'],
+            'sessions_revoked' => $result['sessions_revoked'],
+        ]);
     }
 
     public function getRoles(): JsonResponse
     {
         return response()->json([
-            'roles' => $this->roleCatalog->tenantRoles(),
+            'roles' => $this->roles->tenantRoles(),
         ]);
+    }
+
+    private function authenticatedUser(
+        Request $request
+    ): TenantUser {
+        $user = $request->user();
+
+        if (! $user instanceof TenantUser) {
+            abort(401, 'Unauthenticated.');
+        }
+
+        return $user;
+    }
+
+    private function currentTenant(): Tenant
+    {
+        $tenant = Tenant::current();
+
+        if (! $tenant) {
+            abort(
+                422,
+                'Tenant context is required.'
+            );
+        }
+
+        return $tenant;
     }
 
     private function notFound(): JsonResponse
