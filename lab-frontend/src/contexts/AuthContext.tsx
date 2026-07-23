@@ -9,46 +9,33 @@ import {
 import api from '../api/client';
 
 import {
+  normaliseImpersonatedTenant,
+  normaliseImpersonatedUser,
+} from '../auth/authSessionMapper';
+
+import {
+  clearAllAuthentication,
+  clearPlatformSession,
+  persistActiveUser,
+  persistPlatformAuthentication,
+  persistPlatformBackup,
+  persistTenantAuthentication,
+  persistTenantDomain,
+  readActiveToken,
+  readPlatformSession,
+  readStoredAuthentication,
+  removeStoredTenant,
+} from '../auth/authStorage';
+
+import { ImpersonationResponse } from '../auth/authTypes';
+
+import {
   AuthResponse,
   LoginCredentials,
   RegisterData,
   Tenant,
   User,
 } from '../types';
-
-interface ImpersonationResponse {
-  message: string;
-
-  token: string;
-
-  is_impersonating: boolean;
-
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    role: string;
-    is_active?: boolean;
-    created_at?: string;
-    updated_at?: string;
-  };
-
-  tenant: {
-    id: number;
-    name: string;
-    domain: string;
-    database?: string;
-    is_active?: boolean;
-    trial_ends_at?: string | null;
-    created_at?: string;
-    updated_at?: string;
-  };
-}
-
-interface StoredPlatformSession {
-  token: string;
-  user: User;
-}
 
 export interface AuthContextType {
   user: User | null;
@@ -83,123 +70,6 @@ export interface AuthContextType {
 const AuthContext = createContext<
   AuthContextType | undefined
 >(undefined);
-
-const activeAuthenticationKeys = [
-  'token',
-  'user',
-  'tenant',
-  'tenant_domain',
-  'is_superadmin',
-  'is_impersonating',
-  'role',
-] as const;
-
-const platformStorageKeys = [
-  'rezhel_platform_token',
-  'rezhel_platform_user',
-] as const;
-
-const parseStoredValue = <T,>(
-  value: string | null
-): T | null => {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(value) as T;
-  } catch {
-    return null;
-  }
-};
-
-const normaliseUser = (
-  user: ImpersonationResponse['user']
-): User => {
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    is_active:
-      user.is_active ?? true,
-    created_at:
-      user.created_at ?? '',
-    updated_at:
-      user.updated_at ?? '',
-  };
-};
-
-const normaliseTenant = (
-  tenant: ImpersonationResponse['tenant']
-): Tenant => {
-  return {
-    id: tenant.id,
-    name: tenant.name,
-    domain: tenant.domain,
-    database:
-      tenant.database ?? '',
-    is_active:
-      tenant.is_active ?? true,
-    trial_ends_at:
-      tenant.trial_ends_at ?? null,
-    created_at:
-      tenant.created_at ?? '',
-    updated_at:
-      tenant.updated_at ?? '',
-  };
-};
-
-const clearActiveAuthentication =
-  (): void => {
-    activeAuthenticationKeys.forEach(
-      (key) => {
-        localStorage.removeItem(key);
-      }
-    );
-  };
-
-const clearPlatformSession =
-  (): void => {
-    platformStorageKeys.forEach(
-      (key) => {
-        localStorage.removeItem(key);
-      }
-    );
-  };
-
-const clearAllAuthentication =
-  (): void => {
-    clearActiveAuthentication();
-    clearPlatformSession();
-  };
-
-const readPlatformSession =
-  (): StoredPlatformSession | null => {
-    const token =
-      localStorage.getItem(
-        'rezhel_platform_token'
-      );
-
-    const user = parseStoredValue<User>(
-      localStorage.getItem(
-        'rezhel_platform_user'
-      )
-    );
-
-    if (
-      !token ||
-      !user ||
-      user.role !== 'superadmin'
-    ) {
-      return null;
-    }
-
-    return {
-      token,
-      user,
-    };
-  };
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -246,35 +116,13 @@ export const AuthProvider = ({
     setIsImpersonating(false);
   };
 
-  const persistPlatformSession = (
+  const applyPlatformSession = (
     sessionUser: User,
     token: string
   ): void => {
-    clearActiveAuthentication();
-
-    localStorage.setItem(
-      'token',
+    persistPlatformAuthentication(
+      sessionUser,
       token
-    );
-
-    localStorage.setItem(
-      'user',
-      JSON.stringify(sessionUser)
-    );
-
-    localStorage.setItem(
-      'is_superadmin',
-      'true'
-    );
-
-    localStorage.setItem(
-      'is_impersonating',
-      'false'
-    );
-
-    localStorage.setItem(
-      'role',
-      'superadmin'
     );
 
     setUser(sessionUser);
@@ -284,47 +132,17 @@ export const AuthProvider = ({
     setImpersonator(null);
   };
 
-  const persistTenantSession = (
+  const applyTenantSession = (
     sessionUser: User,
     sessionTenant: Tenant,
     token: string,
     impersonating: boolean
   ): void => {
-    clearActiveAuthentication();
-
-    localStorage.setItem(
-      'token',
-      token
-    );
-
-    localStorage.setItem(
-      'user',
-      JSON.stringify(sessionUser)
-    );
-
-    localStorage.setItem(
-      'tenant',
-      JSON.stringify(sessionTenant)
-    );
-
-    localStorage.setItem(
-      'tenant_domain',
-      sessionTenant.domain
-    );
-
-    localStorage.setItem(
-      'is_superadmin',
-      'false'
-    );
-
-    localStorage.setItem(
-      'is_impersonating',
-      String(impersonating)
-    );
-
-    localStorage.setItem(
-      'role',
-      sessionUser.role
+    persistTenantAuthentication(
+      sessionUser,
+      sessionTenant,
+      token,
+      impersonating
     );
 
     setUser(sessionUser);
@@ -337,30 +155,10 @@ export const AuthProvider = ({
 
   useEffect(() => {
     const restoreSession = (): void => {
-      const token =
-        localStorage.getItem('token');
+      const stored =
+        readStoredAuthentication();
 
-      const storedUser =
-        parseStoredValue<User>(
-          localStorage.getItem('user')
-        );
-
-      const storedTenant =
-        parseStoredValue<Tenant>(
-          localStorage.getItem('tenant')
-        );
-
-      const storedIsSuperadmin =
-        localStorage.getItem(
-          'is_superadmin'
-        ) === 'true';
-
-      const storedIsImpersonating =
-        localStorage.getItem(
-          'is_impersonating'
-        ) === 'true';
-
-      if (!token || !storedUser) {
+      if (!stored.token || !stored.user) {
         clearAllAuthentication();
         resetState();
         setIsLoading(false);
@@ -368,13 +166,13 @@ export const AuthProvider = ({
         return;
       }
 
-      if (storedIsImpersonating) {
+      if (stored.isImpersonating) {
         const platformSession =
           readPlatformSession();
 
         if (
           !platformSession ||
-          !storedTenant?.domain
+          !stored.tenant?.domain
         ) {
           clearAllAuthentication();
           resetState();
@@ -383,13 +181,12 @@ export const AuthProvider = ({
           return;
         }
 
-        localStorage.setItem(
-          'tenant_domain',
-          storedTenant.domain
+        persistTenantDomain(
+          stored.tenant.domain
         );
 
-        setUser(storedUser);
-        setTenant(storedTenant);
+        setUser(stored.user);
+        setTenant(stored.tenant);
         setImpersonator(
           platformSession.user
         );
@@ -400,13 +197,10 @@ export const AuthProvider = ({
         return;
       }
 
-      if (storedIsSuperadmin) {
-        localStorage.removeItem('tenant');
-        localStorage.removeItem(
-          'tenant_domain'
-        );
+      if (stored.isSuperadmin) {
+        removeStoredTenant();
 
-        setUser(storedUser);
+        setUser(stored.user);
         setTenant(null);
         setImpersonator(null);
         setIsSuperadmin(true);
@@ -416,7 +210,7 @@ export const AuthProvider = ({
         return;
       }
 
-      if (!storedTenant?.domain) {
+      if (!stored.tenant?.domain) {
         clearAllAuthentication();
         resetState();
         setIsLoading(false);
@@ -424,13 +218,12 @@ export const AuthProvider = ({
         return;
       }
 
-      localStorage.setItem(
-        'tenant_domain',
-        storedTenant.domain
+      persistTenantDomain(
+        stored.tenant.domain
       );
 
-      setUser(storedUser);
-      setTenant(storedTenant);
+      setUser(stored.user);
+      setTenant(stored.tenant);
       setImpersonator(null);
       setIsSuperadmin(false);
       setIsImpersonating(false);
@@ -462,7 +255,7 @@ export const AuthProvider = ({
       } = response.data;
 
       if (sessionIsSuperadmin) {
-        persistPlatformSession(
+        applyPlatformSession(
           sessionUser,
           token
         );
@@ -473,7 +266,7 @@ export const AuthProvider = ({
           );
         }
 
-        persistTenantSession(
+        applyTenantSession(
           sessionUser,
           sessionTenant,
           token,
@@ -513,7 +306,7 @@ export const AuthProvider = ({
         );
       }
 
-      persistTenantSession(
+      applyTenantSession(
         sessionUser,
         sessionTenant,
         token,
@@ -544,7 +337,7 @@ export const AuthProvider = ({
     }
 
     const platformToken =
-      localStorage.getItem('token');
+      readActiveToken();
 
     if (!platformToken) {
       throw new Error(
@@ -558,12 +351,12 @@ export const AuthProvider = ({
       );
 
     const impersonatedUser =
-      normaliseUser(
+      normaliseImpersonatedUser(
         response.data.user
       );
 
     const impersonatedTenant =
-      normaliseTenant(
+      normaliseImpersonatedTenant(
         response.data.tenant
       );
 
@@ -576,17 +369,12 @@ export const AuthProvider = ({
       );
     }
 
-    localStorage.setItem(
-      'rezhel_platform_token',
+    persistPlatformBackup(
+      user,
       platformToken
     );
 
-    localStorage.setItem(
-      'rezhel_platform_user',
-      JSON.stringify(user)
-    );
-
-    persistTenantSession(
+    applyTenantSession(
       impersonatedUser,
       impersonatedTenant,
       response.data.token,
@@ -623,7 +411,7 @@ export const AuthProvider = ({
         // The token may already have expired.
       }
 
-      persistPlatformSession(
+      applyPlatformSession(
         platformSession.user,
         platformSession.token
       );
@@ -656,7 +444,7 @@ export const AuthProvider = ({
         }
 
         if (platformSession) {
-          persistPlatformSession(
+          applyPlatformSession(
             platformSession.user,
             platformSession.token
           );
@@ -686,11 +474,8 @@ export const AuthProvider = ({
           user: User;
         }>('/user');
 
-      localStorage.setItem(
-        'user',
-        JSON.stringify(
-          response.data.user
-        )
+      persistActiveUser(
+        response.data.user
       );
 
       setUser(response.data.user);
