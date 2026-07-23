@@ -8,7 +8,7 @@ import {
   StoredPlatformSession,
 } from './authTypes';
 
-const activeAuthenticationKeys = [
+export const activeAuthenticationKeys = [
   'token',
   'user',
   'tenant',
@@ -18,9 +18,14 @@ const activeAuthenticationKeys = [
   'role',
 ] as const;
 
-const platformStorageKeys = [
+export const platformStorageKeys = [
   'rezhel_platform_token',
   'rezhel_platform_user',
+] as const;
+
+export const authenticationStorageKeys = [
+  ...activeAuthenticationKeys,
+  ...platformStorageKeys,
 ] as const;
 
 const parseStoredValue = <T,>(
@@ -119,6 +124,53 @@ export const readPlatformSession =
 export const readActiveToken =
   (): string | null => {
     return localStorage.getItem('token');
+  };
+
+export const readTenantDomain =
+  (): string | null => {
+    const storedDomain =
+      localStorage.getItem(
+        'tenant_domain'
+      );
+
+    if (storedDomain) {
+      return storedDomain;
+    }
+
+    const storedTenant =
+      localStorage.getItem('tenant');
+
+    if (!storedTenant) {
+      return null;
+    }
+
+    try {
+      const tenant = JSON.parse(
+        storedTenant
+      ) as {
+        domain?: unknown;
+      };
+
+      if (
+        typeof tenant.domain !==
+          'string' ||
+        tenant.domain.trim() === ''
+      ) {
+        return null;
+      }
+
+      const domain = tenant.domain
+        .trim()
+        .toLowerCase();
+
+      persistTenantDomain(domain);
+
+      return domain;
+    } catch {
+      removeStoredTenant();
+
+      return null;
+    }
   };
 
 export const persistPlatformAuthentication = (

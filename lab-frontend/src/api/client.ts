@@ -4,69 +4,14 @@ import axios, {
   InternalAxiosRequestConfig,
 } from 'axios';
 
+import {
+  clearAllAuthentication,
+  readTenantDomain,
+} from '../auth/authStorage';
+
 const apiUrl =
   import.meta.env.VITE_API_URL?.trim() ||
   'http://127.0.0.1:8000/api';
-
-const authenticationStorageKeys = [
-  'token',
-  'user',
-  'tenant',
-  'tenant_domain',
-  'is_superadmin',
-  'is_impersonating',
-  'role',
-  'rezhel_platform_token',
-  'rezhel_platform_user',
-] as const;
-
-const clearAuthenticationStorage = (): void => {
-  authenticationStorageKeys.forEach((key) => {
-    localStorage.removeItem(key);
-  });
-};
-
-const restoreTenantDomain = (): string | null => {
-  const storedTenant =
-    localStorage.getItem('tenant');
-
-  if (!storedTenant) {
-    return null;
-  }
-
-  try {
-    const tenant = JSON.parse(
-      storedTenant
-    ) as {
-      domain?: unknown;
-    };
-
-    if (
-      typeof tenant.domain !== 'string' ||
-      tenant.domain.trim() === ''
-    ) {
-      return null;
-    }
-
-    const domain = tenant.domain
-      .trim()
-      .toLowerCase();
-
-    localStorage.setItem(
-      'tenant_domain',
-      domain
-    );
-
-    return domain;
-  } catch {
-    localStorage.removeItem('tenant');
-    localStorage.removeItem(
-      'tenant_domain'
-    );
-
-    return null;
-  }
-};
 
 const api: AxiosInstance = axios.create({
   baseURL: apiUrl,
@@ -107,10 +52,7 @@ api.interceptors.request.use(
     }
 
     const tenantDomain =
-      localStorage.getItem(
-        'tenant_domain'
-      ) ||
-      restoreTenantDomain();
+      readTenantDomain();
 
     if (tenantDomain) {
       config.headers[
@@ -157,7 +99,7 @@ api.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      clearAuthenticationStorage();
+      clearAllAuthentication();
 
       if (
         !isAuthenticationRequest &&
