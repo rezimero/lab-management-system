@@ -1,8 +1,12 @@
 # Project Handover
 
+Updated:
+
+    23 July 2026
+
 ## 1. Project Identity
 
-This repository contains a multi-tenant Laboratory Information Management System built with Laravel.
+This repository contains a multi-tenant Laboratory Information Management System built with Laravel and React.
 
 The system is designed for independent laboratories operating on isolated tenant databases while platform-wide administration remains in a landlord database.
 
@@ -10,13 +14,13 @@ Repository:
 
     lab-management-system
 
-Primary remote:
+Current active milestone:
 
-    https://github.com/rezimero/lab-management-system.git
+    Frontend Vite migration and foundation refactor - completed through tenant-management wave 2
 
-Current backend milestone:
+Current backend status:
 
-    Laboratory reporting - implementation complete
+    Result processing and immutable laboratory reporting are complete and validated
 
 ---
 
@@ -39,17 +43,19 @@ The system manages the operational lifecycle of a diagnostic laboratory, includi
 - test-result review
 - result approval
 - order completion
-- reporting
+- immutable reporting
 
-The next development priority is the frontend Vite migration, followed by result and report API integration.
+The Vite migration and frontend foundation refactors are complete.
 
-The backend result and reporting workflows are stable. Frontend build-tool migration and API integration are the next planned milestones.
+The next development priority is characterization and integration of the frontend result and immutable-report APIs.
+
+The backend result and reporting workflows are stable.
 
 ---
 
 ## 3. Technology Stack
 
-Current backend stack:
+Backend:
 
 - Laravel 13.17.0
 - PHP 8.5.6
@@ -59,18 +65,21 @@ Current backend stack:
 - Spatie Laravel Multitenancy
 - PHPUnit through Laravel Artisan testing
 
+Frontend:
+
+- React 19.2.7
+- Vite 8.1.5
+- TypeScript 6.0.3
+- Vitest 4.1.10
+- React Router DOM 7.18.1
+- Axios 1.18.1
+- MUI 9.x
+
 Development environment:
 
 - Windows
 - PowerShell
-- Sublime Text
 - UTF-8 without BOM
-
-Frontend:
-
-- React 19
-- Create React App currently
-- Vite migration is the next planned milestone
 
 ---
 
@@ -110,6 +119,7 @@ Tenant databases contain:
 - laboratory order items
 - specimens
 - test results
+- laboratory reports
 - tenant-specific operational data
 
 Automated tests generate temporary tenant databases and remove them during teardown.
@@ -131,9 +141,7 @@ Tenant middleware order is:
 
 The tenant context must be resolved before Sanctum authentication.
 
-Tenant resolution is performed using the tenant domain.
-
-The final tenant authentication flow is:
+Final tenant authentication flow:
 
 1. Read the tenant domain from `X-Tenant-Domain`.
 2. Resolve the tenant in the landlord database.
@@ -148,6 +156,12 @@ Sanctum tokens are tenant-bound using:
     personal_access_tokens.tenant_id
 
 A token issued for one tenant must never authenticate against another tenant.
+
+Tenant context restoration must restore both database and guard:
+
+    Config::set('database.default', 'landlord');
+    Config::set('auth.defaults.guard', 'landlord');
+    Auth::forgetGuards();
 
 ---
 
@@ -182,18 +196,13 @@ Public API routes use UUIDs.
 
 Database numeric IDs remain internal implementation details.
 
-Models participating in public tenant routes should return:
-
-    uuid
-
-from `getRouteKeyName()`.
-
 Current UUID-bound resources include:
 
 - laboratory orders
 - laboratory order items
 - specimens
 - test results
+- laboratory reports
 
 ---
 
@@ -214,79 +223,63 @@ Completed:
 - cross-tenant token protection
 - isolated automated tenant testing
 
-### Patient management
+### Core laboratory operations
 
 Completed:
 
-- create
-- list
-- show
-- update
-- delete
-- statistics
-
-### Laboratory test catalogue
-
-Completed:
-
-- create
-- list
-- show
-- update
-- delete
-- category listing
-
-### Laboratory orders
-
-Completed:
-
-- order creation
-- order listing
-- order details
+- departments
+- users
+- patients
+- laboratory test catalogue
+- laboratory orders
 - multiple order items
-- status state machine
-- cancellation
-- sample collection protection
-- processing-readiness validation
+- order status state machine
+- specimen collection
+- specimen receiving and rejection
+- specimen replacement and lineage
+- processing readiness
+- test processing
 
-### Specimens
+### Test results
 
 Completed:
 
-- multiple specimens per order
-- many-to-many specimen and order-item links
-- accession generation
-- collection
-- receiving
-- rejection
-- rejection reason validation
-- query
-- statistics
-- details
-- replacement
-- replacement lineage
-- duplicate replacement prevention
-- processing-readiness restoration
-
-### Test processing and results
-
-Implemented in the completed result-processing milestone:
-
-- start processing an order item
 - one result per laboratory order item
-- create a draft result
-- update a draft result
-- submit a result
-- reject a submitted result
-- edit a rejected result and return it to draft
-- resubmit a corrected result
-- approve a submitted result
-- mark the order item completed after approval
-- prevent order completion until every active item has an approved result
-- audit entry, submission and review users
-- audit entry, submission and review timestamps
-- UUID test-result routes
-- tenant-isolated result operations
+- draft creation and editing
+- submission
+- rejection with required reason
+- rejected-result correction
+- resubmission
+- approval
+- approved-result immutability
+- order-item completion after approval
+- order-completion readiness guard
+- audit users and timestamps
+- result query and statistics
+- UUID routes
+- tenant isolation
+- role authorization
+
+### Laboratory reporting
+
+Completed:
+
+- one immutable report snapshot per completed order
+- laboratory, patient, order and result snapshots
+- generating-user audit
+- UUID route binding
+- tenant isolation
+- view and generation authorization
+- JSON report resources
+
+Deferred:
+
+- PDF rendering and export
+
+Latest confirmed backend baseline:
+
+    133 tests passed
+    3,458 assertions
 
 ---
 
@@ -310,9 +303,7 @@ Current order status transitions:
     cancelled
         → terminal
 
-An order cannot be changed to `sample_collected` through the generic status endpoint.
-
-Specimen collection performs that transition.
+Specimen collection owns the transition to `sample_collected`.
 
 An order cannot enter `in_progress` unless every active order item has at least one received specimen.
 
@@ -356,7 +347,7 @@ Rules:
 
 ---
 
-## 11. Current Result API Contract
+## 11. Active Result and Report API Contracts
 
 Order-item processing:
 
@@ -382,109 +373,31 @@ Result workflow:
     POST /api/test-results/{uuid}/approve
     POST /api/test-results/{uuid}/reject
 
-Legacy standalone result creation and deletion routes must not be reintroduced into the tenant workflow.
+Laboratory reporting:
+
+    POST /api/laboratory-orders/{laboratoryOrder}/report
+    GET  /api/laboratory-orders/{laboratoryOrder}/report
+    GET  /api/laboratory-reports
+    GET  /api/laboratory-reports/{laboratoryReport}
+
+Legacy standalone result creation and deletion routes must not be reintroduced into the active tenant workflow.
 
 ---
 
-## 12. Result Schema Strategy
-
-The existing `test_results` table originated as a standalone patient/test result table.
-
-The current workflow modernizes it using four focused migrations:
-
-1. Add order-item processing metadata.
-2. Add result workflow columns.
-3. Migrate legacy result statuses and audit data.
-4. Enforce final workflow constraints.
-
-New workflow columns include:
-
-- uuid
-- laboratory_order_item_id
-- entered_by
-- submitted_by
-- reviewed_by
-- submitted_at
-- reviewed_at
-- rejection_reason
-
-Legacy columns remain temporarily for compatibility:
-
-- patient_id
-- lab_test_id
-- user_id
-- test_date
-- completed_at
-
-New workflow writes should use `laboratory_order_item_id`.
-
-Legacy rows may have a null `laboratory_order_item_id`.
-
-Active order-driven queries exclude rows that are not linked to an order item.
-
----
-
-## 13. Current Code Organization
-
-Result controllers:
-
-    app/Http/Controllers/Api/Tenant/
-        LaboratoryOrderItemProcessingController.php
-        TestResultController.php
-        TestResultWorkflowController.php
-
-Result requests:
-
-    app/Http/Requests/TestResult/
-        IndexTestResultRequest.php
-        StoreTestResultRequest.php
-        UpdateTestResultRequest.php
-        RejectTestResultRequest.php
-
-Result services:
-
-    app/Services/Tenant/TestResult/
-        TestResultManagementService.php
-        TestResultQueryService.php
-        TestResultWorkflowService.php
-        TestResultSubmissionValidator.php
-
-Order processing service:
-
-    app/Services/Tenant/LaboratoryOrder/
-        LaboratoryOrderItemProcessingService.php
-        LaboratoryOrderStatusService.php
-
-Result resources:
-
-    app/Http/Resources/
-        TestResultResource.php
-        LaboratoryOrderItemResource.php
-
-Result routes:
-
-    routes/api/tenant/test-results.php
-
-Tenant authorization catalogue:
-
-    app/Support/Tenant/TenantUserPermissionCatalog.php
-
----
-
-## 14. Testing Architecture
+## 12. Testing Architecture
 
 Automated tenant tests:
 
-1. Register a temporary tenant through the real registration API.
-2. Provision a physical tenant database.
-3. Run tenant migrations.
-4. Create the tenant administrator.
-5. Log in through the real login API.
-6. Send API requests with bearer token and tenant domain.
-7. Run assertions against API responses and tenant database state.
-8. Restore landlord context.
-9. Delete temporary tenant records.
-10. Drop temporary tenant databases.
+1. register a temporary tenant through the real registration API
+2. provision a physical tenant database
+3. run tenant migrations
+4. create the tenant administrator
+5. log in through the real login API
+6. send API requests with bearer token and tenant domain
+7. assert API responses and tenant database state
+8. restore landlord database and guard context
+9. delete temporary tenant records
+10. drop temporary tenant databases
 
 The test suite refuses to run unless the active landlord database is:
 
@@ -494,50 +407,88 @@ Temporary tenant database deletion is guarded by strict database-name validation
 
 ---
 
-## 15. Frontend State
+## 13. Frontend State
 
-The frontend is located in:
+Frontend root:
 
     lab-frontend
 
+Current branch:
+
+    feature/frontend-vite-migration
+
+Current checkpoint:
+
+    e06166e
+    frontend-tenant-management-wave-2
+
 Current frontend status:
 
-- React 19
-- Create React App
-- reusable visual components exist
-- result user interface is based on the legacy result model
-- API integration requires alignment with the new order-item-driven result workflow
-- Authorization header logging exists in `src/api/client.ts` and must be removed before production
+- Vite migration complete
+- TypeScript validation active
+- Vitest active
+- Create React App is not the active toolchain
+- authentication context and API interceptors characterized
+- authentication storage decomposed
+- landlord tenant management characterized and decomposed
+- result and report interfaces still require active API integration
+
+Current frontend test baseline:
+
+    5 test files passed
+    47 tests passed
+
+Current build baseline:
+
+    tsc --noEmit passed
+    vite build passed
+
+Authentication structure:
+
+    lab-frontend/src/auth/authTypes.ts
+    lab-frontend/src/auth/authSessionMapper.ts
+    lab-frontend/src/auth/authStorage.ts
+    lab-frontend/src/contexts/AuthContext.tsx
+    lab-frontend/src/api/client.ts
+
+Landlord tenant-management structure:
+
+    lab-frontend/src/components/landlords/AllTenants.tsx
+    lab-frontend/src/components/landlords/tenantManagementApi.ts
+    lab-frontend/src/components/landlords/tenantManagementSelectors.ts
+    lab-frontend/src/components/landlords/tenantManagementTypes.ts
+    lab-frontend/src/components/landlords/useTenantManagement.ts
+    lab-frontend/src/components/landlords/TenantManagementStates.tsx
+    lab-frontend/src/components/landlords/TenantManagementHero.tsx
+    lab-frontend/src/components/landlords/TenantSummaryCards.tsx
+    lab-frontend/src/components/landlords/TenantPortfolio.tsx
+    lab-frontend/src/components/landlords/TenantPortfolioRow.tsx
+    lab-frontend/src/components/landlords/TenantActionMenu.tsx
+    lab-frontend/src/components/landlords/TenantConfirmationDialog.tsx
+
+Frontend recovery tags:
+
+    frontend-vite-baseline
+    frontend-auth-refactor-wave-1
+    frontend-tenant-management-wave-1
+    frontend-tenant-management-wave-2
 
 Planned sequence:
 
 1. backend result workflow - completed
 2. backend laboratory reporting - completed
-3. migrate frontend build tooling to Vite - next
-4. integrate frontend with the result and report APIs
+3. frontend Vite migration - completed
+4. frontend authentication foundation - completed
+5. landlord tenant-management foundation - completed
+6. characterize current result and report screens - next
+7. integrate result and report APIs
+8. select and integrate a compatible PDF renderer
 
-Do not perform broad frontend refactoring beyond the planned Vite migration and API integration.
-
-### Backend laboratory reporting
-
-The backend supports one immutable report record per completed laboratory order.
-
-Active routes:
-
-    POST /api/laboratory-orders/{laboratoryOrder}/report
-    GET  /api/laboratory-orders/{laboratoryOrder}/report
-    GET  /api/laboratory-reports
-    GET  /api/laboratory-reports/{laboratoryReport}
-
-Report generation requires every active order item to be completed with an approved result.
-
-The report persists laboratory, patient, order and approved-result snapshots. It also records the generating tenant user and generation timestamp.
-
-Report records have no update or delete API. PDF rendering and export are deferred until a compatible renderer is deliberately selected.
+Do not perform broad frontend redesign before characterizing existing result and report behavior.
 
 ---
 
-## 16. Known Technical Debt
+## 14. Known Technical Debt
 
 Known but non-blocking items:
 
@@ -545,24 +496,61 @@ Known but non-blocking items:
 - legacy landlord result tools may still query the old result shape
 - tenant authorization and platform authorization use different models
 - the role-and-permission seeder still describes historical Spatie-based tenant permissions
-- frontend result screens use the legacy model
-- the frontend API client logs authorization headers
-- some test-support files are near or slightly above the preferred 300-line review threshold
-- PDF rendering and export are not yet implemented; issued reports currently use immutable JSON snapshots
+- frontend result screens require order-item-driven API integration
+- frontend report screens require immutable-report API integration
+- some test-support and orchestration files exceed the preferred line-count target
+- PDF rendering and export are not implemented
 
-Do not perform broad cleanup while completing and handing over the reporting milestone.
+Resolved items that should not be reported as current debt:
 
-Refactor only when:
-
-- a test proves a defect
-- security is affected
-- data integrity is affected
-- the current feature is blocked
-- an agreed architecture rule is violated
+- Vite migration
+- Create React App as active tooling
+- frontend authorization-header logging
+- authentication-storage decomposition
+- tenant-management decomposition
 
 ---
 
-## 17. Source-of-Truth Priority
+## 15. Current Git and Recovery Context
+
+Current branch:
+
+    feature/frontend-vite-migration
+
+Current HEAD:
+
+    e06166e
+    refactor landlord tenant management presentation
+
+Current worktree:
+
+    clean
+
+Frontend recovery tags:
+
+    frontend-vite-baseline
+        64495da
+
+    frontend-auth-refactor-wave-1
+        f01fe8a
+
+    frontend-tenant-management-wave-1
+        e7d3a90
+
+    frontend-tenant-management-wave-2
+        e06166e
+
+Use exact-path staging.
+
+Do not use:
+
+    git add .
+
+Do not include repository-root investigation reports or archives in production commits.
+
+---
+
+## 16. Source-of-Truth Priority
 
 When documentation, chat history and code appear to disagree, use this order:
 
@@ -578,7 +566,7 @@ Chat history is not the permanent source of truth.
 
 ---
 
-## 18. New Engineer Handover Procedure
+## 17. New Engineer Handover Procedure
 
 A new engineer or AI assistant must first read:
 
@@ -592,9 +580,10 @@ Before modifying code, the engineer must confirm:
 
 - current Git branch
 - current Git status
-- latest commits
+- latest commits and recovery tags
 - active landlord database
 - current passing focused tests
+- current full-suite baseline
 - the next unfinished milestone task
 
 No implementation should begin from assumptions.

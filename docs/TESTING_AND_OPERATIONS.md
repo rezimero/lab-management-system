@@ -1,5 +1,9 @@
 # Testing and Operations
 
+Updated:
+
+    23 July 2026
+
 ## 1. Safety Principle
 
 Automated tests must never connect to the real development landlord database.
@@ -21,7 +25,7 @@ Tests fail immediately when either value is unsafe.
 
 ---
 
-## 2. Required Test Environment
+## 2. Required Backend Test Environment
 
 PowerShell environment:
 
@@ -56,9 +60,15 @@ Each test tenant is created by:
 During teardown:
 
 1. authentication state is cleared
-2. landlord context is restored
+2. landlord database and guard context are restored
 3. temporary tenant records are deleted
 4. temporary tenant databases are dropped
+
+Tenant restoration must include:
+
+    Config::set('database.default', 'landlord');
+    Config::set('auth.defaults.guard', 'landlord');
+    Auth::forgetGuards();
 
 Database cleanup refuses to drop databases that do not match the expected automated-test naming pattern.
 
@@ -135,11 +145,11 @@ Expected:
 
     no output
 
-Any output must be corrected before tests or commits.
+Any output must be corrected before commit.
 
 ---
 
-## 8. Route Inspection
+## 8. Backend Route Inspection
 
 Result routes:
 
@@ -151,7 +161,7 @@ Order-item processing routes:
     php artisan route:list `
         --path=api/laboratory-order-items
 
-Current expected result routes:
+Expected result routes:
 
     GET   api/test-results
     GET   api/test-results/stats
@@ -161,89 +171,141 @@ Current expected result routes:
     POST  api/test-results/{testResult}/approve
     POST  api/test-results/{testResult}/reject
 
-Current expected processing routes:
+Expected processing routes:
 
     POST  api/laboratory-order-items/{laboratoryOrderItem}/start
     POST  api/laboratory-order-items/{laboratoryOrderItem}/test-result
 
----
+Reporting routes:
 
-## 9. Current Focused Result Tests
-
-Current passing focused command:
-
-    php artisan test `
-        tests\Feature\Tenant\TestResult\TenantTestResultDraftTest.php `
-        tests\Feature\Tenant\TestResult\TenantTestResultWorkflowTest.php `
-        tests\Feature\Tenant\TestResult\TenantTestResultCompletionReadinessTest.php `
-        tests\Feature\Tenant\LaboratoryOrder\TenantLaboratoryOrderStatusTransitionTest.php `
-        --stop-on-failure
-
-Latest result:
-
-    5 tests passed
-    185 assertions
+    php artisan route:list `
+        --path=api/laboratory-reports
 
 ---
 
-## 10. Laboratory Reporting Validation
+## 9. Backend Test Baselines
 
-Focused reporting suite:
+Latest confirmed complete backend result:
 
-    php artisan test `
-        tests/Feature/Tenant/LaboratoryReport
+    133 tests passed
+    3,458 assertions
 
-Latest focused result:
+This baseline was not rerun during the frontend documentation synchronization.
 
-    11 tests passed
-    430 assertions
-    81.83 seconds
-
-Adjacent clinical regression suite:
-
-    php artisan test `
-        tests/Feature/Tenant/TestResult `
-        tests/Feature/Tenant/LaboratoryOrder `
-        tests/Feature/Tenant/Specimen
-
-Latest regression result:
-
-    49 tests passed
-    1,501 assertions
-    549.69 seconds
-
-Latest full project result:
-
-    112 tests passed
-    2,953 assertions
-    1,208.24 seconds
-
----
-
-## 11. Full Project Suite
-
-At milestone completion:
+At backend milestone completion:
 
     php artisan test
 
-Do not create the milestone commit until the full suite passes.
+Do not create a backend milestone commit until the required focused, regression and full suites pass.
 
-Record the final:
-
-- test count
-- assertion count
-- duration
-- date
-
-in:
+Record the final test count, assertion count, duration and date in:
 
     docs/CURRENT_STATE.md
 
 ---
 
+## 10. Frontend Test and Build Environment
+
+Frontend root:
+
+    lab-frontend
+
+Focused test example:
+
+    npm test -- `
+        src/components/landlords/AllTenants.test.tsx
+
+Complete frontend suite:
+
+    npm test -- --run
+
+Production validation:
+
+    npm run build
+
+The build command executes:
+
+    tsc --noEmit && vite build
+
+Latest confirmed frontend baseline:
+
+    5 test files passed
+    47 tests passed
+    production build passed
+
+Current passing test files:
+
+    src/contexts/AuthContext.test.tsx
+        15 tests
+
+    src/components/PrivateRoute.test.tsx
+        4 tests
+
+    src/components/landlords/AllTenants.test.tsx
+        14 tests
+
+    src/api/client.test.ts
+        13 tests
+
+    src/App.test.tsx
+        1 test
+
+Use a single `Push-Location` and `finally` block so failures do not leave PowerShell in the wrong directory:
+
+    Push-Location .\lab-frontend
+
+    try {
+        npm test -- --run
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Frontend tests failed."
+        }
+
+        npm run build
+
+        if ($LASTEXITCODE -ne 0) {
+            throw "Frontend build failed."
+        }
+    }
+    finally {
+        Pop-Location
+    }
+
+Do not raise the global Vitest timeout merely because one test is slow.
+
+When testing a large controlled MUI input and per-character behavior is not the subject under test, a direct Testing Library change event may be more appropriate than repeated user-event typing.
+
+---
+
+## 11. Frontend Characterization and Refactor Cycle
+
+Required order:
+
+1. inspect the active component and its API/context dependencies
+2. identify the behavior boundary
+3. add or update focused characterization tests
+4. run the focused test
+5. make the smallest responsible implementation change
+6. rerun the focused test
+7. run `npm test -- --run`
+8. run `npm run build`
+9. run `git diff --check`
+10. stage exact paths only
+11. compare intended paths with `git diff --cached --name-only`
+12. commit only when all gates pass
+13. create a recovery tag only at a stable wave boundary
+
+Do not use:
+
+    git add .
+
+Do not delete backups until the commit is confirmed, unless the previous version is already recoverable from a verified commit or tag.
+
+---
+
 ## 12. Migration Policy
 
-During feature implementation:
+During backend feature implementation:
 
 - do not manually migrate the development tenant before focused tests pass
 - temporary test tenants run all tenant migrations during provisioning
@@ -297,54 +359,118 @@ Before commit:
 
 Inspect staged files:
 
+    git diff --cached --name-status
     git diff --cached --stat
-    git diff --cached
-
-Do not use broad staging commands until the file list has been reviewed.
+    git diff --cached --check
 
 Preferred staging:
 
-    git add path\to\file1 path\to\file2
+    git add -- path\to\file1 path\to\file2
+
+Compare the intended and actual stage:
+
+    $actualStage = @(
+        git diff --cached --name-only
+    )
+
+    Compare-Object `
+        $intendedFiles `
+        $actualStage
+
+The comparison must return no output.
+
+Do not use:
+
+    git add .
 
 ---
 
-## 15. Milestone Completion Procedure
+## 15. Backend Milestone Completion Procedure
 
 Required order:
 
 1. finish focused implementation
-2. run syntax checks
+2. run PHP syntax checks
 3. run whitespace checks
-4. run focused result tests
+4. run focused tests
 5. run related regression tests
-6. run full suite
-7. migrate the development tenant
-8. perform a manual API smoke test
+6. run the full backend suite
+7. migrate the development tenant when required
+8. perform a manual API smoke test when required
 9. update handover documents
-10. review Git diff
-11. create local checkpoint commit
-12. push branch
-13. open pull request
-14. merge after review
-15. create baseline tag
+10. review the Git diff
+11. stage exact reviewed paths
+12. create the local checkpoint commit
+13. push the branch
+14. open the pull request
+15. merge after review
+16. create the baseline tag
 
 ---
 
-## 16. Current Branch
+## 16. Frontend Milestone Completion Procedure
 
-Current milestone branch:
+Required order:
 
-    feature/laboratory-reporting
-
-Previous completed baseline:
-
-    baseline-test-processing-results-2523
-
-The reporting milestone has passed its focused, regression and full project suites. Tag only after documentation review, commit, push, pull request and merge.
+1. finish or characterize the focused behavior
+2. run the focused Vitest suite
+3. run `npm test -- --run`
+4. run `npm run build`
+5. run `git diff --check`
+6. update handover documents
+7. review the Git diff
+8. stage exact reviewed paths
+9. compare the staged path list with the intended path list
+10. create the local checkpoint commit
+11. create a recovery tag when the wave is stable
+12. push and open the pull request at the milestone boundary
 
 ---
 
-## 17. Troubleshooting
+## 17. Current Branch and Checkpoint
+
+Current branch:
+
+    feature/frontend-vite-migration
+
+Current frontend checkpoint:
+
+    e06166e
+    frontend-tenant-management-wave-2
+
+Completed frontend tags:
+
+    frontend-vite-baseline
+    frontend-auth-refactor-wave-1
+    frontend-tenant-management-wave-1
+    frontend-tenant-management-wave-2
+
+---
+
+## 18. Troubleshooting
+
+### Frontend build reports that Vite is unavailable
+
+Confirm the current directory:
+
+    Get-Location
+
+The frontend build must run from:
+
+    lab-frontend
+
+Use `try` and `finally` around `Push-Location` so failure handling does not pop the directory twice.
+
+### A PowerShell hash variable shows an old value
+
+A failed assignment does not necessarily clear the previous variable value.
+
+Before retrying:
+
+    Remove-Variable actualHash `
+        -ErrorAction SilentlyContinue
+
+Use `$ErrorActionPreference = "Stop"` inside protected installation blocks.
 
 ### Tests connect to the wrong database
 
@@ -361,7 +487,7 @@ Clear cached configuration when necessary:
 
 ### Tenant request returns 404 for another tenant's UUID
 
-This is expected tenant isolation behavior.
+This is expected tenant-isolation behavior.
 
 ### Tenant result endpoint returns 403
 
@@ -374,23 +500,9 @@ Check:
 - tenant header
 - active status
 
-### Route is missing
-
-Run:
-
-    php artisan route:list --path=api/test-results
-
-Confirm:
-
-    routes/api/tenant.php
-
-requires:
-
-    routes/api/tenant/test-results.php
-
 ### Temporary tenant database remains after a failed test
 
-First verify that its name contains `_test_`.
+First verify that its name contains the required automated-test pattern.
 
 Use the project's guarded cleanup logic.
 
@@ -398,7 +510,7 @@ Do not manually run a broad database-drop command.
 
 ---
 
-## 18. Secret Handling
+## 19. Secret and Identity Handling
 
 Never include:
 
@@ -422,3 +534,5 @@ Use placeholders:
     <TOKEN>
     <PASSWORD>
     <SECRET_KEY>
+
+Shared command logs should also redact Git author and tagger email addresses.

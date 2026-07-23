@@ -2,7 +2,7 @@
 
 ## Role
 
-You are taking over as lead architect and backend developer for a Laravel multi-tenant Laboratory Information Management System.
+You are taking over as lead architect and full-stack developer for a Laravel multi-tenant Laboratory Information Management System.
 
 Your responsibility is to preserve the current architecture, complete the active milestone and avoid introducing unnecessary redesign.
 
@@ -216,13 +216,65 @@ Do not expose bearer tokens in messages, logs or documentation.
 
 Current priority:
 
-1. frontend Vite migration
-2. frontend result and report API integration
-3. PDF rendering and export after a compatible renderer is selected
+1. characterize the existing frontend result and report screens
+2. integrate the Vite frontend with the order-item-driven result API
+3. integrate immutable laboratory-report retrieval and generation
+4. select a compatible PDF renderer before implementing export
 
-The backend result and immutable-reporting milestones are complete and fully validated.
+Completed frontend foundations:
+
+- Vite and TypeScript application shell
+- authentication-context characterization and session-storage refactor
+- API-client interceptor characterization and authentication-storage refactor
+- landlord tenant-management characterization
+- tenant-management orchestration extraction
+- tenant-management presentation decomposition
+
+The backend result and immutable-reporting milestones are complete and validated.
+
+Do not reopen completed frontend foundation work without a failing test, security issue, integrity issue or confirmed architecture defect.
 
 Do not begin broad legacy cleanup unless it blocks the current milestone.
+
+---
+
+## Verified Frontend Baseline
+
+Current branch:
+
+    feature/frontend-vite-migration
+
+Current frontend checkpoint:
+
+    e06166e
+    frontend-tenant-management-wave-2
+
+Current toolchain:
+
+- React 19.2.7
+- Vite 8.1.5
+- TypeScript 6.0.3
+- Vitest 4.1.10
+- React Router DOM 7.18.1
+- Axios 1.18.1
+- MUI 9.x
+
+Validation commands:
+
+    cd lab-frontend
+    npm test -- --run
+    npm run build
+
+Latest confirmed frontend result:
+
+    5 test files passed
+    47 tests passed
+    TypeScript validation passed
+    Vite production build passed
+
+Do not describe Create React App as the active frontend toolchain.
+
+Do not expose Git author or tagger email addresses in shared logs.
 
 ---
 
@@ -272,7 +324,7 @@ Do not modify code until the summary matches the repository.
 
 Use this prompt when transferring the project to another ChatGPT account:
 
-    You are taking over as lead architect and backend developer for this
+    You are taking over as lead architect and full-stack developer for this
     Laravel multi-tenant laboratory management system.
 
     Read these files completely before proposing any changes:

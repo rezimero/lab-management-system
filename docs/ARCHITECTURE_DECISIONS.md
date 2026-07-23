@@ -363,15 +363,15 @@ Status:
 
 Decision:
 
-When modifying existing workflow behavior, existing tests must be updated or supplemented to describe the intended new behavior.
+When modifying existing behavior, tests must describe the intended behavior before refactoring or changing the implementation.
 
 Reason:
 
-This prevents accidental regression disguised as refactoring.
+This prevents accidental regression disguised as cleanup.
 
-Example:
+Consequence:
 
-The previous order-completion characterization was updated because order completion now requires approved results.
+Frontend and backend refactors must preserve or deliberately update their characterization boundaries.
 
 ---
 
@@ -388,13 +388,13 @@ During milestone development:
 1. run syntax and whitespace checks
 2. run focused feature tests
 3. fix demonstrated failures
-4. run the full suite once the milestone is complete
+4. run the full relevant suite once the milestone is complete
 5. create the milestone checkpoint
 6. push, review, merge and tag
 
 Reason:
 
-Running the full suite after every small edit is too slow while skipping it entirely is unsafe.
+Running every suite after every small edit is too slow while skipping milestone validation is unsafe.
 
 ---
 
@@ -418,9 +418,11 @@ One substantial milestone should normally produce:
 - one merge
 - one baseline tag
 
-Current branch:
+The active branch is recorded in `docs/CURRENT_STATE.md`.
 
-    feature/laboratory-reporting
+At the 23 July 2026 documentation checkpoint, the active branch is:
+
+    feature/frontend-vite-migration
 
 ---
 
@@ -492,3 +494,151 @@ Report authorization uses `TenantUserPermissionCatalog`:
 Consequence:
 
 Historical report data remains reproducible and tenant isolated. Future PDF output must render from the persisted report snapshot rather than live mutable clinical records.
+
+---
+
+## ADR-020: Vite and TypeScript Frontend Toolchain
+
+Status:
+
+    Accepted
+
+Decision:
+
+The active React frontend uses Vite and TypeScript.
+
+The validated frontend build command is:
+
+    npm run build
+
+which executes:
+
+    tsc --noEmit && vite build
+
+Reason:
+
+- Vite provides the active development and production build pipeline
+- TypeScript validation catches contract errors before bundling
+- Vitest integrates with the current frontend toolchain
+- obsolete Create React App assumptions must not guide future work
+
+Consequence:
+
+Documentation, scripts and implementation guidance must treat Vite as the source-of-truth frontend toolchain.
+
+---
+
+## ADR-021: Characterized Frontend Authentication Boundary
+
+Status:
+
+    Accepted
+
+Decision:
+
+Frontend authentication behavior is protected by characterization tests before refactoring.
+
+Authentication responsibilities are separated across:
+
+    lab-frontend/src/contexts/AuthContext.tsx
+    lab-frontend/src/auth/authTypes.ts
+    lab-frontend/src/auth/authSessionMapper.ts
+    lab-frontend/src/auth/authStorage.ts
+    lab-frontend/src/api/client.ts
+
+The API client must preserve:
+
+- bearer-token attachment
+- stale authorization-header removal
+- tenant-domain header attachment for tenant users
+- tenant-header exclusion for platform superadmins
+- malformed stored-tenant cleanup
+- 401 session clearing and redirect behavior
+- impersonated logout behavior
+
+Reason:
+
+Authentication storage, interceptors and tenant context are security-sensitive and must not be changed by uncharacterized cleanup.
+
+Consequence:
+
+Any future authentication change must first update or extend the existing `AuthContext` and API-client characterization suites.
+
+---
+
+## ADR-022: Landlord Tenant-Management Layering
+
+Status:
+
+    Accepted
+
+Decision:
+
+Landlord tenant management is decomposed into explicit layers:
+
+- API operations
+- shared types
+- selectors and aggregate calculations
+- React Query and interaction orchestration
+- presentational components
+- existing form and password-reset dialogs
+
+The orchestration boundary is:
+
+    lab-frontend/src/components/landlords/useTenantManagement.ts
+
+The route-level composition boundary is:
+
+    lab-frontend/src/components/landlords/AllTenants.tsx
+
+Reason:
+
+The original component combined network operations, cache invalidation, filtering, dialog state, mutations and all visual markup in one file.
+
+Consequence:
+
+Future tenant-management changes should be made in the narrowest responsible module.
+
+The following behavior must remain characterized:
+
+- array and paginated response support
+- search by name, domain and database
+- create and update
+- activate and suspend
+- exact-domain permanent-deletion confirmation
+- administrator password reset
+- maintenance impersonation
+- cache invalidation
+- mutation failure feedback
+
+---
+
+## ADR-023: Exact-Path Frontend Checkpoints
+
+Status:
+
+    Accepted
+
+Decision:
+
+Frontend refactor batches use:
+
+- focused characterization tests
+- full frontend tests
+- TypeScript and Vite build validation
+- `git diff --check`
+- exact-path staging
+- local checkpoint commits
+- annotated recovery tags at stable wave boundaries
+
+Broad staging commands such as `git add .` are not used.
+
+Reason:
+
+Exact-path staging prevents unrelated reports, archives and investigation files from entering production commits.
+
+Consequence:
+
+Before each frontend commit, compare the intended file list with `git diff --cached --name-only`.
+
+Repository-root investigation artifacts must remain untracked or be archived outside the repository.
