@@ -14,9 +14,20 @@ Repository:
 
     lab-management-system
 
-Current active milestone:
+Completed frontend milestone:
 
-    Frontend Vite migration and foundation refactor - completed through tenant-management wave 2
+    Frontend Vite migration and foundation refactor
+
+GitHub closeout:
+
+    Pull request:
+        #9
+
+    Merge commit:
+        f88f993
+
+    Final tag:
+        frontend-vite-foundation-complete
 
 Current backend status:
 
@@ -413,14 +424,16 @@ Frontend root:
 
     lab-frontend
 
-Current branch:
+Canonical integration branch:
 
-    feature/frontend-vite-migration
+    develop
 
-Current checkpoint:
+Merged milestone baseline:
 
-    e06166e
-    frontend-tenant-management-wave-2
+    f88f993
+    frontend-vite-foundation-complete
+
+The completed feature branch was deleted locally and remotely after merge verification.
 
 Current frontend status:
 
@@ -513,18 +526,20 @@ Resolved items that should not be reported as current debt:
 
 ## 15. Current Git and Recovery Context
 
-Current branch:
+Canonical integration branch:
 
-    feature/frontend-vite-migration
+    develop
 
-Current HEAD:
+Merged frontend foundation baseline:
 
-    e06166e
-    refactor landlord tenant management presentation
+    Pull request:
+        #9
 
-Current worktree:
+    Merge commit:
+        f88f993
 
-    clean
+    Final tag:
+        frontend-vite-foundation-complete
 
 Frontend recovery tags:
 
@@ -539,6 +554,15 @@ Frontend recovery tags:
 
     frontend-tenant-management-wave-2
         e06166e
+
+    frontend-vite-foundation-complete
+        f88f993
+
+The completed feature branch was deleted locally and remotely after merge verification.
+
+After this documentation closeout is merged, begin the next implementation milestone from updated `develop` on:
+
+    feature/frontend-result-report-integration
 
 Use exact-path staging.
 

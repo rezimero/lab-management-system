@@ -16,27 +16,27 @@ Repository:
 
     lab-management-system
 
-Current branch:
+Canonical integration branch:
 
-    feature/frontend-vite-migration
+    develop
 
-Current HEAD:
+Merged frontend foundation milestone:
 
-    e06166e
-    refactor landlord tenant management presentation
+    Pull request:
+        #9
 
-Current worktree:
+    Merge commit:
+        f88f993
+        Merge pull request #9 from rezimero/feature/frontend-vite-migration
 
-    clean
+    Final milestone tag:
+        frontend-vite-foundation-complete
 
-Current frontend tags:
+The feature branch was merged and removed locally and remotely after verification.
 
-    frontend-vite-baseline
-    frontend-auth-refactor-wave-1
-    frontend-tenant-management-wave-1
-    frontend-tenant-management-wave-2
+The documentation closeout is performed on a short-lived documentation-only branch and must be merged back into `develop` before the next implementation branch is created.
 
-Tag targets:
+Frontend recovery tags:
 
     frontend-vite-baseline
         64495da
@@ -50,8 +50,13 @@ Tag targets:
     frontend-tenant-management-wave-2
         e06166e
 
-Recent commits:
+    frontend-vite-foundation-complete
+        f88f993
 
+Milestone commit sequence:
+
+    f88f993 Merge pull request #9 from rezimero/feature/frontend-vite-migration
+    de13940 docs synchronize frontend migration handover
     e06166e refactor landlord tenant management presentation
     e7d3a90 refactor landlord tenant management orchestration
     076e3d5 test stabilize landlord tenant management characterization
@@ -62,8 +67,13 @@ Recent commits:
     4cabf8c test characterize frontend authentication context
     64495da chore remove obsolete backup source files
     6c9475b refactor Vite frontend application shell
+    5499877 refactor landlord cross-tenant management
+    4f40083 refactor tenant user governance services
+    ac67b88 Migrate frontend tooling from CRA to Vite
 
-The repository root contains no untracked investigation artifacts at this checkpoint.
+The merged milestone was verified as contained in `develop`.
+
+The repository worktree was clean immediately after the merge, tag push and feature-branch deletion.
 
 Archived investigation material is outside the repository under:
 
@@ -525,9 +535,13 @@ Status:
     focused tests passed
     full frontend suite passed
     production build passed
-    checkpoint tags created
-    worktree clean
-    documentation synchronization in progress
+    pull request #9 merged into develop
+    merge commit f88f993 verified
+    final tag frontend-vite-foundation-complete pushed
+    completed feature branch removed locally and remotely
+    documentation closeout ready for its own review and merge
+
+The frontend foundation milestone is complete. Do not add result or report integration changes to the documentation closeout branch.
 
 ---
 
@@ -550,21 +564,27 @@ Do not begin by broadly rewriting the result interface.
 
 ## 17. Git Continuation
 
-Before continuing:
+Before beginning the next implementation milestone:
 
-    git branch --show-current
+    git checkout develop
+    git pull --ff-only origin develop
     git status --short
     git log -8 --oneline --decorate
     git tag --list "frontend-*"
 
-Expected branch:
+Required starting branch:
 
-    feature/frontend-vite-migration
+    develop
 
-Expected HEAD:
+Required merged frontend baseline:
 
-    e06166e
+    f88f993
+    frontend-vite-foundation-complete
 
-Expected worktree:
+Required worktree:
 
     clean
+
+After the documentation closeout is merged, create:
+
+    feature/frontend-result-report-integration

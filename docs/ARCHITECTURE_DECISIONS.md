@@ -418,11 +418,23 @@ One substantial milestone should normally produce:
 - one merge
 - one baseline tag
 
-The active branch is recorded in `docs/CURRENT_STATE.md`.
+The canonical integration branch and merged milestone baseline are recorded in `docs/CURRENT_STATE.md`.
 
-At the 23 July 2026 documentation checkpoint, the active branch is:
+At the 23 July 2026 frontend-foundation closeout:
 
-    feature/frontend-vite-migration
+    integration branch:
+        develop
+
+    merged pull request:
+        #9
+
+    merge commit:
+        f88f993
+
+    final milestone tag:
+        frontend-vite-foundation-complete
+
+New implementation work must begin from updated `develop` on a separate feature branch.
 
 ---
 

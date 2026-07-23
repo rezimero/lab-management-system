@@ -429,14 +429,20 @@ Required order:
 
 ## 17. Current Branch and Checkpoint
 
-Current branch:
+Canonical integration branch:
 
-    feature/frontend-vite-migration
+    develop
 
-Current frontend checkpoint:
+Merged frontend foundation milestone:
 
-    e06166e
-    frontend-tenant-management-wave-2
+    Pull request:
+        #9
+
+    Merge commit:
+        f88f993
+
+    Final tag:
+        frontend-vite-foundation-complete
 
 Completed frontend tags:
 
@@ -444,6 +450,11 @@ Completed frontend tags:
     frontend-auth-refactor-wave-1
     frontend-tenant-management-wave-1
     frontend-tenant-management-wave-2
+    frontend-vite-foundation-complete
+
+After the documentation closeout is merged, create the next implementation branch from updated `develop`:
+
+    feature/frontend-result-report-integration
 
 ---
 

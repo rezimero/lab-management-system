@@ -240,13 +240,26 @@ Do not begin broad legacy cleanup unless it blocks the current milestone.
 
 ## Verified Frontend Baseline
 
-Current branch:
+Canonical integration branch:
 
-    feature/frontend-vite-migration
+    develop
 
-Current frontend checkpoint:
+Merged frontend foundation milestone:
 
-    e06166e
+    Pull request:
+        #9
+
+    Merge commit:
+        f88f993
+
+    Final milestone tag:
+        frontend-vite-foundation-complete
+
+Recovery wave tags remain available:
+
+    frontend-vite-baseline
+    frontend-auth-refactor-wave-1
+    frontend-tenant-management-wave-1
     frontend-tenant-management-wave-2
 
 Current toolchain:
@@ -273,6 +286,10 @@ Latest confirmed frontend result:
     Vite production build passed
 
 Do not describe Create React App as the active frontend toolchain.
+
+Begin the next implementation milestone from updated `develop` on a new feature branch. The planned branch is:
+
+    feature/frontend-result-report-integration
 
 Do not expose Git author or tagger email addresses in shared logs.
 
