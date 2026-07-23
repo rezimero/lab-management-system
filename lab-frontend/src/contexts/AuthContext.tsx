@@ -1,199 +1,502 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import api from '../api/client';
-import { User, Tenant, LoginCredentials, RegisterData, AuthResponse } from '../types';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
-interface AuthContextType {
+import api from '../api/client';
+
+import {
+  normaliseImpersonatedTenant,
+  normaliseImpersonatedUser,
+} from '../auth/authSessionMapper';
+
+import {
+  clearAllAuthentication,
+  clearPlatformSession,
+  persistActiveUser,
+  persistPlatformAuthentication,
+  persistPlatformBackup,
+  persistTenantAuthentication,
+  persistTenantDomain,
+  readActiveToken,
+  readPlatformSession,
+  readStoredAuthentication,
+  removeStoredTenant,
+} from '../auth/authStorage';
+
+import { ImpersonationResponse } from '../auth/authTypes';
+
+import {
+  AuthResponse,
+  LoginCredentials,
+  RegisterData,
+  Tenant,
+  User,
+} from '../types';
+
+export interface AuthContextType {
   user: User | null;
   tenant: Tenant | null;
+  impersonator: User | null;
+
   isLoading: boolean;
   isSuperadmin: boolean;
   isImpersonating: boolean;
-  login: (credentials: LoginCredentials) => Promise<AuthResponse>;
-  register: (data: RegisterData) => Promise<void>;
-  logout: () => Promise<void>;
   isAuthenticated: boolean;
+
+  login: (
+    credentials: LoginCredentials
+  ) => Promise<AuthResponse>;
+
+  register: (
+    data: RegisterData
+  ) => Promise<void>;
+
+  startImpersonation: (
+    tenantId: number
+  ) => Promise<void>;
+
+  stopImpersonation:
+    () => Promise<void>;
+
+  logout: () => Promise<void>;
+
   refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<
+  AuthContextType | undefined
+>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSuperadmin, setIsSuperadmin] = useState<boolean>(() => {
-    return localStorage.getItem('is_superadmin') === 'true';
-  });
-  const [isImpersonating, setIsImpersonating] = useState<boolean>(() => {
-    return localStorage.getItem('is_impersonating') === 'true';
-  });
+interface AuthProviderProps {
+  children: ReactNode;
+}
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
-    const storedTenant = localStorage.getItem('tenant');
-    const storedIsSuperadmin = localStorage.getItem('is_superadmin');
-    const storedIsImpersonating = localStorage.getItem('is_impersonating');
+export const AuthProvider = ({
+  children,
+}: AuthProviderProps) => {
+  const [
+    user,
+    setUser,
+  ] = useState<User | null>(null);
 
-    if (token && storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-        
-        if (storedIsSuperadmin === 'true') {
-          setIsSuperadmin(true);
-          setTenant(null);
-          // Ensure tenant_domain is removed for superadmin
-          localStorage.removeItem('tenant_domain');
-        } else if (storedTenant) {
-          const tenantData = JSON.parse(storedTenant);
-          setTenant(tenantData);
-          // CRITICAL: Ensure tenant_domain is set from tenant data
-          if (tenantData.domain) {
-            localStorage.setItem('tenant_domain', tenantData.domain);
-            console.log('✅ Restored tenant_domain from tenant:', tenantData.domain);
-          }
-          setIsSuperadmin(false);
-        }
+  const [
+    tenant,
+    setTenant,
+  ] = useState<Tenant | null>(null);
 
-        if (storedIsImpersonating === 'true') {
-          setIsImpersonating(true);
-        }
-      } catch (e) {
-        console.error('Error restoring auth state:', e);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        localStorage.removeItem('tenant');
-        localStorage.removeItem('tenant_domain');
-        localStorage.removeItem('is_superadmin');
-        localStorage.removeItem('is_impersonating');
-      }
-    }
-    setIsLoading(false);
-  }, []);
+  const [
+    impersonator,
+    setImpersonator,
+  ] = useState<User | null>(null);
 
-  const login = async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    setIsLoading(true);
-    try {
-      console.log('🔐 Login attempt:', credentials.email);
-      
-      const response = await api.post<AuthResponse>('/login', credentials);
-      const { user, token, tenant, is_superadmin } = response.data;
-      
-      console.log('🔐 Login response:', { user: user.email, is_superadmin, tenant: tenant?.domain });
-      
-      // Clear old data
-      localStorage.removeItem('tenant_domain');
-      localStorage.removeItem('tenant');
-      
-      // Save token and user
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('is_superadmin', String(is_superadmin));
-      
-      if (is_superadmin) {
-        // Superadmin - no tenant
-        localStorage.removeItem('tenant');
-        localStorage.removeItem('tenant_domain');
-        setTenant(null);
-        setIsSuperadmin(true);
-        localStorage.setItem('role', 'superadmin');
-        console.log('✅ Superadmin login - no tenant');
-      } else {
-        // Tenant user - save tenant and tenant_domain
-        if (tenant) {
-          localStorage.setItem('tenant', JSON.stringify(tenant));
-          // CRITICAL: Save tenant domain separately for API headers
-          localStorage.setItem('tenant_domain', tenant.domain);
-          setTenant(tenant);
-          console.log('✅ Tenant login - saved tenant_domain:', tenant.domain);
-        } else {
-          setTenant(null);
-        }
-        setIsSuperadmin(false);
-        localStorage.setItem('role', user.role);
-      }
-      
-      setUser(user);
-      localStorage.removeItem('is_impersonating');
-      setIsImpersonating(false);
-      
-      return response.data;
-    } catch (error) {
-      console.error('❌ Login error:', error);
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [
+    isLoading,
+    setIsLoading,
+  ] = useState(true);
 
-  const register = async (data: RegisterData) => {
-    setIsLoading(true);
-    try {
-      const response = await api.post<AuthResponse>('/register', data);
-      const { user, token, tenant } = response.data;
-      
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('tenant', JSON.stringify(tenant));
-      localStorage.setItem('is_superadmin', 'false');
-      localStorage.setItem('role', user.role);
-      
-      // CRITICAL: Save tenant domain for API headers
-      if (tenant?.domain) {
-        localStorage.setItem('tenant_domain', tenant.domain);
-        console.log('✅ Registration - saved tenant_domain:', tenant.domain);
-      }
-      
-      setUser(user);
-      setTenant(tenant || null);
-      setIsSuperadmin(false);
-      setIsImpersonating(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [
+    isSuperadmin,
+    setIsSuperadmin,
+  ] = useState(false);
 
-  const logout = async () => {
-    try {
-      await api.post('/logout');
-    } catch (e) {
-      // Ignore errors on logout
-    }
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('tenant');
-    localStorage.removeItem('tenant_domain');
-    localStorage.removeItem('is_superadmin');
-    localStorage.removeItem('role');
-    localStorage.removeItem('is_impersonating');
+  const [
+    isImpersonating,
+    setIsImpersonating,
+  ] = useState(false);
+
+  const resetState = (): void => {
     setUser(null);
     setTenant(null);
+    setImpersonator(null);
     setIsSuperadmin(false);
     setIsImpersonating(false);
   };
 
-  const refreshUser = async () => {
+  const applyPlatformSession = (
+    sessionUser: User,
+    token: string
+  ): void => {
+    persistPlatformAuthentication(
+      sessionUser,
+      token
+    );
+
+    setUser(sessionUser);
+    setTenant(null);
+    setIsSuperadmin(true);
+    setIsImpersonating(false);
+    setImpersonator(null);
+  };
+
+  const applyTenantSession = (
+    sessionUser: User,
+    sessionTenant: Tenant,
+    token: string,
+    impersonating: boolean
+  ): void => {
+    persistTenantAuthentication(
+      sessionUser,
+      sessionTenant,
+      token,
+      impersonating
+    );
+
+    setUser(sessionUser);
+    setTenant(sessionTenant);
+    setIsSuperadmin(false);
+    setIsImpersonating(
+      impersonating
+    );
+  };
+
+  useEffect(() => {
+    const restoreSession = (): void => {
+      const stored =
+        readStoredAuthentication();
+
+      if (!stored.token || !stored.user) {
+        clearAllAuthentication();
+        resetState();
+        setIsLoading(false);
+
+        return;
+      }
+
+      if (stored.isImpersonating) {
+        const platformSession =
+          readPlatformSession();
+
+        if (
+          !platformSession ||
+          !stored.tenant?.domain
+        ) {
+          clearAllAuthentication();
+          resetState();
+          setIsLoading(false);
+
+          return;
+        }
+
+        persistTenantDomain(
+          stored.tenant.domain
+        );
+
+        setUser(stored.user);
+        setTenant(stored.tenant);
+        setImpersonator(
+          platformSession.user
+        );
+        setIsSuperadmin(false);
+        setIsImpersonating(true);
+        setIsLoading(false);
+
+        return;
+      }
+
+      if (stored.isSuperadmin) {
+        removeStoredTenant();
+
+        setUser(stored.user);
+        setTenant(null);
+        setImpersonator(null);
+        setIsSuperadmin(true);
+        setIsImpersonating(false);
+        setIsLoading(false);
+
+        return;
+      }
+
+      if (!stored.tenant?.domain) {
+        clearAllAuthentication();
+        resetState();
+        setIsLoading(false);
+
+        return;
+      }
+
+      persistTenantDomain(
+        stored.tenant.domain
+      );
+
+      setUser(stored.user);
+      setTenant(stored.tenant);
+      setImpersonator(null);
+      setIsSuperadmin(false);
+      setIsImpersonating(false);
+      setIsLoading(false);
+    };
+
+    restoreSession();
+  }, []);
+
+  const login = async (
+    credentials: LoginCredentials
+  ): Promise<AuthResponse> => {
+    setIsLoading(true);
+
     try {
-      const response = await api.get('/user');
-      setUser(response.data.user);
+      clearAllAuthentication();
+
+      const response =
+        await api.post<AuthResponse>(
+          '/login',
+          credentials
+        );
+
+      const {
+        user: sessionUser,
+        token,
+        tenant: sessionTenant,
+        is_superadmin: sessionIsSuperadmin,
+      } = response.data;
+
+      if (sessionIsSuperadmin) {
+        applyPlatformSession(
+          sessionUser,
+          token
+        );
+      } else {
+        if (!sessionTenant?.domain) {
+          throw new Error(
+            'The laboratory session does not contain a tenant domain.'
+          );
+        }
+
+        applyTenantSession(
+          sessionUser,
+          sessionTenant,
+          token,
+          false
+        );
+      }
+
       return response.data;
-    } catch (error) {
-      console.error('Error refreshing user:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const register = async (
+    data: RegisterData
+  ): Promise<void> => {
+    setIsLoading(true);
+
+    try {
+      clearAllAuthentication();
+
+      const response =
+        await api.post<AuthResponse>(
+          '/register',
+          data
+        );
+
+      const {
+        user: sessionUser,
+        token,
+        tenant: sessionTenant,
+      } = response.data;
+
+      if (!sessionTenant?.domain) {
+        throw new Error(
+          'The newly registered laboratory does not contain a tenant domain.'
+        );
+      }
+
+      applyTenantSession(
+        sessionUser,
+        sessionTenant,
+        token,
+        false
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startImpersonation = async (
+    tenantId: number
+  ): Promise<void> => {
+    if (
+      !isSuperadmin ||
+      !user ||
+      user.role !== 'superadmin'
+    ) {
+      throw new Error(
+        'Only a landlord superadmin can enter a tenant maintenance session.'
+      );
+    }
+
+    if (isImpersonating) {
+      throw new Error(
+        'A tenant maintenance session is already active.'
+      );
+    }
+
+    const platformToken =
+      readActiveToken();
+
+    if (!platformToken) {
+      throw new Error(
+        'The landlord session is no longer available.'
+      );
+    }
+
+    const response =
+      await api.post<ImpersonationResponse>(
+        `/landlord/impersonate/${tenantId}`
+      );
+
+    const impersonatedUser =
+      normaliseImpersonatedUser(
+        response.data.user
+      );
+
+    const impersonatedTenant =
+      normaliseImpersonatedTenant(
+        response.data.tenant
+      );
+
+    if (
+      !impersonatedTenant.domain ||
+      !response.data.token
+    ) {
+      throw new Error(
+        'The tenant maintenance session could not be established.'
+      );
+    }
+
+    persistPlatformBackup(
+      user,
+      platformToken
+    );
+
+    applyTenantSession(
+      impersonatedUser,
+      impersonatedTenant,
+      response.data.token,
+      true
+    );
+
+    setImpersonator(user);
+  };
+
+  const stopImpersonation =
+    async (): Promise<void> => {
+      if (!isImpersonating) {
+        return;
+      }
+
+      const platformSession =
+        readPlatformSession();
+
+      if (!platformSession) {
+        clearAllAuthentication();
+        resetState();
+
+        throw new Error(
+          'The landlord session could not be restored. Sign in again.'
+        );
+      }
+
+      /*
+       * Revoke the temporary tenant token first.
+       */
+      try {
+        await api.post('/logout');
+      } catch {
+        // The token may already have expired.
+      }
+
+      applyPlatformSession(
+        platformSession.user,
+        platformSession.token
+      );
+
+      /*
+       * Retain compatibility with the existing
+       * backend impersonation endpoint.
+       */
+      try {
+        await api.post(
+          '/landlord/impersonate/stop'
+        );
+      } catch {
+        // Local restoration is authoritative.
+      }
+
+      clearPlatformSession();
+    };
+
+  const logout =
+    async (): Promise<void> => {
+      if (isImpersonating) {
+        const platformSession =
+          readPlatformSession();
+
+        try {
+          await api.post('/logout');
+        } catch {
+          // Temporary token may already be invalid.
+        }
+
+        if (platformSession) {
+          applyPlatformSession(
+            platformSession.user,
+            platformSession.token
+          );
+
+          try {
+            await api.post('/logout');
+          } catch {
+            // Landlord token may already be invalid.
+          }
+        }
+      } else {
+        try {
+          await api.post('/logout');
+        } catch {
+          // Local logout must still complete.
+        }
+      }
+
+      clearAllAuthentication();
+      resetState();
+    };
+
+  const refreshUser =
+    async (): Promise<void> => {
+      const response =
+        await api.get<{
+          user: User;
+        }>('/user');
+
+      persistActiveUser(
+        response.data.user
+      );
+
+      setUser(response.data.user);
+    };
 
   return (
     <AuthContext.Provider
       value={{
         user,
         tenant,
+        impersonator,
         isLoading,
         isSuperadmin,
         isImpersonating,
+        isAuthenticated:
+          Boolean(user),
         login,
         register,
+        startImpersonation,
+        stopImpersonation,
         logout,
-        isAuthenticated: !!user,
         refreshUser,
       }}
     >
@@ -202,10 +505,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-};
+export const useAuth =
+  (): AuthContextType => {
+    const context =
+      useContext(AuthContext);
+
+    if (!context) {
+      throw new Error(
+        'useAuth must be used within AuthProvider'
+      );
+    }
+
+    return context;
+  };

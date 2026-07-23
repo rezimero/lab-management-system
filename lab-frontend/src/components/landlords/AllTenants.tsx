@@ -1,251 +1,235 @@
-import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  CircularProgress,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Alert,
-  Snackbar,
 } from '@mui/material';
-import { Search, Delete, Refresh, CheckCircle, Cancel } from '@mui/icons-material';
-import api from '../../api/client';
 
-interface Tenant {
-  id: number;
-  name: string;
-  domain: string;
-  is_active: boolean;
-  trial_ends_at: string | null;
-  created_at: string;
-  stats?: {
-    users: number;
-    patients: number;
-    lab_tests: number;
-    test_results: number;
+import TenantActionMenu from './TenantActionMenu';
+import TenantConfirmationDialog from './TenantConfirmationDialog';
+import TenantFormDialog from './TenantFormDialog';
+import TenantManagementHero from './TenantManagementHero';
+
+import {
+  TenantManagementError,
+  TenantManagementLoading,
+} from './TenantManagementStates';
+
+import TenantPasswordResetDialog from './TenantPasswordResetDialog';
+import TenantPortfolio from './TenantPortfolio';
+import TenantSummaryCards from './TenantSummaryCards';
+
+import type {
+  ConfirmationAction,
+  TenantRecord,
+} from './tenantManagementTypes';
+
+import {
+  useTenantManagement,
+} from './useTenantManagement';
+
+const AllTenants = () => {
+  const {
+    search,
+    setSearch,
+    formOpen,
+    setFormOpen,
+    editingTenant,
+    setEditingTenant,
+    passwordTenant,
+    setPasswordTenant,
+    confirmationTenant,
+    setConfirmationTenant,
+    confirmationAction,
+    setConfirmationAction,
+    deleteConfirmation,
+    setDeleteConfirmation,
+    formError,
+    setFormError,
+    passwordError,
+    setPasswordError,
+    menuAnchor,
+    menuTenant,
+    tenants,
+    isPending,
+    isError,
+    isFetching,
+    refetch,
+    createMutation,
+    updateMutation,
+    statusMutation,
+    deleteMutation,
+    passwordMutation,
+    impersonationMutation,
+    filteredTenants,
+    totals,
+    activeTenants,
+    closeMenu,
+    openMenu,
+    openCreateDialog,
+    openEditDialog,
+    openPasswordDialog,
+    openConfirmation,
+    confirmationTitle,
+    confirmationBusy,
+    deleteConfirmed,
+  } = useTenantManagement();
+
+  const closeConfirmation = () => {
+    setConfirmationTenant(null);
+    setConfirmationAction(null);
+    setDeleteConfirmation('');
   };
-}
 
-const AllTenants: React.FC = () => {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [search, setSearch] = useState<string>('');
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<boolean>(false);
-  const [suspendDialogOpen, setSuspendDialogOpen] = useState<boolean>(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
-    open: false,
-    message: '',
-    severity: 'success',
-  });
+  const confirmTenantAction = (
+    tenant: TenantRecord,
+    action: Exclude<
+      ConfirmationAction,
+      null
+    >
+  ) => {
+    if (action === 'delete') {
+      deleteMutation.mutate(
+        tenant
+      );
 
-  const fetchTenants = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/landlord/tenants');
-      setTenants(res.data.tenants || []);
-    } catch (error) {
-      console.error('Error fetching tenants:', error);
-    } finally {
-      setLoading(false);
+      return;
     }
+
+    statusMutation.mutate({
+      tenant,
+      action,
+    });
   };
 
-  useEffect(() => {
-    fetchTenants();
-  }, []);
+  if (isPending) {
+    return (
+      <TenantManagementLoading />
+    );
+  }
 
-  const handleSuspend = async () => {
-    if (!selectedTenant) return;
-    try {
-      const endpoint = selectedTenant.is_active
-        ? `/landlord/tenants/${selectedTenant.id}/suspend`
-        : `/landlord/tenants/${selectedTenant.id}/activate`;
-
-      await api.post(endpoint);
-      setSnackbar({
-        open: true,
-        message: `Tenant ${selectedTenant.is_active ? 'suspended' : 'activated'} successfully`,
-        severity: 'success',
-      });
-      fetchTenants();
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to update tenant status', severity: 'error' });
-    }
-    setSuspendDialogOpen(false);
-    setSelectedTenant(null);
-  };
-
-  const handleDelete = async () => {
-    if (!selectedTenant) return;
-    try {
-      await api.delete(`/landlord/tenants/${selectedTenant.id}`);
-      setSnackbar({ open: true, message: 'Tenant deleted successfully', severity: 'success' });
-      fetchTenants();
-    } catch (error) {
-      setSnackbar({ open: true, message: 'Failed to delete tenant', severity: 'error' });
-    }
-    setDeleteDialogOpen(false);
-    setSelectedTenant(null);
-  };
-
-  const filteredTenants = tenants.filter((tenant) =>
-    tenant.name.toLowerCase().includes(search.toLowerCase()) ||
-    tenant.domain.toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (loading) return <CircularProgress />;
+  if (isError) {
+    return (
+      <TenantManagementError
+        onRetry={() => {
+          void refetch();
+        }}
+      />
+    );
+  }
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h5">🏢 All Tenants</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            size="small"
-            placeholder="Search tenants..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <Button variant="contained" startIcon={<Refresh />} onClick={fetchTenants}>
-            Refresh
-          </Button>
-        </Box>
-      </Box>
+    <Box
+      sx={{
+        display: 'grid',
+        gap: 3,
+      }}
+    >
+      <TenantManagementHero
+        onCreate={openCreateDialog}
+      />
 
-      <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-        Total: {filteredTenants.length} tenants
-      </Typography>
+      <TenantSummaryCards
+        tenantCount={tenants.length}
+        activeTenants={activeTenants}
+        totals={totals}
+      />
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Domain</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Users</TableCell>
-              <TableCell>Patients</TableCell>
-              <TableCell>Tests</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredTenants.map((tenant) => (
-              <TableRow key={tenant.id} hover>
-                <TableCell>{tenant.name}</TableCell>
-                <TableCell>{tenant.domain}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={tenant.is_active ? 'Active' : 'Suspended'}
-                    color={tenant.is_active ? 'success' : 'error'}
-                    size="small"
-                    icon={tenant.is_active ? <CheckCircle /> : <Cancel />}
-                  />
-                </TableCell>
-                <TableCell>{tenant.stats?.users || 0}</TableCell>
-                <TableCell>{tenant.stats?.patients || 0}</TableCell>
-                <TableCell>{tenant.stats?.lab_tests || 0}</TableCell>
-                <TableCell>
-                  <IconButton
-                    size="small"
-                    color={tenant.is_active ? 'warning' : 'success'}
-                    onClick={() => {
-                      setSelectedTenant(tenant);
-                      setSuspendDialogOpen(true);
-                    }}
-                  >
-                    {tenant.is_active ? <Cancel /> : <CheckCircle />}
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    color="error"
-                    onClick={() => {
-                      setSelectedTenant(tenant);
-                      setDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <TenantPortfolio
+        search={search}
+        tenants={filteredTenants}
+        isFetching={isFetching}
+        maintenancePending={
+          impersonationMutation.isPending
+        }
+        onSearchChange={setSearch}
+        onRefresh={() => {
+          void refetch();
+        }}
+        onMaintain={(tenant) => {
+          impersonationMutation.mutate(
+            tenant
+          );
+        }}
+        onManage={openMenu}
+      />
 
-      {/* Suspend/Activate Dialog */}
-      <Dialog open={suspendDialogOpen} onClose={() => setSuspendDialogOpen(false)}>
-        <DialogTitle>{selectedTenant?.is_active ? 'Suspend' : 'Activate'} Tenant</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to {selectedTenant?.is_active ? 'suspend' : 'activate'}
-            tenant &quot;{selectedTenant?.name}&quot;?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSuspendDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleSuspend}
-            variant="contained"
-            color={selectedTenant?.is_active ? 'warning' : 'success'}
-          >
-            {selectedTenant?.is_active ? 'Suspend' : 'Activate'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <TenantActionMenu
+        anchorEl={menuAnchor}
+        tenant={menuTenant}
+        onClose={closeMenu}
+        onEdit={openEditDialog}
+        onResetPassword={
+          openPasswordDialog
+        }
+        onConfirm={openConfirmation}
+      />
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography color="error">
-            ⚠️ Warning: This will permanently delete the tenant and all its data!
-          </Typography>
-          <Typography sx={{ mt: 2 }}>
-            Are you sure you want to delete tenant &quot;{selectedTenant?.name}&quot;? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDelete} variant="contained" color="error">
-            Delete Permanently
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <TenantFormDialog
+        open={formOpen}
+        tenant={editingTenant}
+        submitting={
+          createMutation.isPending ||
+          updateMutation.isPending
+        }
+        serverError={formError}
+        onClose={() => {
+          setFormOpen(false);
+          setEditingTenant(null);
+          setFormError(null);
+        }}
+        onCreate={async (payload) => {
+          await createMutation.mutateAsync(
+            payload
+          );
+        }}
+        onUpdate={async (
+          tenantId,
+          payload
+        ) => {
+          await updateMutation.mutateAsync({
+            tenantId,
+            payload,
+          });
+        }}
+      />
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+      <TenantPasswordResetDialog
+        open={Boolean(passwordTenant)}
+        tenant={passwordTenant}
+        submitting={
+          passwordMutation.isPending
+        }
+        serverError={passwordError}
+        onClose={() => {
+          setPasswordTenant(null);
+          setPasswordError(null);
+        }}
+        onSubmit={async (
+          tenantId,
+          payload
+        ) => {
+          await passwordMutation.mutateAsync({
+            tenantId,
+            payload,
+          });
+        }}
+      />
+
+      <TenantConfirmationDialog
+        tenant={confirmationTenant}
+        action={confirmationAction}
+        title={confirmationTitle}
+        busy={confirmationBusy}
+        deleteConfirmation={
+          deleteConfirmation
+        }
+        deleteConfirmed={
+          deleteConfirmed
+        }
+        onDeleteConfirmationChange={
+          setDeleteConfirmation
+        }
+        onClose={closeConfirmation}
+        onConfirm={confirmTenantAction}
+      />
     </Box>
   );
 };

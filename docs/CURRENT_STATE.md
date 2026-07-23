@@ -2,7 +2,7 @@
 
 Updated:
 
-    19 July 2026
+    23 July 2026
 
 This document is the current repository handover snapshot.
 
@@ -16,121 +16,139 @@ Repository:
 
     lab-management-system
 
-Remote:
-
-    https://github.com/rezimero/lab-management-system.git
-
 Current branch:
 
-    feature/laboratory-reporting
+    feature/frontend-vite-migration
 
-Branch base:
+Current HEAD:
 
-    560b359
-    Merge pull request #7 from rezimero/feature/test-processing-results
+    e06166e
+    refactor landlord tenant management presentation
 
-Previous completed milestone tag:
+Current worktree:
 
-    baseline-test-processing-results-2523
+    clean
 
-Previous tag target:
+Current frontend tags:
 
-    560b359
+    frontend-vite-baseline
+    frontend-auth-refactor-wave-1
+    frontend-tenant-management-wave-1
+    frontend-tenant-management-wave-2
 
-The previous result-processing milestone was merged and tagged. The current laboratory-reporting milestone is implemented and fully validated on this milestone branch.
+Tag targets:
 
----
+    frontend-vite-baseline
+        64495da
 
-## 2. Previous Completed Result Milestone
+    frontend-auth-refactor-wave-1
+        f01fe8a
 
-Milestone:
+    frontend-tenant-management-wave-1
+        e7d3a90
 
-    Test processing and test-result workflow
+    frontend-tenant-management-wave-2
+        e06166e
 
-Milestone status:
+Recent commits:
 
-    Completed
-    Merged into develop
-    Baseline tag baseline-test-processing-results-2523 created
-    Focused, regression and full project suites passed
-    Development tenant migration and API smoke test completed
+    e06166e refactor landlord tenant management presentation
+    e7d3a90 refactor landlord tenant management orchestration
+    076e3d5 test stabilize landlord tenant management characterization
+    e80123c test characterize landlord tenant management
+    f01fe8a refactor frontend API authentication storage
+    f002eee test characterize frontend API client interceptors
+    f35e09b refactor frontend authentication session storage
+    4cabf8c test characterize frontend authentication context
+    64495da chore remove obsolete backup source files
+    6c9475b refactor Vite frontend application shell
 
----
+The repository root contains no untracked investigation artifacts at this checkpoint.
 
-## 3. Milestone Objectives
+Archived investigation material is outside the repository under:
 
-Completed objectives:
-
-- start processing laboratory order items
-- ensure processing requires a received specimen
-- create one test result per laboratory order item
-- create draft results
-- update draft results
-- validate result completeness before submission
-- submit results for review
-- reject submitted results with a required reason
-- edit rejected results and return them to draft
-- resubmit corrected results
-- approve submitted results
-- make approved results immutable
-- complete order items after result approval
-- prevent order completion until every active item has an approved result
-- query and filter test results
-- provide result statistics
-- exclude unlinked legacy rows from active workflow queries
-- enforce tenant role authorization
-- enforce cross-tenant isolation
-- audit entry, submission and review users
-- audit entry, submission and review timestamps
-- use UUID public route binding
+    C:\Users\Rezi\Documents\Rezhel-Refactor-Artifacts\20260723
 
 ---
 
-## 4. Implemented API Contract
+## 2. Non-Negotiable Architecture
 
-### Order-item processing
+Preserve:
 
-    POST /api/laboratory-order-items/{uuid}/start
+- database-per-tenant MySQL isolation
+- landlord database for tenant metadata and Sanctum tokens
+- `X-Tenant-Domain` tenant resolution
+- `SetTenantContext:required` before `auth:sanctum`
+- tenant-bound Sanctum tokens
+- `App\Models\Tenant\User` as the authenticated tenant model
+- UUID public route binding
+- order-item-driven test results
+- one result per laboratory order item
+- result workflow state machine
+- approved-result order-completion guard
+- immutable laboratory report snapshots
+- tenant database transactions for workflow mutations
+- isolated automated MySQL tenant tests
 
-### Result creation
+The test landlord database must be:
 
-    POST /api/laboratory-order-items/{uuid}/test-result
+    lab_saas_landlord_test
 
-### Result query
+Automated tests must never target:
 
-    GET /api/test-results
-    GET /api/test-results/stats
-    GET /api/test-results/{uuid}
+    lab_saas_landlord
 
-### Result editing
+---
 
-    PUT /api/test-results/{uuid}
+## 3. Tenant Context Restoration
 
-### Result workflow
+Tenant operations and tests must restore both database and authentication context:
 
-    POST /api/test-results/{uuid}/submit
-    POST /api/test-results/{uuid}/approve
-    POST /api/test-results/{uuid}/reject
+    Config::set('database.default', 'landlord');
+    Config::set('auth.defaults.guard', 'landlord');
+    Auth::forgetGuards();
 
-The legacy standalone result creation, deletion and patient-result routes are not part of the active tenant result workflow.
+Failure to restore both contexts can leak tenant state into later landlord operations or tests.
+
+---
+
+## 4. Completed Backend Milestones
+
+Completed and validated backend capabilities include:
+
+- landlord and tenant authentication
+- tenant provisioning and cleanup
+- tenant-bound Sanctum token isolation
+- departments
+- tenant users
+- patients
+- laboratory test catalogue
+- laboratory orders
+- specimens and replacement lineage
+- processing readiness
+- order-item processing
+- draft, submit, reject, correct and approve result workflow
+- approved-result order-completion guard
+- tenant result authorization
+- tenant-isolated result queries and statistics
+- immutable laboratory report snapshots
+- tenant-isolated report retrieval and generation
+
+Latest confirmed backend baseline:
+
+    133 tests passed
+    3,458 assertions
+
+This backend baseline was not rerun during the frontend documentation synchronization.
 
 ---
 
 ## 5. Result Workflow
 
-Current result states:
-
-    draft
-    submitted
-    approved
-    rejected
-
-Allowed transitions:
+States:
 
     draft
         → submitted
-
-    submitted
         → approved
 
     submitted
@@ -143,522 +161,410 @@ Allowed transitions:
 
 Rules:
 
-- one result is allowed per laboratory order item
+- one result per laboratory order item
 - result creation requires an in-progress order item
-- result creation requires the parent order to be in progress
-- result creation requires a received specimen covering the item
+- the parent order must be in progress
+- a received specimen must cover the order item
 - draft results are editable
 - submitted results are immutable
 - rejected results are editable
-- editing a rejected result clears review information and returns it to draft
+- editing a rejected result clears review state and returns it to draft
 - rejection requires a reason
 - approved results are terminal
 - approval completes the linked order item
 
----
+An order may complete only when every active order item:
 
-## 6. Laboratory Order Completion Rule
-
-An in-progress laboratory order may move to completed only when every active order item:
-
-- has status `completed`
-- has a test result
-- has an approved test result
-
-The generic order-status endpoint cannot bypass specimen collection, processing or result approval requirements.
+- is completed
+- has a result
+- has an approved result
 
 ---
 
-## 7. Tenant Authorization
+## 6. Active Backend API Contract
 
-Authenticated tenant model:
+Order-item processing:
 
-    App\Models\Tenant\User
+    POST /api/laboratory-order-items/{uuid}/start
 
-Tenant result authorization catalogue:
+Result creation:
 
-    App\Support\Tenant\TenantUserPermissionCatalog
+    POST /api/laboratory-order-items/{uuid}/test-result
 
-Current permissions:
+Result query:
 
-### Admin
+    GET /api/test-results
+    GET /api/test-results/stats
+    GET /api/test-results/{uuid}
 
-- view results
-- start processing
-- create results
-- edit results
-- submit results
-- approve results
-- reject results
+Result editing:
 
-### Laboratory technician
+    PUT /api/test-results/{uuid}
 
-- view results
-- start processing
-- create results
-- edit results
-- submit results
+Result workflow:
 
-### Doctor
+    POST /api/test-results/{uuid}/submit
+    POST /api/test-results/{uuid}/approve
+    POST /api/test-results/{uuid}/reject
 
-- view results
-- approve results
-- reject results
-
-### Receptionist
-
-- view results
-
-Platform superadmin remains landlord-scoped.
-
----
-
-## 8. Result Workflow Migrations
-
-The milestone introduced four tenant migrations:
-
-    2026_07_17_145036_add_processing_metadata_to_laboratory_order_items.php
-
-    2026_07_17_145158_add_workflow_columns_to_test_results.php
-
-    2026_07_17_145217_migrate_legacy_test_results_to_workflow.php
-
-    2026_07_17_145232_enforce_test_result_workflow_constraints.php
-
-Migration responsibilities:
-
-1. Add processing metadata to laboratory order items.
-2. Add result workflow and audit columns.
-3. migrate legacy statuses and audit information.
-4. enforce final result workflow constraints.
-
----
-
-## 9. Development Tenant Migration
-
-Development tenant:
-
-    Tenant ID:
-        12
-
-    Name:
-        Development Laboratory
-
-    Domain:
-        development
-
-    Database:
-        tenant_s4d0mhau_development
-
-Migration result:
-
-    All four result-workflow migrations ran successfully.
-
-Migration batch:
-
-    5
-
-Verified columns:
-
-    test_results.uuid
-    test_results.laboratory_order_item_id
-    test_results.entered_by
-    test_results.submitted_at
-    test_results.reviewed_at
-
-    laboratory_order_items.processing_started_at
-    laboratory_order_items.processing_started_by
-    laboratory_order_items.completed_at
-
-Every schema verification returned:
-
-    true
-
----
-
-## 10. Development API Smoke Test
-
-Development administrator:
-
-    admin@development.test
-
-The administrator record was verified as:
-
-    user exists
-    role admin
-    active
-    password hash present
-
-A local development password was reset securely for the smoke test.
-
-The password was not written to:
-
-- source code
-- documentation
-- Git
-- command history as plain text
-- chat output
-
-Smoke-test results:
-
-    Login:
-        successful
-
-    Authentication guard:
-        tenant
-
-    Tenant domain:
-        development
-
-    User role:
-        admin
-
-    GET /api/test-results:
-        successful
-
-    GET /api/test-results/stats:
-        successful
-
-    Returned order-driven results:
-        0
-
-    Result-list total:
-        0
-
-    Result-statistics total:
-        0
-
-    Draft:
-        0
-
-    Submitted:
-        0
-
-    Approved:
-        0
-
-    Rejected:
-        0
-
-    Logout:
-        successful
-
-Zero results are valid because the development tenant currently has no order-driven test-result records.
-
----
-
-## 11. Focused Result Tests
-
-Complete result test suite:
-
-    7 tests passed
-    391 assertions
-    71.75 seconds
-
-Passing result tests:
-
-    TenantTestResultAuthorizationTest
-    TenantTestResultCompletionReadinessTest
-    TenantTestResultDraftTest
-    TenantTestResultIsolationTest
-    TenantTestResultQueryTest
-    TenantTestResultValidationTest
-    TenantTestResultWorkflowTest
-
-Coverage includes:
-
-- processing start
-- draft creation
-- draft editing
-- duplicate-result prevention
-- submission validation
-- rejection
-- rejected-result correction
-- resubmission
-- approval
-- order-item completion
-- order completion readiness
-- query filtering
-- result statistics
-- pagination
-- authorization
-- tenant isolation
-
----
-
-## 12. Laboratory Order and Specimen Regression Tests
-
-Regression result:
-
-    42 tests passed
-    1,110 assertions
-    694.31 seconds
-
-Validated areas:
-
-- laboratory-order creation
-- laboratory-order queries
-- order status transitions
-- order validation
-- order transactions
-- specimen collection
-- specimen receiving
-- specimen rejection
-- specimen replacement
-- specimen replacement lineage
-- processing readiness
-- specimen queries
-- specimen statistics
-- tenant isolation
-
-No confirmed regression was introduced by the result workflow.
-
----
-
-## 13. Full Project Test Suite
-
-Latest complete project result:
-
-    112 tests passed
-    2,953 assertions
-    1,208.24 seconds
-
-Validated modules:
-
-- landlord authentication
-- tenant authentication
-- Sanctum token isolation
-- tenant provisioning
-- tenant cleanup
-- landlord dashboard
-- landlord tenant management
-- departments
-- users
-- patients
-- laboratory tests
-- laboratory orders
-- specimens
-- test processing
-- test results
-- laboratory reports
-
-There are no failing automated tests.
-
----
-
-## 14. Current Production Implementation Areas
-
-Modified tracked files include:
-
-    app/Http/Resources/LaboratoryOrderItemResource.php
-
-    app/Models/LaboratoryOrderItem.php
-
-    app/Models/Tenant/User.php
-
-    app/Models/TestResult.php
-
-    app/Services/Tenant/LaboratoryOrder/LaboratoryOrderStatusService.php
-
-    routes/api/tenant.php
-
-    tests/Feature/Tenant/LaboratoryOrder/
-        TenantLaboratoryOrderStatusTransitionTest.php
-
-New implementation areas include:
-
-    app/Http/Controllers/Api/Tenant/
-        LaboratoryOrderItemProcessingController.php
-        TestResultController.php
-        TestResultWorkflowController.php
-        LaboratoryReportController.php
-
-    app/Http/Requests/TestResult/
-
-    app/Http/Resources/
-        TestResultResource.php
-
-    app/Services/Tenant/LaboratoryOrder/
-        LaboratoryOrderItemProcessingService.php
-
-    app/Services/Tenant/TestResult/
-
-    app/Support/Tenant/
-        TenantUserPermissionCatalog.php
-
-    database/migrations/tenant/
-        result workflow migrations
-        2026_07_18_162846_create_laboratory_reports_table.php
-
-    routes/api/tenant/
-        test-results.php
-        laboratory-reports.php
-
-    tests/Feature/Tenant/TestResult/
-    tests/Feature/Tenant/LaboratoryReport/
-
-    tests/Support/Tenant/
-        TestResultManagementTestCase.php
-        LaboratoryReportTestCase.php
-
-Use `git status --short` as the authoritative final file list.
-
----
-
-## 15. Documentation Handover Pack
-
-The repository now contains:
-
-    docs/AI_ENGINEER_BRIEF.md
-
-    docs/ARCHITECTURE_DECISIONS.md
-
-    docs/CURRENT_STATE.md
-
-    docs/PROJECT_HANDOVER.md
-
-    docs/TESTING_AND_OPERATIONS.md
-
-These documents are the durable project handover mechanism between:
-
-- ChatGPT accounts
-- AI engineering assistants
-- human developers
-- future maintainers
-
-A new engineer must read these files before proposing implementation changes.
-
----
-
-## 16. Known Technical Debt
-
-Known but non-blocking items:
-
-- legacy test-result columns remain for compatibility
-- legacy result records may have no order-item relationship
-- old landlord result utilities may still depend on the legacy result structure
-- tenant authorization and landlord authorization use different user models
-- the old role-and-permission seeder still reflects historical tenant permission architecture
-- frontend result screens still use the legacy result structure
-- frontend API client authorization-header logging must be removed before production
-- some test-support files exceed the preferred line-count target
-- PDF rendering and export are not yet implemented; issued reports currently use immutable JSON snapshots
-
-Do not perform broad cleanup before the next planned milestone.
-
----
-
-## 17. Current Blockers
-
-No confirmed production blocker exists.
-
----
-
-## 18. Current Laboratory Reporting Milestone
-
-Branch:
-
-    feature/laboratory-reporting
-
-Status:
-
-    Implementation complete
-    Focused report suite passed
-    Adjacent clinical regression suite passed
-    Full project suite passed
-    Development tenant migration completed
-    Manual report API smoke test not yet performed
-    Ready for documentation review and Git milestone completion
-
-Implemented API:
+Laboratory reporting:
 
     POST /api/laboratory-orders/{laboratoryOrder}/report
     GET  /api/laboratory-orders/{laboratoryOrder}/report
     GET  /api/laboratory-reports
     GET  /api/laboratory-reports/{laboratoryReport}
 
-Persistence migration:
-
-    2026_07_18_162846_create_laboratory_reports_table.php
-
-Development tenant migration:
-
-    tenant_s4d0mhau_development
-    batch 6
-    table laboratory_reports verified
-    all 12 expected columns verified
-
-Report rules:
-
-- one issued report per laboratory order
-- UUID public route binding
-- unique report number
-- completed orders only
-- at least one active order item
-- all active order items must be completed
-- all active order items must have approved results
-- laboratory, patient, order and result data are snapshotted
-- issued report models are immutable
-- report retrieval is tenant isolated
-- receptionist users may view but not generate reports
-- lab technicians, doctors and administrators may generate reports
-- PDF rendering is deferred
-
-Focused report result:
-
-    11 tests passed
-    430 assertions
-    81.83 seconds
-
-Adjacent clinical regression result:
-
-    49 tests passed
-    1,501 assertions
-    549.69 seconds
-
-Latest full project result:
-
-    112 tests passed
-    2,953 assertions
-    1,208.24 seconds
-
-No confirmed regression was introduced by the laboratory-reporting milestone.
-
-No automated test failure exists.
-
-No migration failure exists.
-
-No development smoke-test failure exists.
-
-Remaining work is repository review and Git milestone completion.
+PDF rendering remains deferred until a compatible renderer is deliberately selected.
 
 ---
 
-## 18. Immediate Next Steps
+## 7. Active Frontend Toolchain
 
-Required order:
+Frontend root:
 
-1. stop the local Laravel development server
-2. normalize this document as UTF-8 without BOM
-3. run `git diff --check`
-4. inspect all tracked and untracked files
-5. inspect the complete milestone diff
-6. stage only the reviewed milestone files
-7. inspect the staged diff
-8. create the local milestone commit
-9. push the branch
-10. create the GitHub pull request
-11. merge after review
-12. create the milestone baseline tag
+    lab-frontend
+
+Current stack:
+
+- React 19.2.7
+- Vite 8.1.5
+- TypeScript 6.0.3
+- Vitest 4.1.10
+- React Router DOM 7.18.1
+- Axios 1.18.1
+- MUI 9.x
+- Testing Library React 16.3.2
+- user-event 14.6.1
+- jsdom 29.1.1
+
+Build command:
+
+    npm run build
+
+Build pipeline:
+
+    tsc --noEmit && vite build
+
+Create React App is not the active frontend toolchain.
 
 ---
 
-## 19. Git Continuation
+## 8. Completed Frontend Foundation Milestones
 
-Use Git history and milestone tags as the authoritative source for commit state.
+### Vite application baseline
 
-Before continuing work, verify:
+Completed:
+
+- Vite application shell
+- TypeScript build validation
+- Vitest test runner
+- obsolete backup source removal
+- stable baseline tag
+
+Checkpoint:
+
+    frontend-vite-baseline
+    64495da
+
+### Authentication characterization and refactor
+
+Completed:
+
+- `AuthContext` behavior characterization
+- API-client interceptor characterization
+- authentication type extraction
+- API session mapping extraction
+- authentication storage extraction
+- API authentication storage consolidation
+- bearer-token and tenant-header behavior preservation
+- 401 and impersonation behavior preservation
+
+Checkpoints:
+
+    4cabf8c test characterize frontend authentication context
+    f35e09b refactor frontend authentication session storage
+    f002eee test characterize frontend API client interceptors
+    f01fe8a refactor frontend API authentication storage
+    frontend-auth-refactor-wave-1
+
+### Landlord tenant-management characterization and refactor
+
+Completed:
+
+- 14-test tenant-management characterization boundary
+- test stabilization without global timeout increases
+- tenant API operation extraction
+- tenant types and selector extraction
+- React Query and interaction orchestration extraction
+- presentation decomposition
+- exact-domain deletion protection preservation
+- tenant maintenance impersonation preservation
+
+Checkpoints:
+
+    e80123c test characterize landlord tenant management
+    076e3d5 test stabilize landlord tenant management characterization
+    e7d3a90 refactor landlord tenant management orchestration
+    e06166e refactor landlord tenant management presentation
+    frontend-tenant-management-wave-1
+    frontend-tenant-management-wave-2
+
+---
+
+## 9. Frontend Authentication Structure
+
+Current files:
+
+    lab-frontend/src/auth/authTypes.ts
+    lab-frontend/src/auth/authSessionMapper.ts
+    lab-frontend/src/auth/authStorage.ts
+    lab-frontend/src/contexts/AuthContext.tsx
+    lab-frontend/src/api/client.ts
+
+Characterized public `AuthContext` interface:
+
+- `user`
+- `tenant`
+- `impersonator`
+- `isLoading`
+- `isSuperadmin`
+- `isImpersonating`
+- `isAuthenticated`
+- `login`
+- `register`
+- `startImpersonation`
+- `stopImpersonation`
+- `logout`
+- `refreshUser`
+
+API-client invariants include:
+
+- attach the current bearer token
+- remove stale authorization headers
+- include stored or recovered tenant domain for tenant requests
+- exclude tenant header for platform superadmins
+- clean malformed tenant storage
+- clear invalid sessions on ordinary 401 responses
+- preserve login and registration exception handling
+- preserve impersonated logout behavior
+
+---
+
+## 10. Landlord Tenant-Management Structure
+
+Route-level composition:
+
+    lab-frontend/src/components/landlords/AllTenants.tsx
+
+Current line count:
+
+    237
+
+The original component was:
+
+    1,541 lines
+
+Orchestration and data modules:
+
+    tenantManagementApi.ts
+    tenantManagementSelectors.ts
+    tenantManagementTypes.ts
+    useTenantManagement.ts
+
+Presentation modules:
+
+    TenantManagementStates.tsx
+    TenantManagementHero.tsx
+    TenantSummaryCards.tsx
+    TenantPortfolio.tsx
+    TenantPortfolioRow.tsx
+    TenantActionMenu.tsx
+    TenantConfirmationDialog.tsx
+
+Existing focused dialogs remain:
+
+    TenantFormDialog.tsx
+    TenantPasswordResetDialog.tsx
+
+Characterized behavior:
+
+- loading and error states
+- array and paginated tenant response shapes
+- aggregate statistics
+- empty portfolio
+- retry
+- case-insensitive search by name, domain and database
+- create
+- update
+- suspend
+- activate
+- exact-domain permanent deletion
+- administrator password reset
+- maintenance impersonation and dashboard navigation
+- mutation failure feedback
+- tenant and landlord dashboard cache invalidation
+
+`useTenantManagement.ts` remains above the preferred 300-line review threshold but is cohesive and validated. Do not split it merely for line count.
+
+---
+
+## 11. Current Frontend Validation Baseline
+
+Focused tenant-management suite:
+
+    1 test file passed
+    14 tests passed
+
+Complete frontend suite:
+
+    5 test files passed
+    47 tests passed
+
+Passing files:
+
+    src/contexts/AuthContext.test.tsx
+        15 tests
+
+    src/components/PrivateRoute.test.tsx
+        4 tests
+
+    src/components/landlords/AllTenants.test.tsx
+        14 tests
+
+    src/api/client.test.ts
+        13 tests
+
+    src/App.test.tsx
+        1 test
+
+Production build:
+
+    TypeScript validation passed
+    Vite build passed
+
+Commands:
+
+    cd lab-frontend
+    npm test -- --run
+    npm run build
+
+---
+
+## 12. Testing and Refactor Discipline
+
+For each frontend behavior change:
+
+1. inspect the active component, API client and context
+2. locate or create characterization coverage
+3. run the focused test
+4. make the smallest responsible change
+5. run the focused test again
+6. run the full frontend suite
+7. run `npm run build`
+8. run `git diff --check`
+9. stage exact paths only
+10. compare intended paths with `git diff --cached --name-only`
+11. commit only passing code
+12. create a tag only at a stable wave boundary
+
+Do not use:
+
+    git add .
+
+Do not raise global test timeouts to hide a slow test without identifying the cause.
+
+---
+
+## 13. Known Technical Debt
+
+Known but non-blocking items:
+
+- legacy test-result columns remain for compatibility
+- legacy result rows may lack an order-item relationship
+- old landlord result utilities may still use the legacy shape
+- tenant authorization and landlord authorization use different user models
+- the historical role-and-permission seeder does not describe the active tenant authorization path
+- frontend result screens still require alignment with the order-item-driven result API
+- frontend report screens still require immutable-report API integration
+- some test-support and orchestration files exceed the preferred line-count target
+- PDF rendering and export are not implemented
+
+Resolved items that must not remain in technical-debt lists:
+
+- Vite migration
+- Create React App removal as active tooling
+- frontend authorization-header logging
+- authentication-storage decomposition
+- landlord tenant-management decomposition
+
+---
+
+## 14. Current Blockers
+
+No confirmed production blocker exists.
+
+No frontend test failure exists.
+
+No frontend build failure exists.
+
+No uncommitted source change exists.
+
+---
+
+## 15. Current Milestone Status
+
+Milestone:
+
+    Frontend Vite migration and foundation refactor
+
+Status:
+
+    Vite migration complete
+    authentication foundation characterized and refactored
+    landlord tenant management characterized and refactored
+    focused tests passed
+    full frontend suite passed
+    production build passed
+    checkpoint tags created
+    worktree clean
+    documentation synchronization in progress
+
+---
+
+## 16. Immediate Next Task
+
+Before changing frontend result or report behavior:
+
+1. locate the active result and report routes, screens and API calls
+2. inspect their current legacy data assumptions
+3. map the backend result and report contracts
+4. create characterization tests for the current user-visible behavior
+5. freeze the intended API integration boundary
+6. implement the smallest integration batch
+7. preserve tenant headers, authentication and route protection
+8. run focused tests, the full frontend suite and the production build
+
+Do not begin by broadly rewriting the result interface.
+
+---
+
+## 17. Git Continuation
+
+Before continuing:
 
     git branch --show-current
     git status --short
-    git log -5 --oneline
+    git log -8 --oneline --decorate
+    git tag --list "frontend-*"
+
+Expected branch:
+
+    feature/frontend-vite-migration
+
+Expected HEAD:
+
+    e06166e
+
+Expected worktree:
+
+    clean

@@ -1,126 +1,113 @@
 import axios, {
+  AxiosError,
   AxiosInstance,
   InternalAxiosRequestConfig,
-  AxiosError,
 } from 'axios';
 
+import {
+  clearAllAuthentication,
+  readTenantDomain,
+} from '../auth/authStorage';
+
+const apiUrl =
+  import.meta.env.VITE_API_URL?.trim() ||
+  'http://127.0.0.1:8000/api';
+
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+  baseURL: apiUrl,
+
   headers: {
-    'Content-Type': 'application/json',
     Accept: 'application/json',
+    'Content-Type': 'application/json',
   },
-  // IMPORTANT:
-  // We use Bearer tokens, NOT Sanctum cookie authentication.
-  // Therefore withCredentials must be false (or omitted).
+
   withCredentials: false,
 });
 
-// ============================================================
-// REQUEST INTERCEPTOR - Adds Bearer Token and Tenant Domain
-// ============================================================
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
-    console.log('========================================');
-    console.log('🔵 INTERCEPTOR - Adding headers');
+  (
+    config: InternalAxiosRequestConfig
+  ): InternalAxiosRequestConfig => {
+    const token =
+      localStorage.getItem('token');
 
-    const token = localStorage.getItem('token');
-    const isSuperadmin = localStorage.getItem('is_superadmin') === 'true';
-    let tenantDomain = localStorage.getItem('tenant_domain');
+    const isSuperadmin =
+      localStorage.getItem(
+        'is_superadmin'
+      ) === 'true';
 
-    console.log('📌 Token:', token ? '✅ Present' : '❌ Missing');
-    console.log('📌 Is Superadmin:', isSuperadmin);
-    console.log('📌 Tenant Domain:', tenantDomain || '❌ Missing');
-
-    // Always send Bearer token
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('✅ Authorization header added');
-    }
-
-    // Tenant users require tenant domain
-    if (!isSuperadmin) {
-      if (!tenantDomain) {
-        const tenantStr = localStorage.getItem('tenant');
-
-        if (tenantStr) {
-          try {
-            const tenant = JSON.parse(tenantStr);
-
-            if (tenant?.domain) {
-              tenantDomain = tenant.domain;
-              localStorage.setItem('tenant_domain', tenant.domain);
-
-              console.log(
-                '✅ Restored tenant_domain from tenant:',
-                tenant.domain
-              );
-            }
-          } catch (err) {
-            console.error('Failed to parse tenant object:', err);
-          }
-        }
-      }
-
-      if (tenantDomain) {
-        config.headers['X-Tenant-Domain'] = tenantDomain;
-        console.log(
-          '✅ X-Tenant-Domain header added:',
-          tenantDomain
-        );
-      } else {
-        console.warn(
-          '⚠️ Tenant user has no tenant domain stored.'
-        );
-      }
+      config.headers.Authorization =
+        `Bearer ${token}`;
     } else {
-      console.log(
-        '👑 Superadmin request - skipping X-Tenant-Domain header'
-      );
+      delete config.headers.Authorization;
     }
 
-    console.log('📤 Final Headers:', config.headers);
-    console.log('📤 URL:', config.url);
-    console.log('========================================');
+    if (isSuperadmin) {
+      delete config.headers[
+        'X-Tenant-Domain'
+      ];
+
+      return config;
+    }
+
+    const tenantDomain =
+      readTenantDomain();
+
+    if (tenantDomain) {
+      config.headers[
+        'X-Tenant-Domain'
+      ] = tenantDomain;
+    } else {
+      delete config.headers[
+        'X-Tenant-Domain'
+      ];
+    }
 
     return config;
   },
-  (error: AxiosError) => {
-    console.error('❌ Request Interceptor Error:', error);
-    return Promise.reject(error);
-  }
+
+  (error: AxiosError) =>
+    Promise.reject(error)
 );
 
-// ============================================================
-// RESPONSE INTERCEPTOR
-// ============================================================
 api.interceptors.response.use(
-  (response) => {
-    console.log(
-      '✅ API Response:',
-      response.status,
-      response.config.url
-    );
-    return response;
-  },
+  (response) => response,
+
   (error: AxiosError) => {
-    console.error(
-      '❌ API Error:',
-      error.response?.status,
-      error.response?.data
-    );
-
     if (error.response?.status === 401) {
-      console.warn('🔒 Unauthorized. Clearing local storage.');
+      const requestUrl =
+        error.config?.url ?? '';
 
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      localStorage.removeItem('tenant');
-      localStorage.removeItem('tenant_domain');
-      localStorage.removeItem('is_superadmin');
-      localStorage.removeItem('role');
+      const isAuthenticationRequest =
+        requestUrl.endsWith('/login') ||
+        requestUrl.endsWith('/register');
 
-      window.location.href = '/login';
+      const isImpersonationLogout =
+        requestUrl.endsWith('/logout') &&
+        localStorage.getItem(
+          'is_impersonating'
+        ) === 'true';
+
+      /*
+       * During impersonation shutdown, AuthContext
+       * must be allowed to restore the landlord
+       * session even when the temporary tenant token
+       * has already expired.
+       */
+      if (isImpersonationLogout) {
+        return Promise.reject(error);
+      }
+
+      clearAllAuthentication();
+
+      if (
+        !isAuthenticationRequest &&
+        window.location.pathname !==
+          '/login'
+      ) {
+        window.location.assign('/login');
+      }
     }
 
     return Promise.reject(error);

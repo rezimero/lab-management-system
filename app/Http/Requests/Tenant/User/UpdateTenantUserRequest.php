@@ -22,27 +22,56 @@ class UpdateTenantUserRequest extends FormRequest
         return [
             'name' => [
                 'sometimes',
+                'required',
                 'string',
                 'max:255',
             ],
+
             'email' => [
                 'sometimes',
+                'required',
                 'string',
                 'email',
                 'max:255',
-                Rule::unique(TenantUser::class, 'email')
-                    ->ignore($this->targetUserId()),
+                Rule::unique(
+                    TenantUser::class,
+                    'email'
+                )->ignore(
+                    $this->targetUserId()
+                ),
             ],
+
             'password' => [
                 'sometimes',
+                'nullable',
                 'string',
                 'min:8',
+                'max:255',
             ],
+
+            'password_confirmation' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'current_password' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
             'role' => [
                 'sometimes',
+                'required',
                 'string',
-                Rule::in(TenantUserRoleCatalog::keys()),
+                Rule::in(
+                    TenantUserRoleCatalog::keys()
+                ),
             ],
+
             'is_active' => [
                 'sometimes',
                 'boolean',
@@ -58,7 +87,8 @@ class UpdateTenantUserRequest extends FormRequest
             return $user->getKey();
         }
 
-        return is_int($user) || is_string($user)
+        return is_int($user)
+            || is_string($user)
             ? $user
             : null;
     }
