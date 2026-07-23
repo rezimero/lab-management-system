@@ -3,6 +3,7 @@
 namespace App\Services\Authentication;
 
 use App\Models\Tenant;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -46,6 +47,9 @@ class TenantSwitcher
         DB::disconnect('tenant');
 
         Config::set('database.default', 'landlord');
+        Config::set('auth.defaults.guard', 'landlord');
+
+        Auth::forgetGuards();
 
         DB::purge('landlord');
 

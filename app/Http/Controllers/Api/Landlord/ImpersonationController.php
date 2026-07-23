@@ -5,88 +5,136 @@ namespace App\Http\Controllers\Api\Landlord;
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use App\Services\Landlord\TenantContextRunner;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class ImpersonationController extends Controller
 {
+    public function __construct(
+        protected TenantContextRunner $tenantContextRunner
+    ) {
+    }
+
     /**
-     * Impersonate a tenant (Enter any tenant as admin)
+     * Enter an active tenant as its first administrator or user.
      */
-    public function impersonate(Request $request, $tenantId)
-    {
+    public function impersonate(
+        Request $request,
+        $tenantId
+    ): JsonResponse {
         try {
-            $tenant = Tenant::find($tenantId);
-            if (!$tenant) {
-                return response()->json(['message' => 'Tenant not found'], 404);
+            $tenant = Tenant::query()->find($tenantId);
+
+            if (! $tenant) {
+                return response()->json([
+                    'message' => 'Tenant not found',
+                ], 404);
             }
 
-            // Check if tenant is active
-            if (!$tenant->is_active) {
-                return response()->json(['message' => 'Cannot impersonate a suspended tenant'], 422);
+            if (! $tenant->is_active) {
+                return response()->json([
+                    'message' => (
+                        'Cannot impersonate a suspended tenant'
+                    ),
+                ], 422);
             }
 
-            // Switch to tenant
-            $this->switchToTenant($tenant);
+            $impersonation =
+                $this->tenantContextRunner->run(
+                    $tenant,
+                    function (): ?array {
+                        $user = TenantUser::query()
+                            ->where('role', 'admin')
+                            ->first();
 
-            // Get the first admin user in this tenant
-            $adminUser = TenantUser::where('role', 'admin')->first();
-            if (!$adminUser) {
-                // If no admin, get any user
-                $adminUser = TenantUser::first();
+                        if (! $user) {
+                            $user = TenantUser::query()
+                                ->first();
+                        }
+
+                        if (! $user) {
+                            return null;
+                        }
+
+                        return [
+                            'user' => [
+                                'id' => $user->getKey(),
+                                'name' => $user->name,
+                                'email' => $user->email,
+                                'role' => $user->role,
+                            ],
+                            'token' => $user
+                                ->createToken(
+                                    'impersonation_token'
+                                )
+                                ->plainTextToken,
+                        ];
+                    }
+                );
+
+            if ($impersonation === null) {
+                return response()->json([
+                    'message' => (
+                        'No users found in this tenant'
+                    ),
+                ], 404);
             }
 
-            if (!$adminUser) {
-                return response()->json(['message' => 'No users found in this tenant'], 404);
-            }
+            $user = $impersonation['user'];
 
-            // Store impersonation state
             session([
                 'impersonating' => true,
-                'impersonated_tenant_id' => $tenant->id,
-                'impersonated_tenant_name' => $tenant->name,
-                'impersonated_user_id' => $adminUser->id,
-                'impersonated_user_email' => $adminUser->email,
+                'impersonated_tenant_id' => (
+                    $tenant->getKey()
+                ),
+                'impersonated_tenant_name' => (
+                    $tenant->name
+                ),
+                'impersonated_user_id' => (
+                    $user['id']
+                ),
+                'impersonated_user_email' => (
+                    $user['email']
+                ),
             ]);
 
-            // Switch back to landlord
-            Config::set('database.default', 'landlord');
-            DB::connection('landlord')->reconnect();
-
-            // Create a token for the impersonated user
-            $token = $adminUser->createToken('impersonation_token')->plainTextToken;
-
             return response()->json([
-                'message' => 'Impersonating tenant: ' . $tenant->name,
+                'message' => (
+                    'Impersonating tenant: '
+                    .$tenant->name
+                ),
                 'tenant' => [
-                    'id' => $tenant->id,
+                    'id' => $tenant->getKey(),
                     'name' => $tenant->name,
                     'domain' => $tenant->domain,
                 ],
-                'user' => [
-                    'id' => $adminUser->id,
-                    'name' => $adminUser->name,
-                    'email' => $adminUser->email,
-                    'role' => $adminUser->role,
-                ],
-                'token' => $token,
+                'user' => $user,
+                'token' => $impersonation['token'],
                 'is_impersonating' => true,
             ]);
+        } catch (Throwable $exception) {
+            Log::error(
+                'Error impersonating tenant: '
+                .$exception->getMessage()
+            );
 
-        } catch (\Exception $e) {
-            Log::error('Error impersonating tenant: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to impersonate tenant'], 500);
+            return response()->json([
+                'message' => (
+                    'Failed to impersonate tenant'
+                ),
+            ], 500);
         }
     }
 
     /**
-     * Stop impersonating
+     * Clear the current impersonation session state.
      */
-    public function stopImpersonating(Request $request)
-    {
+    public function stopImpersonating(
+        Request $request
+    ): JsonResponse {
         try {
             session()->forget([
                 'impersonating',
@@ -99,58 +147,52 @@ class ImpersonationController extends Controller
             return response()->json([
                 'message' => 'Stopped impersonating',
             ]);
+        } catch (Throwable $exception) {
+            Log::error(
+                'Error stopping impersonation: '
+                .$exception->getMessage()
+            );
 
-        } catch (\Exception $e) {
-            Log::error('Error stopping impersonation: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to stop impersonation'], 500);
+            return response()->json([
+                'message' => (
+                    'Failed to stop impersonation'
+                ),
+            ], 500);
         }
     }
 
     /**
-     * Get impersonation status
+     * Return the current impersonation session state.
      */
-    public function status()
+    public function status(): JsonResponse
     {
+        $impersonating = (bool) session(
+            'impersonating',
+            false
+        );
+
         return response()->json([
-            'is_impersonating' => session('impersonating', false),
-            'tenant' => session('impersonating') ? [
-                'id' => session('impersonated_tenant_id'),
-                'name' => session('impersonated_tenant_name'),
-            ] : null,
-            'user' => session('impersonating') ? [
-                'id' => session('impersonated_user_id'),
-                'email' => session('impersonated_user_email'),
-            ] : null,
+            'is_impersonating' => $impersonating,
+            'tenant' => $impersonating
+                ? [
+                    'id' => session(
+                        'impersonated_tenant_id'
+                    ),
+                    'name' => session(
+                        'impersonated_tenant_name'
+                    ),
+                ]
+                : null,
+            'user' => $impersonating
+                ? [
+                    'id' => session(
+                        'impersonated_user_id'
+                    ),
+                    'email' => session(
+                        'impersonated_user_email'
+                    ),
+                ]
+                : null,
         ]);
-    }
-
-    /**
-     * Switch to tenant database
-     */
-    private function switchToTenant(Tenant $tenant): void
-    {
-        $host = Config::get('database.connections.landlord.host', env('DB_HOST', '127.0.0.1'));
-        $port = Config::get('database.connections.landlord.port', env('DB_PORT', '3306'));
-        $username = Config::get('database.connections.landlord.username', env('DB_USERNAME', 'root'));
-        $password = Config::get('database.connections.landlord.password', env('DB_PASSWORD', ''));
-
-        Config::set('database.connections.tenant', [
-            'driver' => 'mysql',
-            'host' => $host,
-            'port' => $port,
-            'database' => $tenant->database,
-            'username' => $username,
-            'password' => $password,
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ]);
-
-        DB::purge('tenant');
-        DB::connection('tenant')->reconnect();
-        Config::set('database.default', 'tenant');
-        $tenant->makeCurrent();
     }
 }

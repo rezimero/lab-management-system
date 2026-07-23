@@ -3,6 +3,8 @@
 namespace Tests\Feature\Landlord\Tenant;
 
 use App\Models\Tenant;
+use App\Services\Authentication\TenantSwitcher;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\Landlord\TenantManagementTestCase;
 
@@ -48,6 +50,38 @@ class LandlordTenantContextRestorationTest extends TenantManagementTestCase
                 'message',
                 'User not found in tenant'
             );
+
+        $this->assertLandlordContext();
+    }
+
+    public function test_tenant_switcher_restores_the_landlord_auth_guard(): void
+    {
+        $registration = $this->registerLandlordTestTenant();
+        $tenant = $registration['tenant'];
+
+        app(TenantSwitcher::class)->switch($tenant);
+
+        $this->assertSame(
+            'tenant',
+            config('auth.defaults.guard')
+        );
+
+        $this->assertSame(
+            'tenant',
+            Auth::getDefaultDriver()
+        );
+
+        app(TenantSwitcher::class)->restore();
+
+        $this->assertSame(
+            'landlord',
+            config('auth.defaults.guard')
+        );
+
+        $this->assertSame(
+            'landlord',
+            Auth::getDefaultDriver()
+        );
 
         $this->assertLandlordContext();
     }
