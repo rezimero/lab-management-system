@@ -80,6 +80,91 @@ export interface TestResult {
   tenant_domain?: string;
 }
 
+
+// Backend resource contract used by the order-item result workflow.
+// The legacy TestResult interface above remains temporarily for the
+// form and detail-page migration waves.
+export type TestResultStatus =
+  | 'draft'
+  | 'submitted'
+  | 'approved'
+  | 'rejected';
+
+export interface TestResultValue {
+  name: string;
+  value: string | number | null;
+  unit?: string | null;
+  reference_range?: string | null;
+  flag?: string | null;
+  notes?: string | null;
+}
+
+export interface TestResultUserSummary {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface TestResultPatientSummary {
+  id: number;
+  medical_record_number: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+}
+
+export interface TestResultOrderSummary {
+  uuid: string;
+  order_number: string;
+  priority: string;
+  status: string;
+  patient: TestResultPatientSummary | null;
+}
+
+export interface TestResultOrderItemSummary {
+  uuid: string;
+  test_name: string;
+  category: string | null;
+  status: string;
+  parameters: unknown[];
+  order: TestResultOrderSummary | null;
+}
+
+export interface TestResultResource {
+  uuid: string;
+  status: TestResultStatus;
+  results_data: TestResultValue[];
+  notes: string | null;
+  rejection_reason: string | null;
+  order_item?: TestResultOrderItemSummary | null;
+  entered_by?: TestResultUserSummary | null;
+  submitted_by?: TestResultUserSummary | null;
+  reviewed_by?: TestResultUserSummary | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaginatedResource<T> {
+  data: T[];
+  links?: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    from: number | null;
+    last_page: number;
+    path: string;
+    per_page: number;
+    to: number | null;
+    total: number;
+  };
+}
+
 export interface AuthResponse {
   message: string;
   user: User;
