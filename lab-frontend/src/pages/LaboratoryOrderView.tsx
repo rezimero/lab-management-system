@@ -8,9 +8,9 @@ import { useAuth } from '../contexts/AuthContext';
 import OrderDetailHeader from '../features/laboratory-orders/components/OrderDetailHeader';
 import OrderItemsTable from '../features/laboratory-orders/components/OrderItemsTable';
 import OrderReportActions from '../features/laboratory-orders/components/OrderReportActions';
-import OrderSpecimens from '../features/laboratory-orders/components/OrderSpecimens';
 import OrderSummary from '../features/laboratory-orders/components/OrderSummary';
 import OrderViewState from '../features/laboratory-orders/components/OrderViewState';
+import SpecimenWorkspace from '../features/laboratory-orders/components/SpecimenWorkspace';
 import { useLaboratoryOrder } from '../features/laboratory-orders/hooks/useLaboratoryOrder';
 import { useOrderItemStart } from '../features/laboratory-orders/hooks/useOrderItemStart';
 import { useOrderReportActions } from '../features/laboratory-orders/hooks/useOrderReportActions';
@@ -27,6 +27,7 @@ const LaboratoryOrderView = () => {
   });
   const canCreateResult = roleAllowsOrderAction(user?.role, 'create_result');
   const canGenerate = roleAllowsOrderAction(user?.role, 'generate_report');
+  const canManageSpecimens = roleAllowsOrderAction(user?.role, 'manage_specimens');
 
   if (resource.loading || !resource.order) {
     return (
@@ -58,7 +59,11 @@ const LaboratoryOrderView = () => {
         onView={() => void report.view(order.uuid)}
         onGenerate={() => void report.generate(order.uuid)}
       />
-      <OrderSpecimens specimens={order.specimens ?? []} />
+      <SpecimenWorkspace
+        order={order}
+        canManage={canManageSpecimens}
+        onChanged={resource.refresh}
+      />
       <Typography variant="h6" sx={{ mb: 1.25, fontWeight: 720 }}>
         Ordered tests
       </Typography>

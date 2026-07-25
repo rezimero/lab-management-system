@@ -8,6 +8,7 @@ export const pendingItemUuid = '193a73b1-c554-43a6-a596-50eef7053281';
 export const activeItemUuid = '3d3fa30e-a6cb-4474-b41d-0189573786df';
 export const resultUuid = '58ae8fb9-8cc1-4455-a1fd-76582dcb3361';
 export const reportUuid = '81a3ca82-ef68-4cd8-b576-0dcb3aa2d714';
+export const specimenUuid = 'cb9c98ca-70e5-4e3c-83e9-fc0a51355566';
 
 export const orderResource: LaboratoryOrderResource = {
   uuid: orderUuid,
@@ -67,7 +68,7 @@ export const orderResource: LaboratoryOrderResource = {
   ],
   specimens: [
     {
-      uuid: 'cb9c98ca-70e5-4e3c-83e9-fc0a51355566',
+      uuid: specimenUuid,
       accession_number: 'SP-20260724-A1B2C3D4',
       specimen_type: 'Whole blood',
       container_type: 'EDTA tube',
@@ -80,6 +81,7 @@ export const orderResource: LaboratoryOrderResource = {
       rejected_at: null,
       rejection_reason: null,
       notes: null,
+      order_item_uuids: [pendingItemUuid, activeItemUuid],
     },
   ],
   created_at: '2026-07-24T08:00:00.000Z',

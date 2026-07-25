@@ -1,13 +1,17 @@
 import api from '../../../api/client';
 import type { LaboratoryReportResource } from '../../laboratory-reports/types/laboratoryReport.types';
 import type {
+  CollectSpecimensPayload,
   LaboratoryOrderItemResource,
   LaboratoryOrderPage,
   LaboratoryOrderPriority,
   LaboratoryOrderResource,
+  LaboratoryOrderSpecimen,
   LaboratoryOrderStatus,
   OrderTestResultPage,
   OrderTestResultSummary,
+  ReplaceSpecimenPayload,
+  SpecimenStatusPayload,
 } from '../types/laboratoryOrder.types';
 
 interface Wrapped<T> {
@@ -50,7 +54,6 @@ export const fetchLaboratoryOrder = async (
   return unwrap(response.data);
 };
 
-
 export const fetchLaboratoryOrderResults = async (
   uuid: string
 ): Promise<OrderTestResultSummary[]> => {
@@ -67,6 +70,39 @@ export const fetchLaboratoryOrderResults = async (
   return Array.isArray(response.data.data)
     ? response.data.data
     : [];
+};
+
+export const collectOrderSpecimens = async (
+  uuid: string,
+  payload: CollectSpecimensPayload
+): Promise<LaboratoryOrderResource> => {
+  const response = await api.post<
+    LaboratoryOrderResource
+    | Wrapped<LaboratoryOrderResource>
+  >(`/laboratory-orders/${uuid}/specimens`, payload);
+  return unwrap(response.data);
+};
+
+export const updateSpecimenStatus = async (
+  uuid: string,
+  payload: SpecimenStatusPayload
+): Promise<LaboratoryOrderSpecimen> => {
+  const response = await api.patch<
+    LaboratoryOrderSpecimen
+    | Wrapped<LaboratoryOrderSpecimen>
+  >(`/specimens/${uuid}/status`, payload);
+  return unwrap(response.data);
+};
+
+export const replaceSpecimen = async (
+  uuid: string,
+  payload: ReplaceSpecimenPayload
+): Promise<LaboratoryOrderSpecimen> => {
+  const response = await api.post<
+    LaboratoryOrderSpecimen
+    | Wrapped<LaboratoryOrderSpecimen>
+  >(`/specimens/${uuid}/replacement`, payload);
+  return unwrap(response.data);
 };
 
 export const startLaboratoryOrderItem = async (

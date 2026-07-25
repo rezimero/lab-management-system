@@ -10,6 +10,11 @@ export type LaboratoryOrderPriority =
   | 'urgent'
   | 'stat';
 
+export type LaboratorySpecimenStatus =
+  | 'collected'
+  | 'received'
+  | 'rejected';
+
 export interface OrderUserSummary {
   id: number;
   name: string;
@@ -52,6 +57,13 @@ export interface LaboratoryOrderItemResource {
   updated_at: string | null;
 }
 
+export interface SpecimenChainSummary {
+  uuid: string;
+  accession_number: string;
+  specimen_type: string;
+  status: LaboratorySpecimenStatus;
+}
+
 export interface LaboratoryOrderSpecimen {
   uuid: string;
   accession_number: string;
@@ -60,12 +72,44 @@ export interface LaboratoryOrderSpecimen {
   collection_site: string | null;
   volume: string | number | null;
   volume_unit: string | null;
-  status: string;
+  status: LaboratorySpecimenStatus;
   collected_at: string | null;
   received_at: string | null;
   rejected_at: string | null;
   rejection_reason: string | null;
   notes: string | null;
+  order_item_uuids?: string[];
+  collected_by?: OrderUserSummary | null;
+  replaces_specimen?: SpecimenChainSummary | null;
+  replacement?: SpecimenChainSummary | null;
+}
+
+export interface SpecimenCollectionInput {
+  specimen_type: string;
+  container_type?: string;
+  collection_site?: string;
+  volume?: number;
+  volume_unit?: string;
+  notes?: string;
+  order_item_uuids: string[];
+}
+
+export interface CollectSpecimensPayload {
+  specimens: SpecimenCollectionInput[];
+}
+
+export interface SpecimenStatusPayload {
+  status: 'received' | 'rejected';
+  rejection_reason?: string;
+}
+
+export interface ReplaceSpecimenPayload {
+  specimen_type?: string;
+  container_type?: string;
+  collection_site?: string;
+  volume?: number;
+  volume_unit?: string;
+  notes?: string;
 }
 
 export interface LaboratoryOrderResource {

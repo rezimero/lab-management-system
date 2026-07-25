@@ -1,6 +1,7 @@
 export type OrderPermission =
   | 'create_result'
-  | 'generate_report';
+  | 'generate_report'
+  | 'manage_specimens';
 
 type Role = string | null | undefined;
 
@@ -18,6 +19,11 @@ const permissionRoles: Record<
     'admin',
     'lab_technician',
     'doctor',
+  ],
+  manage_specimens: [
+    'superadmin',
+    'admin',
+    'lab_technician',
   ],
 };
 
