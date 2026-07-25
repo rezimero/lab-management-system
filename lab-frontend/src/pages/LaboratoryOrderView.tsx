@@ -7,6 +7,7 @@ import Layout from '../components/Layout/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import OrderDetailHeader from '../features/laboratory-orders/components/OrderDetailHeader';
 import OrderItemsTable from '../features/laboratory-orders/components/OrderItemsTable';
+import OrderLifecycleActions from '../features/laboratory-orders/components/OrderLifecycleActions';
 import OrderReportActions from '../features/laboratory-orders/components/OrderReportActions';
 import OrderSummary from '../features/laboratory-orders/components/OrderSummary';
 import OrderViewState from '../features/laboratory-orders/components/OrderViewState';
@@ -28,6 +29,7 @@ const LaboratoryOrderView = () => {
   const canCreateResult = roleAllowsOrderAction(user?.role, 'create_result');
   const canGenerate = roleAllowsOrderAction(user?.role, 'generate_report');
   const canManageSpecimens = roleAllowsOrderAction(user?.role, 'manage_specimens');
+  const canManageStatus = roleAllowsOrderAction(user?.role, 'manage_order_status');
 
   if (resource.loading || !resource.order) {
     return (
@@ -52,6 +54,11 @@ const LaboratoryOrderView = () => {
         </Alert>
       )}
       <OrderSummary order={order} />
+      <OrderLifecycleActions
+        order={order}
+        canManage={canManageStatus}
+        onChanged={resource.refresh}
+      />
       <OrderReportActions
         order={order}
         canGenerate={canGenerate}

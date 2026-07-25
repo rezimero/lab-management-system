@@ -105,6 +105,17 @@ export const replaceSpecimen = async (
   return unwrap(response.data);
 };
 
+export const updateLaboratoryOrderStatus = async (
+  uuid: string,
+  status: LaboratoryOrderStatus
+): Promise<LaboratoryOrderResource> => {
+  const response = await api.patch<
+    LaboratoryOrderResource
+    | Wrapped<LaboratoryOrderResource>
+  >(`/laboratory-orders/${uuid}/status`, { status });
+  return unwrap(response.data);
+};
+
 export const startLaboratoryOrderItem = async (
   uuid: string
 ): Promise<LaboratoryOrderItemResource> => {
