@@ -18,6 +18,9 @@ export const LabTestForm = lazy(
 export const LaboratoryOrders = lazy(
   () => import('../pages/LaboratoryOrders')
 );
+export const LaboratoryOrderCreate = lazy(
+  () => import('../pages/LaboratoryOrderCreate')
+);
 export const LaboratoryOrderView = lazy(
   () => import('../pages/LaboratoryOrderView')
 );

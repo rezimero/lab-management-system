@@ -8,6 +8,9 @@ import LaboratoryOrders from './LaboratoryOrders';
 import { orderPage, orderResource } from './laboratory-order-test/orderFixtures';
 
 vi.mock('../api/client', () => ({ default: { get: vi.fn(), post: vi.fn() } }));
+vi.mock('../contexts/AuthContext', () => ({
+  useAuth: () => ({ user: { role: 'admin' } }),
+}));
 vi.mock('../components/Layout/Layout', () => ({
   default: ({ children, title }: { children: ReactNode; title: string }) => (
     <main><h1>{title}</h1>{children}</main>
@@ -19,6 +22,7 @@ const renderPage = () => render(
   <MemoryRouter initialEntries={['/laboratory-orders']}>
     <Routes>
       <Route path="/laboratory-orders" element={<LaboratoryOrders />} />
+      <Route path="/laboratory-orders/new" element={<div>Create order route</div>} />
       <Route path="/laboratory-orders/:uuid" element={<div>Order detail route</div>} />
     </Routes>
   </MemoryRouter>
@@ -60,6 +64,13 @@ describe('LaboratoryOrders list', { timeout: 30_000 }, () => {
         },
       });
     });
+  });
+
+  it('opens the create order workspace', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByRole('button', { name: 'Create order' }));
+    expect(await screen.findByText('Create order route')).toBeInTheDocument();
   });
 
   it('opens the selected order', async () => {

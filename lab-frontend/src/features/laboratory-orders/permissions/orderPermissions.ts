@@ -1,4 +1,5 @@
 export type OrderPermission =
+  | 'create_order'
   | 'create_result'
   | 'generate_report'
   | 'manage_specimens'
@@ -10,6 +11,13 @@ const permissionRoles: Record<
   OrderPermission,
   string[]
 > = {
+  create_order: [
+    'superadmin',
+    'admin',
+    'lab_technician',
+    'doctor',
+    'receptionist',
+  ],
   create_result: [
     'superadmin',
     'admin',

@@ -5,6 +5,7 @@ import PrivateRoute from '../components/PrivateRoute';
 import {
   Dashboard,
   LaboratoryOrders,
+  LaboratoryOrderCreate,
   LaboratoryOrderView,
   LaboratoryReports,
   LaboratoryReportView,
@@ -56,6 +57,10 @@ export const tenantRoutes = (
     <Route
       path="/laboratory-orders"
       element={protect(<LaboratoryOrders />)}
+    />
+    <Route
+      path="/laboratory-orders/new"
+      element={protect(<LaboratoryOrderCreate />)}
     />
     <Route
       path="/laboratory-orders/:uuid"
