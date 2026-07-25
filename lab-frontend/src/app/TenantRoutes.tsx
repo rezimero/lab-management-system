@@ -1,12 +1,11 @@
-import {
-  Route,
-} from 'react-router-dom';
+import type { ReactElement } from 'react';
+import { Route } from 'react-router-dom';
 
-import PrivateRoute from
-  '../components/PrivateRoute';
-
+import PrivateRoute from '../components/PrivateRoute';
 import {
   Dashboard,
+  LaboratoryOrders,
+  LaboratoryOrderView,
   LaboratoryReports,
   LaboratoryReportView,
   LabTestForm,
@@ -20,135 +19,83 @@ import {
   Users,
 } from './routeComponents';
 
+const protect = (element: ReactElement) => (
+  <PrivateRoute>{element}</PrivateRoute>
+);
+
 export const tenantRoutes = (
   <>
     <Route
       path="/dashboard"
-      element={
-        <PrivateRoute>
-          <Dashboard />
-        </PrivateRoute>
-      }
+      element={protect(<Dashboard />)}
     />
     <Route
       path="/patients"
-      element={
-        <PrivateRoute>
-          <Patients />
-        </PrivateRoute>
-      }
+      element={protect(<Patients />)}
     />
     <Route
       path="/patients/new"
-      element={
-        <PrivateRoute>
-          <PatientForm />
-        </PrivateRoute>
-      }
+      element={protect(<PatientForm />)}
     />
     <Route
       path="/patients/:id/edit"
-      element={
-        <PrivateRoute>
-          <PatientForm />
-        </PrivateRoute>
-      }
+      element={protect(<PatientForm />)}
     />
     <Route
       path="/lab-tests"
-      element={
-        <PrivateRoute>
-          <LabTests />
-        </PrivateRoute>
-      }
+      element={protect(<LabTests />)}
     />
     <Route
       path="/lab-tests/new"
-      element={
-        <PrivateRoute>
-          <LabTestForm />
-        </PrivateRoute>
-      }
+      element={protect(<LabTestForm />)}
     />
     <Route
       path="/lab-tests/:id/edit"
-      element={
-        <PrivateRoute>
-          <LabTestForm />
-        </PrivateRoute>
-      }
+      element={protect(<LabTestForm />)}
+    />
+    <Route
+      path="/laboratory-orders"
+      element={protect(<LaboratoryOrders />)}
+    />
+    <Route
+      path="/laboratory-orders/:uuid"
+      element={protect(<LaboratoryOrderView />)}
     />
     <Route
       path="/test-results"
-      element={
-        <PrivateRoute>
-          <TestResults />
-        </PrivateRoute>
-      }
+      element={protect(<TestResults />)}
     />
     <Route
       path="/test-results/new"
-      element={
-        <PrivateRoute>
-          <TestResultForm />
-        </PrivateRoute>
-      }
+      element={protect(<TestResultForm />)}
     />
     <Route
       path="/test-results/:id/edit"
-      element={
-        <PrivateRoute>
-          <TestResultForm />
-        </PrivateRoute>
-      }
+      element={protect(<TestResultForm />)}
     />
     <Route
       path="/test-results/:id"
-      element={
-        <PrivateRoute>
-          <TestResultView />
-        </PrivateRoute>
-      }
+      element={protect(<TestResultView />)}
     />
     <Route
       path="/laboratory-reports"
-      element={
-        <PrivateRoute>
-          <LaboratoryReports />
-        </PrivateRoute>
-      }
+      element={protect(<LaboratoryReports />)}
     />
     <Route
       path="/laboratory-reports/:id"
-      element={
-        <PrivateRoute>
-          <LaboratoryReportView />
-        </PrivateRoute>
-      }
+      element={protect(<LaboratoryReportView />)}
     />
     <Route
       path="/users"
-      element={
-        <PrivateRoute>
-          <Users />
-        </PrivateRoute>
-      }
+      element={protect(<Users />)}
     />
     <Route
       path="/users/new"
-      element={
-        <PrivateRoute>
-          <UserForm />
-        </PrivateRoute>
-      }
+      element={protect(<UserForm />)}
     />
     <Route
       path="/users/:id/edit"
-      element={
-        <PrivateRoute>
-          <UserForm />
-        </PrivateRoute>
-      }
+      element={protect(<UserForm />)}
     />
   </>
 );

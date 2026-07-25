@@ -1,24 +1,11 @@
-import type {
-  ReactNode,
-} from 'react';
-
-import DashboardRounded from
-  '@mui/icons-material/DashboardRounded';
-
-import DescriptionRounded from
-  '@mui/icons-material/DescriptionRounded';
-
-import FactCheckRounded from
-  '@mui/icons-material/FactCheckRounded';
-
-import GroupsRounded from
-  '@mui/icons-material/GroupsRounded';
-
-import PeopleAltRounded from
-  '@mui/icons-material/PeopleAltRounded';
-
-import ScienceRounded from
-  '@mui/icons-material/ScienceRounded';
+import type { ReactNode } from 'react';
+import AssignmentRounded from '@mui/icons-material/AssignmentRounded';
+import DashboardRounded from '@mui/icons-material/DashboardRounded';
+import DescriptionRounded from '@mui/icons-material/DescriptionRounded';
+import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
+import GroupsRounded from '@mui/icons-material/GroupsRounded';
+import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
+import ScienceRounded from '@mui/icons-material/ScienceRounded';
 
 export interface NavigationItem {
   label: string;
@@ -52,6 +39,11 @@ export const buildNavigationGroups = (
           label: 'Patients',
           path: '/patients',
           icon: <PeopleAltRounded />,
+        },
+        {
+          label: 'Laboratory orders',
+          path: '/laboratory-orders',
+          icon: <AssignmentRounded />,
         },
         {
           label: 'Test catalogue',
