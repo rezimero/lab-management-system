@@ -7,6 +7,9 @@ import {
   vi,
 } from 'vitest';
 
+import {
+  SERVER_ERROR_MESSAGE,
+} from './serverErrorSanitizer';
 interface RequestConfig {
   headers: Record<string, string>;
 }
@@ -560,6 +563,46 @@ describe('API client interceptor characterization', () => {
     expect(assign).not.toHaveBeenCalled();
   });
 
+  it('masks 5xx response data before rejecting', async () => {
+    seedAuthenticationStorage();
+
+    const assign =
+      createNavigationWindow('/patients');
+
+    const { responseRejected } =
+      await loadClientInterceptors();
+
+    const error = {
+      response: {
+        status: 500,
+        data: {
+          message:
+            'SQLSTATE[42S02]: table missing',
+          exception:
+            'Illuminate Database QueryException',
+        },
+      },
+
+      config: {
+        url:
+          '/laboratory-orders/order/report',
+      },
+    };
+
+    await expect(
+      responseRejected(error)
+    ).rejects.toBe(error);
+
+    expect(error.response.data).toEqual({
+      message: SERVER_ERROR_MESSAGE,
+    });
+
+    expect(
+      JSON.stringify(error.response.data)
+    ).not.toContain('SQLSTATE');
+
+    expect(assign).not.toHaveBeenCalled();
+  });
   it('leaves authentication untouched for non-401 errors', async () => {
     seedAuthenticationStorage();
 

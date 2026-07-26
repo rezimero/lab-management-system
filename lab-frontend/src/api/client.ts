@@ -9,6 +9,10 @@ import {
   readTenantDomain,
 } from '../auth/authStorage';
 
+import {
+  sanitizeServerError,
+} from './serverErrorSanitizer';
+
 const apiUrl =
   import.meta.env.VITE_API_URL?.trim() ||
   'http://127.0.0.1:8000/api';
@@ -75,9 +79,12 @@ api.interceptors.response.use(
   (response) => response,
 
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    const safeError =
+      sanitizeServerError(error);
+
+    if (safeError.response?.status === 401) {
       const requestUrl =
-        error.config?.url ?? '';
+        safeError.config?.url ?? '';
 
       const isAuthenticationRequest =
         requestUrl.endsWith('/login') ||
@@ -96,7 +103,7 @@ api.interceptors.response.use(
        * has already expired.
        */
       if (isImpersonationLogout) {
-        return Promise.reject(error);
+        return Promise.reject(safeError);
       }
 
       clearAllAuthentication();
@@ -110,7 +117,7 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(safeError);
   }
 );
 

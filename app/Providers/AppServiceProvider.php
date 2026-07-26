@@ -2,15 +2,14 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Http\Request;
-use Laravel\Sanctum\Sanctum;
 use App\Models\PersonalAccessToken;
+use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Register application services.
      */
     public function register(): void
     {
@@ -18,11 +17,18 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap application services.
      */
-    public function boot(Request $request): void
+    public function boot(): void
     {
-        // Force Sanctum to look for tokens in the centralized landlord database
-        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+        Sanctum::usePersonalAccessTokenModel(
+            PersonalAccessToken::class
+        );
+
+        $this->loadMigrationsFrom(
+            database_path(
+                'migrations/landlord'
+            )
+        );
     }
 }
