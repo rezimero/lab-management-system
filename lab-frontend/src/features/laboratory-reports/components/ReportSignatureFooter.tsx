@@ -15,7 +15,7 @@ interface Props {
 const ReportSignatureFooter = ({
   report,
 }: Props) => (
-  <Box sx={{ mt: 3 }}>
+  <Box className="report-signature-footer" sx={{ mt: 3 }}>
     <Divider sx={{ mb: 2 }} />
 
     <Box

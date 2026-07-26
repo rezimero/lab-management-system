@@ -3,6 +3,7 @@ import {
   useNavigate,
   useParams,
 } from 'react-router-dom';
+
 import Layout from '../components/Layout/Layout';
 import { useAuth } from '../contexts/AuthContext';
 import OrderDetailHeader from '../features/laboratory-orders/components/OrderDetailHeader';
@@ -23,68 +24,132 @@ const LaboratoryOrderView = () => {
   const { user } = useAuth();
   const resource = useLaboratoryOrder(uuid);
   const itemStart = useOrderItemStart(resource.refresh);
-  const report = useOrderReportActions((issued) => {
-    navigate(`/laboratory-reports/${issued.uuid}`);
-  });
-  const canCreateResult = roleAllowsOrderAction(user?.role, 'create_result');
-  const canGenerate = roleAllowsOrderAction(user?.role, 'generate_report');
-  const canManageSpecimens = roleAllowsOrderAction(user?.role, 'manage_specimens');
-  const canManageStatus = roleAllowsOrderAction(user?.role, 'manage_order_status');
+
+  const report = useOrderReportActions(
+    uuid,
+    resource.order?.status === 'completed',
+    (issued) => {
+      navigate(`/laboratory-reports/${issued.uuid}`);
+    }
+  );
+
+  const canCreateResult = roleAllowsOrderAction(
+    user?.role,
+    'create_result'
+  );
+
+  const canGenerate = roleAllowsOrderAction(
+    user?.role,
+    'generate_report'
+  );
+
+  const canManageSpecimens = roleAllowsOrderAction(
+    user?.role,
+    'manage_specimens'
+  );
+
+  const canManageStatus = roleAllowsOrderAction(
+    user?.role,
+    'manage_order_status'
+  );
 
   if (resource.loading || !resource.order) {
     return (
       <Layout title="Laboratory order">
-        <OrderViewState loading={resource.loading} error={resource.error} />
+        <OrderViewState
+          loading={resource.loading}
+          error={resource.error}
+        />
       </Layout>
     );
   }
 
   const order = resource.order;
+
   return (
     <Layout title="Laboratory order">
-      <OrderDetailHeader order={order} onBack={() => navigate('/laboratory-orders')} />
+      <OrderDetailHeader
+        order={order}
+        onBack={() => {
+          navigate('/laboratory-orders');
+        }}
+      />
+
       {itemStart.error && (
-        <Alert severity="error" onClose={itemStart.clearError} sx={{ mb: 2 }}>
+        <Alert
+          severity="error"
+          onClose={itemStart.clearError}
+          sx={{ mb: 2 }}
+        >
           {itemStart.error}
         </Alert>
       )}
+
       {report.error && (
-        <Alert severity="error" onClose={report.clearError} sx={{ mb: 2 }}>
+        <Alert
+          severity="error"
+          onClose={report.clearError}
+          sx={{ mb: 2 }}
+        >
           {report.error}
         </Alert>
       )}
+
       <OrderSummary order={order} />
+
       <OrderLifecycleActions
         order={order}
         canManage={canManageStatus}
         onChanged={resource.refresh}
       />
+
       <OrderReportActions
         order={order}
         canGenerate={canGenerate}
+        availability={report.availability}
         action={report.action}
-        onView={() => void report.view(order.uuid)}
-        onGenerate={() => void report.generate(order.uuid)}
+        onView={() => {
+          void report.view();
+        }}
+        onGenerate={() => {
+          void report.generate();
+        }}
       />
+
       <SpecimenWorkspace
         order={order}
         canManage={canManageSpecimens}
         onChanged={resource.refresh}
       />
-      <Typography variant="h6" sx={{ mb: 1.25, fontWeight: 720 }}>
+
+      <Typography
+        variant="h6"
+        sx={{
+          mb: 1.25,
+          fontWeight: 720,
+        }}
+      >
         Ordered tests
       </Typography>
+
       <OrderItemsTable
         orderUuid={order.uuid}
         orderStatus={order.status}
         items={order.items ?? []}
         canCreateResult={canCreateResult}
         startingUuid={itemStart.startingUuid}
-        onStart={(itemUuid) => void itemStart.start(itemUuid)}
-        onOpenResult={(resultUuid) => navigate(`/test-results/${resultUuid}`)}
-        onEnterResult={(orderUuid, itemUuid) => navigate(
-          `/test-results/new?order=${orderUuid}&item=${itemUuid}`
-        )}
+        onStart={(itemUuid) => {
+          void itemStart.start(itemUuid);
+        }}
+        onOpenResult={(resultUuid) => {
+          navigate(`/test-results/${resultUuid}`);
+        }}
+        onEnterResult={(orderUuid, itemUuid) => {
+          navigate(
+            `/test-results/new?order=${orderUuid}` +
+              `&item=${itemUuid}`
+          );
+        }}
       />
     </Layout>
   );

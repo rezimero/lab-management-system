@@ -33,6 +33,7 @@ const LaboratoryReportView = () => {
   }>();
 
   const navigate = useNavigate();
+
   const resource =
     useLaboratoryReport(uuid);
 
@@ -81,9 +82,14 @@ const LaboratoryReportView = () => {
         }}
       />
 
-      <LaboratoryReportPaper
-        report={resource.report}
-      />
+      <Box
+        className="report-print-root"
+        data-testid="report-print-root"
+      >
+        <LaboratoryReportPaper
+          report={resource.report}
+        />
+      </Box>
     </Layout>
   );
 };

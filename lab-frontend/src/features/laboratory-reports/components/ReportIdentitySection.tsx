@@ -83,6 +83,7 @@ const ReportIdentitySection = ({
     <Divider sx={{ my: 2.5 }} />
 
     <Paper
+      className="report-summary"
       variant="outlined"
       sx={{
         p: 2,

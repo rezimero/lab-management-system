@@ -33,6 +33,7 @@ const ReportResultValues = ({
 
   return (
     <Paper
+      className="report-result-card"
       variant="outlined"
       sx={{
         mb: 2.5,

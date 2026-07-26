@@ -43,6 +43,7 @@ const ReportPatientOrderSection = ({
   report,
 }: Props) => (
   <Grid
+    className="report-patient-order"
     container
     spacing={2.5}
     sx={{ mb: 3 }}
@@ -54,6 +55,7 @@ const ReportPatientOrderSection = ({
       }}
     >
       <Paper
+        className="report-detail-card"
         variant="outlined"
         sx={{
           p: 2.25,
@@ -109,6 +111,7 @@ const ReportPatientOrderSection = ({
       }}
     >
       <Paper
+        className="report-detail-card"
         variant="outlined"
         sx={{
           p: 2.25,

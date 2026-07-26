@@ -18,7 +18,7 @@ interface Props {
 const ReportResultsSection = ({
   results,
 }: Props) => (
-  <Box sx={{ mb: 3 }}>
+  <Box className="report-results-section" sx={{ mb: 3 }}>
     <Typography
       variant="h6"
       sx={{
