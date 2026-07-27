@@ -28,6 +28,10 @@ final class TenantUserPermissionCatalog
         'generate_laboratory_reports'
     );
 
+    public const MANAGE_TENANT_PROFILE = (
+        'manage_tenant_profile'
+    );
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -41,6 +45,7 @@ final class TenantUserPermissionCatalog
             self::APPROVE_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
+            self::MANAGE_TENANT_PROFILE,
         ],
 
         'admin' => [
@@ -50,6 +55,7 @@ final class TenantUserPermissionCatalog
             self::APPROVE_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
+            self::MANAGE_TENANT_PROFILE,
         ],
 
         'lab_technician' => [

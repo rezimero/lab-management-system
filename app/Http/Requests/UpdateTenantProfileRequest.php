@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Tenant\User as TenantUser;
+use App\Support\Tenant\TenantUserPermissionCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTenantProfileRequest extends FormRequest
@@ -11,7 +13,13 @@ class UpdateTenantProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+
+        return $user instanceof TenantUser
+            && $user->hasPermission(
+                TenantUserPermissionCatalog::
+                    MANAGE_TENANT_PROFILE
+            );
     }
 
     /**

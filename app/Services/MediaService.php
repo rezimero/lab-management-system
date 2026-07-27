@@ -3,16 +3,20 @@
 namespace App\Services;
 
 use App\Models\Media;
+use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use LogicException;
+use RuntimeException;
+use Throwable;
 
 class MediaService
 {
     /**
-     * Upload media to any model.
+     * Upload media to any tenant-owned model.
      */
     public function upload(
         Model $model,
@@ -20,48 +24,81 @@ class MediaService
         string $collection,
         string $disk = 'public'
     ): Media {
+        $tenantId = $this->resolveTenantId(
+            $model
+        );
 
-        return DB::transaction(function () use (
+        $directory = $this->generateDirectory(
             $model,
-            $file,
-            $collection,
+            $collection
+        );
+
+        $extension = strtolower(
+            $file->getClientOriginalExtension()
+        );
+
+        if ($extension === '') {
+            throw new RuntimeException(
+                'The uploaded file does not have an extension.'
+            );
+        }
+
+        $filename = sprintf(
+            '%s.%s',
+            Str::uuid(),
+            $extension
+        );
+
+        $path = $file->storeAs(
+            $directory,
+            $filename,
             $disk
-        ) {
+        );
 
-            $directory = sprintf(
-                '%s/%s/%s',
-                Str::kebab(class_basename($model)),
-                $model->getKey(),
-                $collection
+        if (! is_string($path) || $path === '') {
+            throw new RuntimeException(
+                'The uploaded file could not be stored.'
             );
+        }
 
-            $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $hash = hash_file(
+            'sha256',
+            $file->getRealPath()
+        );
 
-            $path = $file->storeAs(
-                $directory,
-                $filename,
-                $disk
-            );
+        try {
+            return DB::connection('landlord')
+                ->transaction(
+                    fn (): Media => (
+                        $model->media()->create([
+                            'tenant_id' => $tenantId,
+                            'collection' => $collection,
+                            'disk' => $disk,
+                            'directory' => $directory,
+                            'filename' => $filename,
+                            'original_filename' => (
+                                $file->getClientOriginalName()
+                            ),
+                            'extension' => $extension,
+                            'mime_type' => (
+                                $file->getMimeType()
+                                ?: 'application/octet-stream'
+                            ),
+                            'size' => $file->getSize(),
+                            'path' => $path,
+                            'hash' => (
+                                is_string($hash)
+                                    ? $hash
+                                    : null
+                            ),
+                        ])
+                    )
+                );
+        } catch (Throwable $exception) {
+            Storage::disk($disk)->delete($path);
 
-            return $model->media()->create([
-
-                'collection' => $collection,
-
-                'disk' => $disk,
-
-                'path' => $path,
-
-                'file_name' => $file->getClientOriginalName(),
-
-                'mime_type' => $file->getMimeType(),
-
-                'extension' => strtolower(
-                    $file->getClientOriginalExtension()
-                ),
-
-                'size' => $file->getSize(),
-            ]);
-        });
+            throw $exception;
+        }
     }
 
     /**
@@ -73,7 +110,6 @@ class MediaService
         string $collection,
         string $disk = 'public'
     ): Media {
-
         $this->deleteCollection(
             $model,
             $collection
@@ -90,20 +126,17 @@ class MediaService
     /**
      * Delete one media file.
      */
-    public function delete(Media $media): void
-    {
-        DB::transaction(function () use ($media) {
-
-            if (
-                Storage::disk($media->disk)
-                    ->exists($media->path)
-            ) {
-                Storage::disk($media->disk)
-                    ->delete($media->path);
-            }
-
-            $media->delete();
-        });
+    public function delete(
+        Media $media
+    ): void {
+        DB::connection('landlord')
+            ->transaction(
+                static function () use (
+                    $media
+                ): void {
+                    $media->delete();
+                }
+            );
     }
 
     /**
@@ -113,14 +146,11 @@ class MediaService
         Model $model,
         string $collection
     ): void {
-
         $model->media()
             ->where('collection', $collection)
             ->get()
-            ->each(function (Media $media) {
-
+            ->each(function (Media $media): void {
                 $this->delete($media);
-
             });
     }
 
@@ -131,7 +161,6 @@ class MediaService
         Model $model,
         string $collection
     ): ?Media {
-
         return $model->media()
             ->where('collection', $collection)
             ->latest()
@@ -158,7 +187,6 @@ class MediaService
         Model $model,
         string $collection
     ): bool {
-
         return $model->media()
             ->where('collection', $collection)
             ->exists();
@@ -171,12 +199,39 @@ class MediaService
         Model $model,
         string $collection
     ): string {
-
         return sprintf(
             '%s/%s/%s',
             Str::kebab(class_basename($model)),
             $model->getKey(),
             $collection
         );
+    }
+
+    /**
+     * Resolve the landlord tenant owner for a media record.
+     */
+    private function resolveTenantId(
+        Model $model
+    ): int {
+        $modelTenantId = $model->getAttribute(
+            'tenant_id'
+        );
+
+        if (
+            is_numeric($modelTenantId) &&
+            (int) $modelTenantId > 0
+        ) {
+            return (int) $modelTenantId;
+        }
+
+        $tenant = Tenant::current();
+
+        if (! $tenant instanceof Tenant) {
+            throw new LogicException(
+                'No active tenant is available for media storage.'
+            );
+        }
+
+        return (int) $tenant->id;
     }
 }

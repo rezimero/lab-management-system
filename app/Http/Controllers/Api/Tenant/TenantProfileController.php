@@ -4,104 +4,134 @@ namespace App\Http\Controllers\Api\Tenant;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateTenantProfileRequest;
-use App\Http\Requests\UploadLogoRequest;
+use App\Http\Requests\UploadTenantProfileMediaRequest;
+use App\Http\Requests\ViewTenantProfileRequest;
+use App\Http\Resources\TenantProfileResource;
+use App\Models\Tenant;
+use App\Models\TenantProfile;
 use App\Services\TenantProfileService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
+use LogicException;
 
 class TenantProfileController extends Controller
 {
     public function __construct(
-        protected TenantProfileService $profileService
+        private readonly TenantProfileService $profileService
     ) {
     }
 
     /**
      * Get the current laboratory profile.
      */
-    public function show(Request $request): JsonResponse
-    {
-        $profile = $this->profileService->getProfile(
-            tenant()
+    public function show(
+        ViewTenantProfileRequest $request
+    ): JsonResponse {
+        return $this->profileResponse(
+            $this->profileService->getProfile(
+                $this->currentTenant()
+            )
         );
-
-        return response()->json([
-            'success' => true,
-            'data' => $profile,
-        ]);
     }
 
     /**
      * Update laboratory profile.
      */
-    public function update(UpdateTenantProfileRequest $request): JsonResponse
-    {
-        $profile = $this->profileService->updateProfile(
-            tenant(),
-            $request->validated()
+    public function update(
+        UpdateTenantProfileRequest $request
+    ): JsonResponse {
+        return $this->profileResponse(
+            $this->profileService->updateProfile(
+                $this->currentTenant(),
+                $request->validated()
+            ),
+            'Laboratory profile updated successfully.'
         );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Laboratory profile updated successfully.',
-            'data' => $profile,
-        ]);
     }
 
     /**
      * Upload laboratory logo.
      */
     public function uploadLogo(
-        UploadLogoRequest $request
+        UploadTenantProfileMediaRequest $request
     ): JsonResponse {
-
-        $profile = $this->profileService->uploadLogo(
-            tenant(),
-            $request->file('file')
+        return $this->profileResponse(
+            $this->profileService->uploadLogo(
+                $this->currentTenant(),
+                $request->file('file')
+            ),
+            'Laboratory logo uploaded successfully.'
         );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Laboratory logo uploaded successfully.',
-            'data' => $profile,
-        ]);
     }
 
     /**
      * Upload laboratory favicon.
      */
     public function uploadFavicon(
-        UploadLogoRequest $request
+        UploadTenantProfileMediaRequest $request
     ): JsonResponse {
-
-        $profile = $this->profileService->uploadFavicon(
-            tenant(),
-            $request->file('file')
+        return $this->profileResponse(
+            $this->profileService->uploadFavicon(
+                $this->currentTenant(),
+                $request->file('file')
+            ),
+            'Laboratory favicon uploaded successfully.'
         );
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Laboratory favicon uploaded successfully.',
-            'data' => $profile,
-        ]);
     }
 
     /**
      * Upload laboratory director signature.
      */
     public function uploadDirectorSignature(
-        UploadLogoRequest $request
+        UploadTenantProfileMediaRequest $request
     ): JsonResponse {
-
-        $profile = $this->profileService->uploadDirectorSignature(
-            tenant(),
-            $request->file('file')
+        return $this->profileResponse(
+            $this->profileService
+                ->uploadDirectorSignature(
+                    $this->currentTenant(),
+                    $request->file('file')
+                ),
+            'Director signature uploaded successfully.'
         );
+    }
 
-        return response()->json([
+    /**
+     * Resolve the tenant selected by SetTenantContext.
+     */
+    private function currentTenant(): Tenant
+    {
+        $tenant = Tenant::current();
+
+        if (! $tenant instanceof Tenant) {
+            throw new LogicException(
+                'No active tenant is available.'
+            );
+        }
+
+        return $tenant;
+    }
+
+    /**
+     * Serialize the administrator-only profile contract.
+     */
+    private function profileResponse(
+        TenantProfile $profile,
+        ?string $message = null
+    ): JsonResponse {
+        $additional = [
             'success' => true,
-            'message' => 'Director signature uploaded successfully.',
-            'data' => $profile,
-        ]);
+        ];
+
+        if ($message !== null) {
+            $additional['message'] = $message;
+        }
+
+        return (
+            new TenantProfileResource(
+                $profile
+            )
+        )
+            ->additional($additional)
+            ->response()
+            ->setStatusCode(200);
     }
 }
