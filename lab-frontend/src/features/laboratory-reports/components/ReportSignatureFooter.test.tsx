@@ -23,6 +23,11 @@ const report: LaboratoryReportResource = {
     lab_name: 'Rezhel Laboratory',
     full_address: '12 Laboratory Road',
     director_name: 'Dr Ada Okafor',
+    director_qualification: 'MBBS, FMCPath',
+    director_registration_number: 'MDCN-12345',
+    signatory_designation: 'Consultant Pathologist',
+    accreditation_details:
+      'ISO 15189 accredited laboratory.',
     director_signature_url:
       '/storage/director-signature.png',
     license_number: 'LIC-1001',
@@ -59,6 +64,24 @@ describe('ReportSignatureFooter', () => {
     expect(
       screen.getByText(
         'Licence: LIC-1001 | Registration: REG-1001'
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        'Consultant Pathologist'
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        'MBBS, FMCPath | Professional registration: MDCN-12345'
+      )
+    ).toBeInTheDocument();
+
+    expect(
+      screen.getByText(
+        'ISO 15189 accredited laboratory.'
       )
     ).toBeInTheDocument();
 

@@ -41,6 +41,18 @@ class TenantProfileResource extends JsonResource
 
             'report_footer' => $this->report_footer,
             'director_name' => $this->director_name,
+            'director_qualification' => (
+                $this->director_qualification
+            ),
+            'director_registration_number' => (
+                $this->director_registration_number
+            ),
+            'signatory_designation' => (
+                $this->signatory_designation
+            ),
+            'accreditation_details' => (
+                $this->accreditation_details
+            ),
 
             'invoice_footer' => $this->invoice_footer,
             'bank_name' => $this->bank_name,

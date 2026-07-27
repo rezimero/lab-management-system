@@ -12,7 +12,7 @@ interface Props {
   report: LaboratoryReportResource;
 }
 
-const credentialText = (
+const laboratoryCredentialText = (
   report: LaboratoryReportResource
 ): string | null => {
   const credentials = [
@@ -32,11 +32,37 @@ const credentialText = (
     : null;
 };
 
+const directorCredentialText = (
+  report: LaboratoryReportResource
+): string | null => {
+  const credentials = [
+    report.laboratory?.director_qualification,
+    report.laboratory?.director_registration_number
+      ? (
+        `Professional registration: ${
+          report.laboratory
+            .director_registration_number
+        }`
+      )
+      : null,
+  ].filter(
+    (value): value is string =>
+      Boolean(value)
+  );
+
+  return credentials.length > 0
+    ? credentials.join(' | ')
+    : null;
+};
+
 const ReportSignatureFooter = ({
   report,
 }: Props) => {
-  const credentials =
-    credentialText(report);
+  const laboratoryCredentials =
+    laboratoryCredentialText(report);
+
+  const directorCredentials =
+    directorCredentialText(report);
 
   return (
     <Box
@@ -87,7 +113,9 @@ const ReportSignatureFooter = ({
             variant="subtitle2"
             sx={{ fontWeight: 750 }}
           >
-            Laboratory director
+            {report.laboratory
+              ?.signatory_designation ??
+              'Laboratory director'}
           </Typography>
 
           <Typography
@@ -99,13 +127,13 @@ const ReportSignatureFooter = ({
               'Not recorded'}
           </Typography>
 
-          {credentials && (
+          {directorCredentials && (
             <Typography
               variant="caption"
               color="text.secondary"
               sx={{ display: 'block' }}
             >
-              {credentials}
+              {directorCredentials}
             </Typography>
           )}
         </Box>
@@ -136,8 +164,37 @@ const ReportSignatureFooter = ({
               report.laboratory?.address ??
               'Address not recorded'}
           </Typography>
+
+          {laboratoryCredentials && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block' }}
+            >
+              {laboratoryCredentials}
+            </Typography>
+          )}
         </Box>
       </Box>
+
+      {report.laboratory
+        ?.accreditation_details && (
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            display: 'block',
+            mt: 2,
+            textAlign: 'center',
+            fontWeight: 650,
+          }}
+        >
+          {
+            report.laboratory
+              .accreditation_details
+          }
+        </Typography>
+      )}
 
       {report.laboratory
         ?.report_footer && (
@@ -146,7 +203,7 @@ const ReportSignatureFooter = ({
           color="text.secondary"
           sx={{
             display: 'block',
-            mt: 2,
+            mt: 1,
             textAlign: 'center',
           }}
         >

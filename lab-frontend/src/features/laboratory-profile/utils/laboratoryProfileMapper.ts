@@ -18,6 +18,10 @@ export const EMPTY_PROFILE_FORM:
     registration_number: '',
     report_footer: '',
     director_name: '',
+    director_qualification: '',
+    director_registration_number: '',
+    signatory_designation: '',
+    accreditation_details: '',
   };
 
 const textValue = (
@@ -44,6 +48,16 @@ export const profileToFormValues = (
     textValue(profile.report_footer),
   director_name:
     textValue(profile.director_name),
+  director_qualification:
+    textValue(profile.director_qualification),
+  director_registration_number:
+    textValue(
+      profile.director_registration_number
+    ),
+  signatory_designation:
+    textValue(profile.signatory_designation),
+  accreditation_details:
+    textValue(profile.accreditation_details),
 });
 
 export const profileImageValidationMessage = (

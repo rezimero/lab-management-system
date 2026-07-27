@@ -19,6 +19,10 @@ export interface ReportLaboratory {
   registration_number?: string | null;
   report_footer?: string | null;
   director_name?: string | null;
+  director_qualification?: string | null;
+  director_registration_number?: string | null;
+  signatory_designation?: string | null;
+  accreditation_details?: string | null;
   logo_url?: string | null;
   director_signature_url?: string | null;
 }

@@ -78,6 +78,18 @@ class LaboratoryReportSnapshotService
             'tin' => $profile->tin,
             'report_footer' => $profile->report_footer,
             'director_name' => $profile->director_name,
+            'director_qualification' => (
+                $profile->director_qualification
+            ),
+            'director_registration_number' => (
+                $profile->director_registration_number
+            ),
+            'signatory_designation' => (
+                $profile->signatory_designation
+            ),
+            'accreditation_details' => (
+                $profile->accreditation_details
+            ),
             'logo_url' => $profile->logo_url,
             'director_signature_url' => (
                 $profile->director_signature_url

@@ -77,6 +77,11 @@ const profile = {
   tin: null,
   report_footer: 'Clinical correlation is advised.',
   director_name: 'Dr Ada Okafor',
+  director_qualification: 'MBBS, FMCPath',
+  director_registration_number: 'MDCN-12345',
+  signatory_designation: 'Consultant Pathologist',
+  accreditation_details:
+    'ISO 15189 accredited laboratory.',
   invoice_footer: null,
   bank_name: null,
   account_name: null,
@@ -162,6 +167,14 @@ describe('LaboratoryProfile', () => {
           lab_name:
             'Rezhel Clinical Laboratory',
           director_name: 'Dr Ada Okafor',
+          director_qualification:
+            'MBBS, FMCPath',
+          director_registration_number:
+            'MDCN-12345',
+          signatory_designation:
+            'Consultant Pathologist',
+          accreditation_details:
+            'ISO 15189 accredited laboratory.',
         })
       );
     });

@@ -22,6 +22,10 @@ export interface LaboratoryProfile {
 
   report_footer: string | null;
   director_name: string | null;
+  director_qualification: string | null;
+  director_registration_number: string | null;
+  signatory_designation: string | null;
+  accreditation_details: string | null;
 
   invoice_footer: string | null;
   bank_name: string | null;
@@ -54,6 +58,10 @@ export interface LaboratoryProfileFormValues {
 
   report_footer: string;
   director_name: string;
+  director_qualification: string;
+  director_registration_number: string;
+  signatory_designation: string;
+  accreditation_details: string;
 }
 
 export interface LaboratoryProfileEnvelope {

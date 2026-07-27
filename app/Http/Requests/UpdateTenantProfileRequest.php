@@ -163,6 +163,30 @@ class UpdateTenantProfileRequest extends FormRequest
                 'max:255',
             ],
 
+            'director_qualification' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'director_registration_number' => [
+                'nullable',
+                'string',
+                'max:150',
+            ],
+
+            'signatory_designation' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'accreditation_details' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+
             /*
             |--------------------------------------------------------------------------
             | Invoice

@@ -64,6 +64,22 @@ class TenantProfileContractTest extends
                 'Dr Ada Okafor'
             )
             ->assertJsonPath(
+                'data.director_qualification',
+                'MBBS, FMCPath'
+            )
+            ->assertJsonPath(
+                'data.director_registration_number',
+                'MDCN-12345'
+            )
+            ->assertJsonPath(
+                'data.signatory_designation',
+                'Consultant Pathologist'
+            )
+            ->assertJsonPath(
+                'data.accreditation_details',
+                'ISO 15189 accredited laboratory.'
+            )
+            ->assertJsonPath(
                 'data.full_address',
                 '12 Laboratory Road, Lagos, Lagos, Nigeria'
             );
@@ -384,6 +400,12 @@ class TenantProfileContractTest extends
                 'This report must be interpreted by a clinician.'
             ),
             'director_name' => 'Dr Ada Okafor',
+            'director_qualification' => 'MBBS, FMCPath',
+            'director_registration_number' => 'MDCN-12345',
+            'signatory_designation' => 'Consultant Pathologist',
+            'accreditation_details' => (
+                'ISO 15189 accredited laboratory.'
+            ),
             'invoice_footer' => 'Thank you for your business.',
             'bank_name' => 'Test Bank',
             'account_name' => $labName,

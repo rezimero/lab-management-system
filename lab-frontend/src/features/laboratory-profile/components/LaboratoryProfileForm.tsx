@@ -92,12 +92,32 @@ const GROUPS: FieldGroup[] = [
         label: 'Laboratory director',
       },
       {
+        name: 'director_qualification',
+        label: 'Director qualification',
+      },
+      {
+        name: 'director_registration_number',
+        label: 'Professional registration number',
+      },
+      {
+        name: 'signatory_designation',
+        label: 'Signatory designation',
+      },
+      {
         name: 'license_number',
         label: 'Laboratory licence number',
       },
       {
         name: 'registration_number',
         label: 'Registration number',
+      },
+      {
+        name: 'accreditation_details',
+        label: 'Accreditation details',
+        multiline: true,
+        fullWidth: true,
+        helperText:
+          'Enter accreditation standards, numbers or scope statements.',
       },
       {
         name: 'report_footer',
