@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
+
 import AssignmentRounded from '@mui/icons-material/AssignmentRounded';
+import BusinessRounded from '@mui/icons-material/BusinessRounded';
 import DashboardRounded from '@mui/icons-material/DashboardRounded';
 import DescriptionRounded from '@mui/icons-material/DescriptionRounded';
 import FactCheckRounded from '@mui/icons-material/FactCheckRounded';
@@ -68,6 +70,11 @@ export const buildNavigationGroups = (
     groups.push({
       label: 'Administration',
       items: [
+        {
+          label: 'Laboratory profile',
+          path: '/settings/laboratory-profile',
+          icon: <BusinessRounded />,
+        },
         {
           label: 'Users and access',
           path: '/users',
