@@ -11,6 +11,11 @@ import type {
 } from '../types/laboratoryReport.types';
 
 import {
+  resolveLaboratoryBrandColors,
+  readableTextColor,
+} from '../../laboratory-profile/utils/laboratoryBrandColors';
+
+import {
   formatReportDate,
   formatReportLabel,
 } from '../utils/reportDisplay';
@@ -21,8 +26,18 @@ interface Props {
 
 const ReportIdentitySection = ({
   report,
-}: Props) => (
-  <>
+}: Props) => {
+  const brandColors =
+    resolveLaboratoryBrandColors(
+      report.laboratory
+    );
+
+  const accentText = readableTextColor(
+    brandColors.accent_color
+  );
+
+  return (
+    <>
     <Box
       sx={{
         display: 'flex',
@@ -64,9 +79,13 @@ const ReportIdentitySection = ({
         <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="h4"
+            data-testid="report-laboratory-name"
+            data-brand-color={
+              brandColors.primary_color
+            }
             sx={{
               fontWeight: 800,
-              color: 'primary.main',
+              color: brandColors.primary_color,
             }}
           >
             {report.laboratory
@@ -77,7 +96,14 @@ const ReportIdentitySection = ({
           {report.laboratory?.tagline && (
             <Typography
               variant="body2"
-              color="text.secondary"
+              data-testid="report-laboratory-tagline"
+              data-brand-color={
+                brandColors.secondary_color
+              }
+              sx={{
+                color:
+                  brandColors.secondary_color,
+              }}
             >
               {report.laboratory.tagline}
             </Typography>
@@ -102,13 +128,28 @@ const ReportIdentitySection = ({
 
         <Chip
           label="Issued"
-          color="success"
           size="small"
+          data-testid="report-issued-chip"
+          data-brand-color={
+            brandColors.accent_color
+          }
+          sx={{
+            fontWeight: 700,
+            backgroundColor:
+              brandColors.accent_color,
+            color: accentText,
+          }}
         />
       </Box>
     </Box>
 
-    <Divider sx={{ my: 2.5 }} />
+    <Divider
+      sx={{
+        my: 2.5,
+        borderColor:
+          brandColors.primary_color,
+      }}
+    />
 
     <Paper
       className="report-summary"
@@ -165,7 +206,8 @@ const ReportIdentitySection = ({
         </Typography>
       </Box>
     </Paper>
-  </>
-);
+    </>
+  );
+};
 
 export default ReportIdentitySection;

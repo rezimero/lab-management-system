@@ -44,6 +44,10 @@ export interface LaboratoryProfileFormValues {
   lab_name: string;
   tagline: string;
 
+  primary_color: string;
+  secondary_color: string;
+  accent_color: string;
+
   email: string;
   phone: string;
   website: string;

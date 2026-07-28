@@ -3,10 +3,24 @@ import type {
   LaboratoryProfileFormValues,
 } from '../types/laboratoryProfile.types';
 
+import {
+  DEFAULT_LABORATORY_BRAND_COLORS,
+  normaliseLaboratoryBrandColor,
+} from './laboratoryBrandColors';
+
 export const EMPTY_PROFILE_FORM:
   LaboratoryProfileFormValues = {
     lab_name: '',
     tagline: '',
+    primary_color:
+      DEFAULT_LABORATORY_BRAND_COLORS
+        .primary_color,
+    secondary_color:
+      DEFAULT_LABORATORY_BRAND_COLORS
+        .secondary_color,
+    accent_color:
+      DEFAULT_LABORATORY_BRAND_COLORS
+        .accent_color,
     email: '',
     phone: '',
     website: '',
@@ -33,6 +47,24 @@ export const profileToFormValues = (
 ): LaboratoryProfileFormValues => ({
   lab_name: profile.lab_name,
   tagline: textValue(profile.tagline),
+  primary_color:
+    normaliseLaboratoryBrandColor(
+      profile.primary_color,
+      DEFAULT_LABORATORY_BRAND_COLORS
+        .primary_color
+    ),
+  secondary_color:
+    normaliseLaboratoryBrandColor(
+      profile.secondary_color,
+      DEFAULT_LABORATORY_BRAND_COLORS
+        .secondary_color
+    ),
+  accent_color:
+    normaliseLaboratoryBrandColor(
+      profile.accent_color,
+      DEFAULT_LABORATORY_BRAND_COLORS
+        .accent_color
+    ),
   email: textValue(profile.email),
   phone: textValue(profile.phone),
   website: textValue(profile.website),

@@ -24,6 +24,11 @@ import {
 } from '../utils/laboratoryProfileMapper';
 
 import {
+  laboratoryBrandColorsError,
+  resolveLaboratoryBrandColors,
+} from '../utils/laboratoryBrandColors';
+
+import {
   profileErrorMessage,
 } from '../utils/profileErrorMessage';
 
@@ -126,12 +131,25 @@ export const useLaboratoryProfile = () => {
   };
 
   const save = async (): Promise<void> => {
+    const brandColorError =
+      laboratoryBrandColorsError(form);
+
+    if (brandColorError) {
+      setError(brandColorError);
+      return;
+    }
+
+    const payload = {
+      ...form,
+      ...resolveLaboratoryBrandColors(form),
+    };
+
     setSaving(true);
     setError(null);
 
     try {
       const response =
-        await updateLaboratoryProfile(form);
+        await updateLaboratoryProfile(payload);
 
       applyProfile(response.data);
 

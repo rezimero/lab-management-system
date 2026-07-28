@@ -15,6 +15,9 @@ import Layout from '../components/Layout/Layout';
 import LaboratoryProfileForm from
   '../features/laboratory-profile/components/LaboratoryProfileForm';
 
+import LaboratoryBrandColors from
+  '../features/laboratory-profile/components/LaboratoryBrandColors';
+
 import LaboratoryProfileMedia from
   '../features/laboratory-profile/components/LaboratoryProfileMedia';
 
@@ -70,9 +73,9 @@ const LaboratoryProfile = () => {
           color="text.secondary"
           sx={{ mb: 3 }}
         >
-          Manage the identity and signatory
-          details captured on newly issued
-          laboratory reports.
+          Manage the identity, tenant branding
+          and signatory details captured on newly
+          issued laboratory reports.
         </Typography>
 
         {profileState.error && (
@@ -93,6 +96,12 @@ const LaboratoryProfile = () => {
           }}
         >
           <LaboratoryProfileForm
+            values={profileState.form}
+            disabled={profileState.saving}
+            onChange={profileState.setField}
+          />
+
+          <LaboratoryBrandColors
             values={profileState.form}
             disabled={profileState.saving}
             onChange={profileState.setField}

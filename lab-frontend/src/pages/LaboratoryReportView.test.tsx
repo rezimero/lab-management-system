@@ -78,6 +78,33 @@ describe('LaboratoryReportView', () => {
     );
 
     expect(
+      screen.getByTestId(
+        'report-laboratory-name'
+      )
+    ).toHaveAttribute(
+      'data-brand-color',
+      '#0057B8'
+    );
+
+    expect(
+      screen.getByTestId(
+        'report-laboratory-tagline'
+      )
+    ).toHaveAttribute(
+      'data-brand-color',
+      '#1F2937'
+    );
+
+    expect(
+      screen.getByTestId(
+        'report-issued-chip'
+      )
+    ).toHaveAttribute(
+      'data-brand-color',
+      '#00A86B'
+    );
+
+    expect(
       screen.getByTestId('report-print-root')
     ).toHaveClass('report-print-root');
 

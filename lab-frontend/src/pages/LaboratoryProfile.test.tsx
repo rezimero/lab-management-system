@@ -147,6 +147,21 @@ describe('LaboratoryProfile', () => {
       'Rezhel Diagnostic Centre'
     );
 
+    const primaryColour =
+      screen.getByLabelText(
+        'Primary colour'
+      );
+
+    expect(primaryColour).toHaveValue(
+      '#1976D2'
+    );
+
+    fireEvent.change(primaryColour, {
+      target: {
+        value: '#7c3aed',
+      },
+    });
+
     fireEvent.change(name, {
       target: {
         value:
@@ -166,6 +181,9 @@ describe('LaboratoryProfile', () => {
         expect.objectContaining({
           lab_name:
             'Rezhel Clinical Laboratory',
+          primary_color: '#7C3AED',
+          secondary_color: '#424242',
+          accent_color: '#2E7D32',
           director_name: 'Dr Ada Okafor',
           director_qualification:
             'MBBS, FMCPath',
@@ -184,7 +202,37 @@ describe('LaboratoryProfile', () => {
     );
   });
 
+
+  it('blocks malformed tenant brand colours', async () => {
+    render(<LaboratoryProfile />);
+
+    const primaryColour =
+      await screen.findByLabelText(
+        'Primary colour'
+      );
+
+    fireEvent.change(primaryColour, {
+      target: {
+        value: 'blue',
+      },
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Save changes',
+      })
+    );
+
+    const colourErrors =
+      await screen.findAllByText(
+        /Primary colour must use a six-digit HEX/i
+      );
+
+    expect(colourErrors).toHaveLength(2);
+    expect(putMock).not.toHaveBeenCalled();
+  });
   it('uploads the laboratory logo', async () => {
+
     render(<LaboratoryProfile />);
 
     const input =

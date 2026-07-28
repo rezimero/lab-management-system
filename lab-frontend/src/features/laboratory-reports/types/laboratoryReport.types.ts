@@ -7,6 +7,9 @@ export interface ReportUser {
 export interface ReportLaboratory {
   lab_name?: string | null;
   tagline?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
   email?: string | null;
   phone?: string | null;
   website?: string | null;
