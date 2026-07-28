@@ -2,7 +2,7 @@
 
 Updated:
 
-    23 July 2026
+    28 July 2026
 
 This document is the current repository handover snapshot.
 
@@ -20,64 +20,69 @@ Canonical integration branch:
 
     develop
 
-Merged frontend foundation milestone:
+Latest merged product milestone:
+
+    Tenant laboratory profile, secure media, immutable signatory details and tenant-owned report branding
 
     Pull request:
-        #9
+        #12
 
     Merge commit:
-        f88f993
-        Merge pull request #9 from rezimero/feature/frontend-vite-migration
+        81c1e67
+        Merge pull request #12 from rezimero/feature/laboratory-profile-report-signatory
 
-    Final milestone tag:
-        frontend-vite-foundation-complete
+Previous merged product milestone:
 
-The feature branch was merged and removed locally and remotely after verification.
+    Frontend result and immutable-report integration
 
-The documentation closeout is performed on a short-lived documentation-only branch and must be merged back into `develop` before the next implementation branch is created.
+    Pull request:
+        #11
 
-Frontend recovery tags:
+    Merge commit:
+        200adfe
+        Merge pull request #11 from rezimero/feature/frontend-result-report-integration
+
+PR #12 milestone commits:
+
+    1ac7a0f fix secure tenant profile contract
+    7558a73 feat integrate laboratory profile settings
+    b005572 feat extend report signatory snapshot
+    e32aec6 fix preserve multipart profile uploads
+    9cf11fb fix render laboratory logo on reports
+    eb5b299 feat add tenant laboratory brand colours
+    81c1e67 Merge pull request #12 from rezimero/feature/laboratory-profile-report-signatory
+
+The PR #12 feature branch was deleted locally and remotely after merge verification.
+
+Verified post-merge state:
+
+    local develop:
+        81c1e67
+
+    origin/develop:
+        81c1e67
+
+    worktree:
+        clean
+
+    ahead/behind:
+        0 / 0
+
+Current documentation branch:
+
+    docs/close-out-laboratory-profile-milestone
+
+The branch was created from `81c1e67` and was clean with no commits ahead of `origin/develop` before this documentation update.
+
+The documentation branch must be reviewed, committed, pushed and merged into `develop` before the next product feature begins.
+
+Historical frontend recovery tags remain available:
 
     frontend-vite-baseline
-        64495da
-
     frontend-auth-refactor-wave-1
-        f01fe8a
-
     frontend-tenant-management-wave-1
-        e7d3a90
-
     frontend-tenant-management-wave-2
-        e06166e
-
     frontend-vite-foundation-complete
-        f88f993
-
-Milestone commit sequence:
-
-    f88f993 Merge pull request #9 from rezimero/feature/frontend-vite-migration
-    de13940 docs synchronize frontend migration handover
-    e06166e refactor landlord tenant management presentation
-    e7d3a90 refactor landlord tenant management orchestration
-    076e3d5 test stabilize landlord tenant management characterization
-    e80123c test characterize landlord tenant management
-    f01fe8a refactor frontend API authentication storage
-    f002eee test characterize frontend API client interceptors
-    f35e09b refactor frontend authentication session storage
-    4cabf8c test characterize frontend authentication context
-    64495da chore remove obsolete backup source files
-    6c9475b refactor Vite frontend application shell
-    5499877 refactor landlord cross-tenant management
-    4f40083 refactor tenant user governance services
-    ac67b88 Migrate frontend tooling from CRA to Vite
-
-The merged milestone was verified as contained in `develop`.
-
-The repository worktree was clean immediately after the merge, tag push and feature-branch deletion.
-
-Archived investigation material is outside the repository under:
-
-    C:\Users\Rezi\Documents\Rezhel-Refactor-Artifacts\20260723
 
 ---
 
@@ -86,17 +91,22 @@ Archived investigation material is outside the repository under:
 Preserve:
 
 - database-per-tenant MySQL isolation
-- landlord database for tenant metadata and Sanctum tokens
+- landlord database for tenant metadata, tenant profiles, media metadata and Sanctum tokens
 - `X-Tenant-Domain` tenant resolution
 - `SetTenantContext:required` before `auth:sanctum`
 - tenant-bound Sanctum tokens
 - `App\Models\Tenant\User` as the authenticated tenant model
+- `TenantUserPermissionCatalog` as the active tenant permission catalogue
 - UUID public route binding
 - order-item-driven test results
 - one result per laboratory order item
 - result workflow state machine
 - approved-result order-completion guard
 - immutable laboratory report snapshots
+- immutable signatory and brand-colour snapshots
+- tenant-owned laboratory identity and colours
+- administrator-only laboratory-profile management
+- secure tenant-profile image validation and physical cleanup
 - tenant database transactions for workflow mutations
 - isolated automated MySQL tenant tests
 
@@ -119,6 +129,8 @@ Tenant operations and tests must restore both database and authentication contex
     Auth::forgetGuards();
 
 Failure to restore both contexts can leak tenant state into later landlord operations or tests.
+
+Landlord-side tenant-profile and media operations must still constrain every query to the resolved tenant.
 
 ---
 
@@ -143,13 +155,24 @@ Completed and validated backend capabilities include:
 - tenant-isolated result queries and statistics
 - immutable laboratory report snapshots
 - tenant-isolated report retrieval and generation
+- explicit tenant-profile API resource
+- administrator-only tenant-profile view and update authorization
+- `MANAGE_TENANT_PROFILE` permission catalogue capability
+- tenant-isolated logo, favicon and director-signature upload handling
+- JPG, JPEG, PNG and WEBP validation with a 2 MB limit
+- SVG rejection
+- media UUID and tenant-ownership alignment
+- replaced-media physical-file cleanup
+- director qualification snapshot
+- director registration-number snapshot
+- signatory-designation snapshot
+- accreditation-details snapshot
+- tenant primary, secondary and accent colour snapshotting
 
 Latest confirmed backend baseline:
 
-    133 tests passed
-    3,458 assertions
-
-This backend baseline was not rerun during the frontend documentation synchronization.
+    138 tests passed
+    3,597 assertions
 
 ---
 
@@ -224,7 +247,18 @@ Laboratory reporting:
     GET  /api/laboratory-reports
     GET  /api/laboratory-reports/{laboratoryReport}
 
-PDF rendering remains deferred until a compatible renderer is deliberately selected.
+Tenant laboratory profile:
+
+- explicit tenant-profile resource
+- authorized profile view and update requests
+- dedicated logo, favicon and director-signature upload handling
+- multipart upload field `file`
+- administrator-only tenant-management boundary
+- tenant-isolation contract tests
+
+The exact route list must be verified from the current route definitions before changing the profile contract.
+
+Server-generated PDF export remains deferred until a compatible renderer is deliberately selected.
 
 ---
 
@@ -259,71 +293,75 @@ Create React App is not the active frontend toolchain.
 
 ---
 
-## 8. Completed Frontend Foundation Milestones
+## 8. Completed Frontend Milestones
 
-### Vite application baseline
+### Vite application foundation
 
 Completed:
 
 - Vite application shell
 - TypeScript build validation
 - Vitest test runner
-- obsolete backup source removal
-- stable baseline tag
-
-Checkpoint:
-
-    frontend-vite-baseline
-    64495da
-
-### Authentication characterization and refactor
-
-Completed:
-
-- `AuthContext` behavior characterization
+- authentication-context characterization and storage refactor
 - API-client interceptor characterization
-- authentication type extraction
-- API session mapping extraction
-- authentication storage extraction
-- API authentication storage consolidation
-- bearer-token and tenant-header behavior preservation
-- 401 and impersonation behavior preservation
+- landlord tenant-management characterization and decomposition
 
-Checkpoints:
+Merged baseline:
 
-    4cabf8c test characterize frontend authentication context
-    f35e09b refactor frontend authentication session storage
-    f002eee test characterize frontend API client interceptors
-    f01fe8a refactor frontend API authentication storage
-    frontend-auth-refactor-wave-1
+    pull request #9
+    merge commit f88f993
+    tag frontend-vite-foundation-complete
 
-### Landlord tenant-management characterization and refactor
+### Result and immutable-report integration
 
 Completed:
 
-- 14-test tenant-management characterization boundary
-- test stabilization without global timeout increases
-- tenant API operation extraction
-- tenant types and selector extraction
-- React Query and interaction orchestration extraction
-- presentation decomposition
-- exact-domain deletion protection preservation
-- tenant maintenance impersonation preservation
+- order-item-driven result API integration
+- result workflow UI alignment
+- immutable laboratory-report retrieval and generation
+- report route and view integration
+- regression coverage around result and report screens
 
-Checkpoints:
+Merged baseline:
 
-    e80123c test characterize landlord tenant management
-    076e3d5 test stabilize landlord tenant management characterization
-    e7d3a90 refactor landlord tenant management orchestration
-    e06166e refactor landlord tenant management presentation
-    frontend-tenant-management-wave-1
-    frontend-tenant-management-wave-2
+    pull request #11
+    merge commit 200adfe
+
+### Laboratory profile and report branding
+
+Completed:
+
+- administrator-only route `/settings/laboratory-profile`
+- tenant-admin route guard
+- laboratory-profile API mapping and form state
+- laboratory identity, legal, accreditation and signatory fields
+- logo and director-signature multipart uploads
+- multipart request preservation in the Axios client
+- primary, secondary and accent colour editors
+- native colour pickers and editable six-digit HEX values
+- uppercase colour normalization
+- profile validation and server-error feedback
+- starter palette and safe fallback colours
+- readable black-or-white text over the accent colour
+- live report-branding preview
+- report laboratory name and divider in primary colour
+- supporting identity text in secondary colour
+- issued badge in accent colour
+- logo rendering in browser and print output
+- director-signature footer
+- immutable report colours and signatory details from the report snapshot
+- tenant-owned branding limited to profile and reports
+
+Merged baseline:
+
+    pull request #12
+    merge commit 81c1e67
 
 ---
 
-## 9. Frontend Authentication Structure
+## 9. Frontend Authentication and API Client Structure
 
-Current files:
+Current authentication files:
 
     lab-frontend/src/auth/authTypes.ts
     lab-frontend/src/auth/authSessionMapper.ts
@@ -356,103 +394,82 @@ API-client invariants include:
 - clean malformed tenant storage
 - clear invalid sessions on ordinary 401 responses
 - preserve login and registration exception handling
-- preserve impersonated logout behavior
+- preserve impersonated logout behaviour
+- do not force JSON `Content-Type` on `FormData`
 
 ---
 
-## 10. Landlord Tenant-Management Structure
+## 10. Laboratory Profile and Report Structure
 
-Route-level composition:
+Profile feature root:
 
-    lab-frontend/src/components/landlords/AllTenants.tsx
+    lab-frontend/src/features/laboratory-profile
 
-Current line count:
+Key modules:
 
-    237
+    api/laboratoryProfileApi.ts
+    components/LaboratoryBrandColors.tsx
+    components/LaboratoryProfileForm.tsx
+    components/LaboratoryProfileMedia.tsx
+    hooks/useLaboratoryProfile.ts
+    types/laboratoryProfile.types.ts
+    utils/laboratoryBrandColors.ts
+    utils/laboratoryProfileMapper.ts
+    utils/profileErrorMessage.ts
 
-The original component was:
+Route-level page:
 
-    1,541 lines
+    lab-frontend/src/pages/LaboratoryProfile.tsx
 
-Orchestration and data modules:
+Authorization boundary:
 
-    tenantManagementApi.ts
-    tenantManagementSelectors.ts
-    tenantManagementTypes.ts
-    useTenantManagement.ts
+    lab-frontend/src/components/TenantAdminRoute.tsx
 
-Presentation modules:
+Report identity and signatory components:
 
-    TenantManagementStates.tsx
-    TenantManagementHero.tsx
-    TenantSummaryCards.tsx
-    TenantPortfolio.tsx
-    TenantPortfolioRow.tsx
-    TenantActionMenu.tsx
-    TenantConfirmationDialog.tsx
+    lab-frontend/src/features/laboratory-reports/components/ReportIdentitySection.tsx
+    lab-frontend/src/features/laboratory-reports/components/ReportSignatureFooter.tsx
+    lab-frontend/src/features/laboratory-reports/components/ReportPrintStyles.tsx
 
-Existing focused dialogs remain:
+Report rendering must use the report snapshot rather than the live laboratory profile.
 
-    TenantFormDialog.tsx
-    TenantPasswordResetDialog.tsx
+Brand colours are tenant-owned. Rezhel defaults are only starter or fallback values.
 
-Characterized behavior:
-
-- loading and error states
-- array and paginated tenant response shapes
-- aggregate statistics
-- empty portfolio
-- retry
-- case-insensitive search by name, domain and database
-- create
-- update
-- suspend
-- activate
-- exact-domain permanent deletion
-- administrator password reset
-- maintenance impersonation and dashboard navigation
-- mutation failure feedback
-- tenant and landlord dashboard cache invalidation
-
-`useTenantManagement.ts` remains above the preferred 300-line review threshold but is cohesive and validated. Do not split it merely for line count.
+Clinical semantic colours remain separate from tenant branding.
 
 ---
 
-## 11. Current Frontend Validation Baseline
+## 11. Current Validation Baseline
 
-Focused tenant-management suite:
+Backend:
 
-    1 test file passed
-    14 tests passed
+    138 tests passed
+    3,597 assertions
 
-Complete frontend suite:
+Frontend:
 
-    5 test files passed
-    47 tests passed
+    31 test files passed
+    119 tests passed
 
-Passing files:
-
-    src/contexts/AuthContext.test.tsx
-        15 tests
-
-    src/components/PrivateRoute.test.tsx
-        4 tests
-
-    src/components/landlords/AllTenants.test.tsx
-        14 tests
-
-    src/api/client.test.ts
-        13 tests
-
-    src/App.test.tsx
-        1 test
-
-Production build:
+Production validation:
 
     TypeScript validation passed
-    Vite build passed
+    Vite production build passed
+
+Manual smoke validation:
+
+- administrator opened the laboratory-profile settings page
+- profile data saved successfully
+- logo uploaded and rendered
+- director signature uploaded and rendered
+- tenant brand colours saved and previewed
+- report view rendered tenant identity and signatory information
+- print preview retained logo, branding and signature
+- report fit on one printed page in the confirmed smoke scenario
 
 Commands:
+
+    php artisan test
 
     cd lab-frontend
     npm test -- --run
@@ -462,20 +479,20 @@ Commands:
 
 ## 12. Testing and Refactor Discipline
 
-For each frontend behavior change:
+For each behaviour change:
 
-1. inspect the active component, API client and context
+1. inspect the active component, API client, service and authorization boundary
 2. locate or create characterization coverage
-3. run the focused test
+3. run focused tests
 4. make the smallest responsible change
-5. run the focused test again
-6. run the full frontend suite
-7. run `npm run build`
+5. rerun focused and affected regression tests
+6. run the full relevant suite at milestone completion
+7. run TypeScript validation and the production build for frontend work
 8. run `git diff --check`
 9. stage exact paths only
 10. compare intended paths with `git diff --cached --name-only`
 11. commit only passing code
-12. create a tag only at a stable wave boundary
+12. perform browser and print smoke checks when rendering changes
 
 Do not use:
 
@@ -494,10 +511,10 @@ Known but non-blocking items:
 - old landlord result utilities may still use the legacy shape
 - tenant authorization and landlord authorization use different user models
 - the historical role-and-permission seeder does not describe the active tenant authorization path
-- frontend result screens still require alignment with the order-item-driven result API
-- frontend report screens still require immutable-report API integration
 - some test-support and orchestration files exceed the preferred line-count target
-- PDF rendering and export are not implemented
+- server-generated PDF rendering and export are not implemented
+- global tenant application theming is not implemented and was deliberately excluded from PR #12
+- report-template customization is not implemented and requires a separate architecture decision
 
 Resolved items that must not remain in technical-debt lists:
 
@@ -506,6 +523,12 @@ Resolved items that must not remain in technical-debt lists:
 - frontend authorization-header logging
 - authentication-storage decomposition
 - landlord tenant-management decomposition
+- frontend result API integration
+- immutable-report frontend integration
+- profile multipart upload handling
+- report logo rendering
+- tenant-owned report brand colours
+- immutable signatory snapshot fields
 
 ---
 
@@ -513,11 +536,15 @@ Resolved items that must not remain in technical-debt lists:
 
 No confirmed production blocker exists.
 
+No backend test failure exists.
+
 No frontend test failure exists.
 
-No frontend build failure exists.
+No frontend typecheck or build failure exists.
 
-No uncommitted source change exists.
+No known uncommitted product-code change exists.
+
+The only active closeout task is synchronization of the five core documentation files.
 
 ---
 
@@ -525,66 +552,88 @@ No uncommitted source change exists.
 
 Milestone:
 
-    Frontend Vite migration and foundation refactor
+    Tenant laboratory profile and immutable report branding
 
 Status:
 
-    Vite migration complete
-    authentication foundation characterized and refactored
-    landlord tenant management characterized and refactored
-    focused tests passed
-    full frontend suite passed
+    secure backend tenant-profile contract completed
+    tenant profile and media authorization completed
+    frontend profile settings completed
+    immutable signatory fields completed
+    multipart upload handling corrected
+    report logo rendering corrected
+    tenant-owned brand colours completed
+    focused and full backend tests passed
+    focused and full frontend tests passed
+    TypeScript validation passed
     production build passed
-    pull request #9 merged into develop
-    merge commit f88f993 verified
-    final tag frontend-vite-foundation-complete pushed
-    completed feature branch removed locally and remotely
-    documentation closeout ready for its own review and merge
+    browser and print smoke checks passed
+    pull request #12 merged into develop
+    merge commit 81c1e67 verified locally and remotely
+    completed feature branch deleted locally and remotely
+    documentation closeout in progress
 
-The frontend foundation milestone is complete. Do not add result or report integration changes to the documentation closeout branch.
+No product-code change belongs on the documentation closeout branch.
 
 ---
 
 ## 16. Immediate Next Task
 
-Before changing frontend result or report behavior:
+Complete the documentation closeout:
 
-1. locate the active result and report routes, screens and API calls
-2. inspect their current legacy data assumptions
-3. map the backend result and report contracts
-4. create characterization tests for the current user-visible behavior
-5. freeze the intended API integration boundary
-6. implement the smallest integration batch
-7. preserve tenant headers, authentication and route protection
-8. run focused tests, the full frontend suite and the production build
+1. review the five updated documents
+2. run `git diff --check`
+3. verify that only the five intended documentation paths changed
+4. stage the five exact paths
+5. commit the documentation closeout
+6. push the documentation branch
+7. open and merge a documentation-only pull request into `develop`
+8. update local `develop`
+9. delete the documentation branch locally and remotely
+10. freeze the scope and exact branch name for the next product feature
 
-Do not begin by broadly rewriting the result interface.
+No next product feature is frozen in this document.
+
+Server-generated PDF export remains a backlog item, not an active instruction.
 
 ---
 
 ## 17. Git Continuation
 
-Before beginning the next implementation milestone:
+Current documentation branch:
 
-    git checkout develop
+    docs/close-out-laboratory-profile-milestone
+
+Required base commit:
+
+    81c1e67
+
+Before committing documentation:
+
+    git status -sb
+    git diff --check
+    git diff --name-status
+    git diff --stat
+
+Required changed paths:
+
+    docs/AI_ENGINEER_BRIEF.md
+    docs/ARCHITECTURE_DECISIONS.md
+    docs/CURRENT_STATE.md
+    docs/PROJECT_HANDOVER.md
+    docs/TESTING_AND_OPERATIONS.md
+
+Stage exact paths only.
+
+Do not use:
+
+    git add .
+
+After the documentation pull request is merged:
+
+    git switch develop
     git pull --ff-only origin develop
-    git status --short
-    git log -8 --oneline --decorate
-    git tag --list "frontend-*"
+    git status -sb
+    git log --oneline --decorate -8
 
-Required starting branch:
-
-    develop
-
-Required merged frontend baseline:
-
-    f88f993
-    frontend-vite-foundation-complete
-
-Required worktree:
-
-    clean
-
-After the documentation closeout is merged, create:
-
-    feature/frontend-result-report-integration
+Create the next product branch only after its scope and descriptive name are agreed.

@@ -2,6 +2,10 @@
 
 This document records decisions that should not be reopened without a clear technical reason, impact analysis and replacement plan.
 
+Updated:
+
+    28 July 2026
+
 ---
 
 ## ADR-001: Database-per-Tenant Isolation
@@ -14,7 +18,7 @@ Decision:
 
 Each laboratory uses a separate physical MySQL database.
 
-The landlord database stores platform-wide tenant metadata and authentication token records.
+The landlord database stores platform-wide tenant metadata, tenant-profile records, media metadata and authentication token records.
 
 Reason:
 
@@ -25,7 +29,9 @@ Reason:
 
 Consequence:
 
-Every tenant request must resolve and activate the correct tenant database before tenant authentication and model queries.
+Every tenant request must resolve and activate the correct tenant database before tenant authentication and tenant-model queries.
+
+Landlord-side tenant-profile and media queries must still be constrained to the resolved tenant.
 
 ---
 
@@ -256,7 +262,7 @@ Status:
 
 Decision:
 
-Tenant result permissions are evaluated through:
+Tenant permissions are evaluated through:
 
     App\Support\Tenant\TenantUserPermissionCatalog
 
@@ -270,9 +276,9 @@ The active tenant user model uses a role column and does not currently use Spati
 
 Consequence:
 
-Do not call `$tenantUser->can(...)` for result workflow authorization unless tenant role provisioning is redesigned.
+Do not call `$tenantUser->can(...)` for tenant workflow authorization unless tenant role provisioning is redesigned.
 
-Current role capabilities:
+Current result-role capabilities:
 
     admin
         view, create, edit, submit, approve, reject
@@ -286,6 +292,12 @@ Current role capabilities:
     receptionist
         view
 
+Laboratory-profile management uses the explicit catalogue capability:
+
+    MANAGE_TENANT_PROFILE
+
+Only tenant administrators and platform superadministrators may manage the tenant laboratory profile.
+
 ---
 
 ## ADR-012: Focused Migration Responsibilities
@@ -296,20 +308,23 @@ Status:
 
 Decision:
 
-The result modernization uses separate migrations for:
+Workflow and profile modernization use focused migrations with one clear responsibility.
+
+Examples include separate migrations for:
 
 1. order-item processing metadata
 2. result workflow columns
-3. legacy data migration
-4. final constraints
+3. legacy result data migration
+4. final result constraints
+5. report signatory profile fields
 
 Reason:
 
-A single oversized migration mixed unrelated schema, data and validation responsibilities.
+A single oversized migration mixes schema, data and validation responsibilities and becomes difficult to review or recover.
 
 Consequence:
 
-Future workflow migrations should remain focused and independently reviewable.
+Future workflow and tenant-profile migrations should remain focused and independently reviewable.
 
 ---
 
@@ -363,7 +378,7 @@ Status:
 
 Decision:
 
-When modifying existing behavior, tests must describe the intended behavior before refactoring or changing the implementation.
+When modifying existing behaviour, tests must describe the intended behaviour before refactoring or changing the implementation.
 
 Reason:
 
@@ -388,9 +403,12 @@ During milestone development:
 1. run syntax and whitespace checks
 2. run focused feature tests
 3. fix demonstrated failures
-4. run the full relevant suite once the milestone is complete
-5. create the milestone checkpoint
-6. push, review, merge and tag
+4. run affected regression tests
+5. run the full relevant suite once the milestone is complete
+6. run frontend typecheck and production build when applicable
+7. perform browser or print smoke checks for user-visible rendering changes
+8. create the milestone checkpoint
+9. push, review and merge normally
 
 Reason:
 
@@ -415,24 +433,24 @@ One substantial milestone should normally produce:
 - one branch
 - one GitHub push sequence
 - one pull request
-- one merge
-- one baseline tag
+- one normal merge commit
+- one documentation synchronization
 
 The canonical integration branch and merged milestone baseline are recorded in `docs/CURRENT_STATE.md`.
 
-At the 23 July 2026 frontend-foundation closeout:
+Verified merged milestones include:
 
-    integration branch:
-        develop
+    frontend foundation:
+        pull request #9
+        merge commit f88f993
 
-    merged pull request:
-        #9
+    frontend result/report integration:
+        pull request #11
+        merge commit 200adfe
 
-    merge commit:
-        f88f993
-
-    final milestone tag:
-        frontend-vite-foundation-complete
+    tenant laboratory profile and report branding:
+        pull request #12
+        merge commit 81c1e67
 
 New implementation work must begin from updated `develop` on a separate feature branch.
 
@@ -446,7 +464,7 @@ Status:
 
 Decision:
 
-The repository documentation is the durable handover mechanism between:
+Repository documentation is the durable handover mechanism between:
 
 - ChatGPT accounts
 - AI coding assistants
@@ -459,7 +477,13 @@ Conversation history and account memory are not portable or reliable project sto
 
 Consequence:
 
-`docs/CURRENT_STATE.md` must be updated before each milestone is committed or handed over.
+The five core documents under `docs/` must be synchronized before a completed milestone is handed over or the next product feature begins:
+
+    AI_ENGINEER_BRIEF.md
+    ARCHITECTURE_DECISIONS.md
+    CURRENT_STATE.md
+    PROJECT_HANDOVER.md
+    TESTING_AND_OPERATIONS.md
 
 ---
 
@@ -483,7 +507,15 @@ Report generation requires:
 
 The report snapshots:
 
-- landlord-side laboratory profile and branding
+- landlord-side laboratory profile
+- tenant-owned primary, secondary and accent colours
+- laboratory logo reference
+- director-signature reference
+- director name
+- director qualification
+- director registration number
+- signatory designation
+- accreditation details
 - patient identity
 - source order information
 - approved result values
@@ -493,7 +525,9 @@ The report record also stores the generating tenant-user relationship and genera
 
 Issued report records are not updated or deleted when source records later change.
 
-The active reporting API returns JSON resources. PDF generation is deferred until a dedicated and compatible PDF renderer is selected.
+Printable browser reports render from the persisted report snapshot.
+
+A server-side PDF renderer remains deferred until a dedicated compatible renderer is selected.
 
 Report authorization uses `TenantUserPermissionCatalog`:
 
@@ -505,7 +539,7 @@ Report authorization uses `TenantUserPermissionCatalog`:
 
 Consequence:
 
-Historical report data remains reproducible and tenant isolated. Future PDF output must render from the persisted report snapshot rather than live mutable clinical records.
+Historical report data remains reproducible, tenant isolated and visually stable after a laboratory later changes its profile, logo, signature or colours.
 
 ---
 
@@ -548,7 +582,7 @@ Status:
 
 Decision:
 
-Frontend authentication behavior is protected by characterization tests before refactoring.
+Frontend authentication behaviour is protected by characterization tests before refactoring.
 
 Authentication responsibilities are separated across:
 
@@ -565,16 +599,17 @@ The API client must preserve:
 - tenant-domain header attachment for tenant users
 - tenant-header exclusion for platform superadmins
 - malformed stored-tenant cleanup
-- 401 session clearing and redirect behavior
-- impersonated logout behavior
+- 401 session clearing and redirect behaviour
+- impersonated logout behaviour
+- multipart `FormData` requests without forcing the JSON content type
 
 Reason:
 
-Authentication storage, interceptors and tenant context are security-sensitive and must not be changed by uncharacterized cleanup.
+Authentication storage, interceptors, tenant context and multipart handling are security-sensitive integration boundaries.
 
 Consequence:
 
-Any future authentication change must first update or extend the existing `AuthContext` and API-client characterization suites.
+Any future authentication or API-client change must first update or extend the existing characterization suites.
 
 ---
 
@@ -611,7 +646,7 @@ Consequence:
 
 Future tenant-management changes should be made in the narrowest responsible module.
 
-The following behavior must remain characterized:
+The following behaviour must remain characterized:
 
 - array and paginated response support
 - search by name, domain and database
@@ -641,7 +676,7 @@ Frontend refactor batches use:
 - `git diff --check`
 - exact-path staging
 - local checkpoint commits
-- annotated recovery tags at stable wave boundaries
+- annotated recovery tags only at stable wave boundaries
 
 Broad staging commands such as `git add .` are not used.
 
@@ -654,3 +689,127 @@ Consequence:
 Before each frontend commit, compare the intended file list with `git diff --cached --name-only`.
 
 Repository-root investigation artifacts must remain untracked or be archived outside the repository.
+
+---
+
+## ADR-024: Explicit Tenant Laboratory-Profile Contract
+
+Status:
+
+    Accepted
+
+Decision:
+
+Tenant laboratory-profile reads and updates use explicit request authorization and an explicit API resource.
+
+The contract includes laboratory identity, legal and accreditation details, signatory information and tenant-owned brand colours.
+
+Only users with `MANAGE_TENANT_PROFILE` or platform-superadministrator authority may manage the profile.
+
+Reason:
+
+Implicit model serialization and controller-only authorization make it easier to expose internal fields or permit accidental cross-tenant access.
+
+Consequence:
+
+Future profile fields must be added deliberately to:
+
+- landlord migration and model
+- update validation
+- API resource
+- service mapping
+- frontend types and mapper
+- tenant-isolation and authorization tests
+- report snapshot when the field must be historically immutable
+
+---
+
+## ADR-025: Secure Tenant Profile Media
+
+Status:
+
+    Accepted
+
+Decision:
+
+Laboratory logo, favicon and director-signature uploads use a shared secured profile-media contract.
+
+The multipart field is:
+
+    file
+
+Accepted formats are:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Maximum file size:
+
+    2 MB
+
+SVG is rejected.
+
+Media records use tenant ownership and UUID public identity.
+
+Replacing or deleting profile media must clean up the superseded physical file through the media service.
+
+Reason:
+
+Tenant media is both an authorization boundary and an untrusted file-upload boundary.
+
+Consequence:
+
+Do not add direct public-path writes, bypass tenant ownership checks or accept arbitrary file types.
+
+The frontend API client must preserve multipart boundaries by not forcing JSON headers onto `FormData` requests.
+
+---
+
+## ADR-026: Tenant-Owned Brand Colours and Report Scope
+
+Status:
+
+    Accepted
+
+Decision:
+
+Each subscribing laboratory owns its:
+
+- primary colour
+- secondary colour
+- accent colour
+
+Colours are stored as validated six-digit HEX values and normalized for display.
+
+Rezhel supplies only starter or fallback values for missing or invalid data.
+
+Brand colours currently apply to:
+
+- laboratory-profile editing
+- laboratory-profile live report preview
+- report identity
+- report divider and supporting identity text
+- issued-report badge
+- print rendering
+
+Brand colours do not currently apply to:
+
+- global application shell
+- sidebar
+- dashboard
+- clinical semantic statuses
+- custom CSS
+- custom fonts
+- arbitrary report templates
+
+Issued reports render snapshot colours rather than current live-profile colours.
+
+Reason:
+
+A tenant's identity must not be confused with Rezhel's platform identity, and historical reports must not change after rebranding.
+
+Consequence:
+
+Any future expansion into global tenant theming or template customization requires a separate architecture decision, accessibility review and regression plan.

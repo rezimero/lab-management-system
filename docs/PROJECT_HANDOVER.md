@@ -2,36 +2,46 @@
 
 Updated:
 
-    23 July 2026
+    28 July 2026
 
 ## 1. Project Identity
 
 This repository contains a multi-tenant Laboratory Information Management System built with Laravel and React.
 
-The system is designed for independent laboratories operating on isolated tenant databases while platform-wide administration remains in a landlord database.
+The system is designed for independent laboratories operating on isolated tenant databases while platform-wide administration, tenant profiles, media metadata and authentication tokens remain in the landlord database.
 
 Repository:
 
     lab-management-system
 
-Completed frontend milestone:
+Latest completed product milestone:
 
-    Frontend Vite migration and foundation refactor
+    Tenant laboratory profile, secure media, immutable signatory details and tenant-owned report branding
 
 GitHub closeout:
 
     Pull request:
-        #9
+        #12
 
     Merge commit:
-        f88f993
+        81c1e67
 
-    Final tag:
-        frontend-vite-foundation-complete
+Previous product milestone:
 
-Current backend status:
+    Frontend result and immutable-report integration
 
-    Result processing and immutable laboratory reporting are complete and validated
+    Pull request:
+        #11
+
+    Merge commit:
+        200adfe
+
+Current validated status:
+
+    Backend result, reporting and tenant-profile workflows are complete
+    Frontend result, report and laboratory-profile integration is complete
+    Printable browser report branding is complete
+    Server-generated PDF export remains deferred
 
 ---
 
@@ -42,6 +52,9 @@ The system manages the operational lifecycle of a diagnostic laboratory, includi
 - tenant onboarding
 - tenant authentication
 - laboratory users and roles
+- laboratory identity and legal profile
+- laboratory logo, favicon and director signature
+- tenant-owned report brand colours
 - patients
 - laboratory test catalogue
 - laboratory orders
@@ -55,12 +68,14 @@ The system manages the operational lifecycle of a diagnostic laboratory, includi
 - result approval
 - order completion
 - immutable reporting
+- historical signatory and branding preservation
+- printable report presentation
 
-The Vite migration and frontend foundation refactors are complete.
+The backend result, reporting and profile workflows are stable.
 
-The next development priority is characterization and integration of the frontend result and immutable-report APIs.
+The frontend result, report and profile integrations are complete.
 
-The backend result and reporting workflows are stable.
+The next product feature has not yet been frozen.
 
 ---
 
@@ -108,6 +123,8 @@ The landlord database contains platform-wide records, including:
 - tenant metadata
 - tenant database names
 - tenant domains
+- tenant laboratory profiles
+- tenant profile media metadata
 
 Development landlord database:
 
@@ -131,6 +148,7 @@ Tenant databases contain:
 - specimens
 - test results
 - laboratory reports
+- immutable report snapshots
 - tenant-specific operational data
 
 Automated tests generate temporary tenant databases and remove them during teardown.
@@ -154,13 +172,13 @@ The tenant context must be resolved before Sanctum authentication.
 
 Final tenant authentication flow:
 
-1. Read the tenant domain from `X-Tenant-Domain`.
-2. Resolve the tenant in the landlord database.
-3. Switch the active tenant database connection.
-4. Read the bearer token from the landlord token table.
-5. Confirm that the token belongs to the resolved tenant.
-6. Load the tenant user from the active tenant database.
-7. Bind the tenant user to the tenant authentication guard.
+1. read the tenant domain from `X-Tenant-Domain`
+2. resolve the tenant in the landlord database
+3. switch the active tenant database connection
+4. read the bearer token from the landlord token table
+5. confirm that the token belongs to the resolved tenant
+6. load the tenant user from the active tenant database
+7. bind the tenant user to the tenant authentication guard
 
 Sanctum tokens are tenant-bound using:
 
@@ -195,9 +213,20 @@ Current test-result authorization:
 | doctor | Yes | No | No | Yes |
 | receptionist | Yes | No | No | No |
 
-Platform superadmin remains a landlord-level role.
+Laboratory-profile management uses:
 
-Do not replace the active tenant authorization path with Spatie permission calls unless tenant provisioning and tenant authentication are deliberately redesigned.
+    MANAGE_TENANT_PROFILE
+
+The profile-management boundary allows:
+
+- authorized tenant administrators
+- platform superadministrators
+
+Other tenant roles must not access profile-management operations merely because they can view reports.
+
+Platform superadministrator remains a landlord-level role.
+
+Do not replace the active tenant authorization path with Spatie permission calls unless tenant provisioning and authentication are deliberately redesigned.
 
 ---
 
@@ -214,6 +243,7 @@ Current UUID-bound resources include:
 - specimens
 - test results
 - laboratory reports
+- tenant profile media
 
 ---
 
@@ -277,20 +307,45 @@ Completed:
 
 - one immutable report snapshot per completed order
 - laboratory, patient, order and result snapshots
+- immutable director qualification
+- immutable director registration number
+- immutable signatory designation
+- immutable accreditation details
+- immutable primary, secondary and accent colours
+- immutable logo and signature references
 - generating-user audit
 - UUID route binding
 - tenant isolation
 - view and generation authorization
 - JSON report resources
+- printable browser report presentation
 
 Deferred:
 
-- PDF rendering and export
+- server-generated PDF rendering and export
+
+### Tenant laboratory profile
+
+Completed:
+
+- explicit `TenantProfileResource`
+- authorized profile view and update requests
+- administrator-only profile-management permission
+- tenant-isolated profile contract
+- laboratory identity, legal, accreditation and signatory fields
+- primary, secondary and accent colour fields
+- logo, favicon and director-signature service wrappers
+- shared secure upload request with multipart field `file`
+- JPG, JPEG, PNG and WEBP validation
+- 2 MB upload limit
+- SVG rejection
+- media UUID and tenant ownership
+- replaced-media physical cleanup
 
 Latest confirmed backend baseline:
 
-    133 tests passed
-    3,458 assertions
+    138 tests passed
+    3,597 assertions
 
 ---
 
@@ -358,7 +413,7 @@ Rules:
 
 ---
 
-## 11. Active Result and Report API Contracts
+## 11. Active Result, Report and Profile Contracts
 
 Order-item processing:
 
@@ -391,6 +446,17 @@ Laboratory reporting:
     GET  /api/laboratory-reports
     GET  /api/laboratory-reports/{laboratoryReport}
 
+Tenant profile:
+
+- explicit profile resource
+- authorized view and update requests
+- secure logo, favicon and director-signature uploads
+- multipart upload field `file`
+- tenant isolation
+- administrator-only management
+
+Verify the current route definitions before changing or documenting exact tenant-profile route paths.
+
 Legacy standalone result creation and deletion routes must not be reintroduced into the active tenant workflow.
 
 ---
@@ -416,6 +482,8 @@ The test suite refuses to run unless the active landlord database is:
 
 Temporary tenant database deletion is guarded by strict database-name validation.
 
+The report signatory landlord migration was validated through the test landlord environment. Deployment migrations must be executed deliberately in the intended environment and must not be conflated with automated-test setup.
+
 ---
 
 ## 13. Frontend State
@@ -428,12 +496,10 @@ Canonical integration branch:
 
     develop
 
-Merged milestone baseline:
+Latest merged product baseline:
 
-    f88f993
-    frontend-vite-foundation-complete
-
-The completed feature branch was deleted locally and remotely after merge verification.
+    81c1e67
+    pull request #12
 
 Current frontend status:
 
@@ -444,60 +510,57 @@ Current frontend status:
 - authentication context and API interceptors characterized
 - authentication storage decomposed
 - landlord tenant management characterized and decomposed
-- result and report interfaces still require active API integration
+- result workflow integrated with the order-item-driven API
+- immutable report retrieval and generation integrated
+- administrator-only laboratory-profile page integrated
+- tenant profile and media uploads integrated
+- multipart `FormData` handling corrected
+- tenant brand-colour editing and preview integrated
+- report logo, signature and signatory details integrated
+- browser and print report branding integrated
 
 Current frontend test baseline:
 
-    5 test files passed
-    47 tests passed
+    31 test files passed
+    119 tests passed
 
 Current build baseline:
 
     tsc --noEmit passed
     vite build passed
 
-Authentication structure:
+Profile route:
 
-    lab-frontend/src/auth/authTypes.ts
-    lab-frontend/src/auth/authSessionMapper.ts
-    lab-frontend/src/auth/authStorage.ts
-    lab-frontend/src/contexts/AuthContext.tsx
-    lab-frontend/src/api/client.ts
+    /settings/laboratory-profile
 
-Landlord tenant-management structure:
+Profile feature root:
 
-    lab-frontend/src/components/landlords/AllTenants.tsx
-    lab-frontend/src/components/landlords/tenantManagementApi.ts
-    lab-frontend/src/components/landlords/tenantManagementSelectors.ts
-    lab-frontend/src/components/landlords/tenantManagementTypes.ts
-    lab-frontend/src/components/landlords/useTenantManagement.ts
-    lab-frontend/src/components/landlords/TenantManagementStates.tsx
-    lab-frontend/src/components/landlords/TenantManagementHero.tsx
-    lab-frontend/src/components/landlords/TenantSummaryCards.tsx
-    lab-frontend/src/components/landlords/TenantPortfolio.tsx
-    lab-frontend/src/components/landlords/TenantPortfolioRow.tsx
-    lab-frontend/src/components/landlords/TenantActionMenu.tsx
-    lab-frontend/src/components/landlords/TenantConfirmationDialog.tsx
+    lab-frontend/src/features/laboratory-profile
 
-Frontend recovery tags:
+Report branding components:
 
-    frontend-vite-baseline
-    frontend-auth-refactor-wave-1
-    frontend-tenant-management-wave-1
-    frontend-tenant-management-wave-2
+    lab-frontend/src/features/laboratory-reports/components/ReportIdentitySection.tsx
+    lab-frontend/src/features/laboratory-reports/components/ReportSignatureFooter.tsx
+    lab-frontend/src/features/laboratory-reports/components/ReportPrintStyles.tsx
 
-Planned sequence:
+Brand colours are tenant-owned and report-scoped in the current architecture.
+
+Rezhel starter values are fallback values only.
+
+Issued reports render from immutable snapshot values rather than the current live profile.
+
+Planned sequence status:
 
 1. backend result workflow - completed
 2. backend laboratory reporting - completed
 3. frontend Vite migration - completed
 4. frontend authentication foundation - completed
 5. landlord tenant-management foundation - completed
-6. characterize current result and report screens - next
-7. integrate result and report APIs
-8. select and integrate a compatible PDF renderer
-
-Do not perform broad frontend redesign before characterizing existing result and report behavior.
+6. frontend result and report integration - completed
+7. secure laboratory profile and report branding - completed
+8. documentation closeout - active
+9. next product feature - not yet frozen
+10. compatible server-side PDF renderer - deferred backlog
 
 ---
 
@@ -509,10 +572,12 @@ Known but non-blocking items:
 - legacy landlord result tools may still query the old result shape
 - tenant authorization and platform authorization use different models
 - the role-and-permission seeder still describes historical Spatie-based tenant permissions
-- frontend result screens require order-item-driven API integration
-- frontend report screens require immutable-report API integration
 - some test-support and orchestration files exceed the preferred line-count target
-- PDF rendering and export are not implemented
+- server-generated PDF rendering and export are not implemented
+- global tenant application theming is not implemented
+- report-template customization is not implemented
+
+The last two items were intentionally excluded from PR #12 and require separate architecture and accessibility decisions.
 
 Resolved items that should not be reported as current debt:
 
@@ -521,6 +586,11 @@ Resolved items that should not be reported as current debt:
 - frontend authorization-header logging
 - authentication-storage decomposition
 - tenant-management decomposition
+- frontend result/report integration
+- profile multipart uploads
+- report logo rendering
+- immutable report signatory fields
+- tenant-owned report brand colours
 
 ---
 
@@ -530,39 +600,29 @@ Canonical integration branch:
 
     develop
 
-Merged frontend foundation baseline:
+Latest merged milestone:
 
     Pull request:
-        #9
+        #12
 
     Merge commit:
-        f88f993
+        81c1e67
 
-    Final tag:
-        frontend-vite-foundation-complete
+The completed feature branch:
 
-Frontend recovery tags:
+    feature/laboratory-profile-report-signatory
 
-    frontend-vite-baseline
-        64495da
+was deleted locally and remotely after merge verification.
 
-    frontend-auth-refactor-wave-1
-        f01fe8a
+Current documentation branch:
 
-    frontend-tenant-management-wave-1
-        e7d3a90
+    docs/close-out-laboratory-profile-milestone
 
-    frontend-tenant-management-wave-2
-        e06166e
+The documentation branch began from:
 
-    frontend-vite-foundation-complete
-        f88f993
+    81c1e67
 
-The completed feature branch was deleted locally and remotely after merge verification.
-
-After this documentation closeout is merged, begin the next implementation milestone from updated `develop` on:
-
-    feature/frontend-result-report-integration
+After this documentation closeout is merged, begin the next implementation milestone from updated `develop` on a descriptive feature branch agreed for that scope.
 
 Use exact-path staging.
 
@@ -604,10 +664,12 @@ Before modifying code, the engineer must confirm:
 
 - current Git branch
 - current Git status
-- latest commits and recovery tags
+- latest merge commits and recovery tags
 - active landlord database
 - current passing focused tests
-- current full-suite baseline
+- current backend full-suite baseline
+- current frontend full-suite and build baseline
+- current browser or print smoke evidence when rendering is involved
 - the next unfinished milestone task
 
 No implementation should begin from assumptions.

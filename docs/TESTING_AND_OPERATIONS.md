@@ -2,7 +2,7 @@
 
 Updated:
 
-    23 July 2026
+    28 July 2026
 
 ## 1. Safety Principle
 
@@ -181,16 +181,35 @@ Reporting routes:
     php artisan route:list `
         --path=api/laboratory-reports
 
+Profile routes must be verified directly from the current route definitions before changing the contract:
+
+    php artisan route:list |
+        Select-String "profile|logo|favicon|signature"
+
+Do not document guessed profile route paths.
+
 ---
 
 ## 9. Backend Test Baselines
 
 Latest confirmed complete backend result:
 
-    133 tests passed
-    3,458 assertions
+    138 tests passed
+    3,597 assertions
 
-This baseline was not rerun during the frontend documentation synchronization.
+Relevant profile and reporting coverage includes:
+
+- tenant-profile resource contract
+- administrator and superadministrator authorization
+- non-administrator denial
+- tenant isolation
+- logo, favicon and director-signature uploads
+- media ownership and UUID handling
+- invalid file type and size rejection
+- physical cleanup when media is replaced
+- immutable signatory snapshot fields
+- immutable tenant brand-colour snapshots
+- report generation and retrieval
 
 At backend milestone completion:
 
@@ -210,14 +229,24 @@ Frontend root:
 
     lab-frontend
 
-Focused test example:
+Focused test examples:
 
     npm test -- `
-        src/components/landlords/AllTenants.test.tsx
+        src/pages/LaboratoryProfile.test.tsx
+
+    npm test -- `
+        src/features/laboratory-profile/utils/laboratoryBrandColors.test.ts
+
+    npm test -- `
+        src/features/laboratory-reports/components/ReportSignatureFooter.test.tsx
 
 Complete frontend suite:
 
     npm test -- --run
+
+TypeScript validation:
+
+    npx tsc --noEmit
 
 Production validation:
 
@@ -229,26 +258,20 @@ The build command executes:
 
 Latest confirmed frontend baseline:
 
-    5 test files passed
-    47 tests passed
+    31 test files passed
+    119 tests passed
+    TypeScript validation passed
     production build passed
 
-Current passing test files:
-
-    src/contexts/AuthContext.test.tsx
-        15 tests
-
-    src/components/PrivateRoute.test.tsx
-        4 tests
-
-    src/components/landlords/AllTenants.test.tsx
-        14 tests
+Relevant profile and report test files include:
 
     src/api/client.test.ts
-        13 tests
-
-    src/App.test.tsx
-        1 test
+    src/components/Layout/navigationConfig.test.tsx
+    src/components/TenantAdminRoute.test.tsx
+    src/features/laboratory-profile/utils/laboratoryBrandColors.test.ts
+    src/features/laboratory-reports/components/ReportSignatureFooter.test.tsx
+    src/pages/LaboratoryProfile.test.tsx
+    src/pages/LaboratoryReportView.test.tsx
 
 Use a single `Push-Location` and `finally` block so failures do not leave PowerShell in the wrong directory:
 
@@ -273,7 +296,7 @@ Use a single `Push-Location` and `finally` block so failures do not leave PowerS
 
 Do not raise the global Vitest timeout merely because one test is slow.
 
-When testing a large controlled MUI input and per-character behavior is not the subject under test, a direct Testing Library change event may be more appropriate than repeated user-event typing.
+When testing a large controlled MUI input and per-character behaviour is not the subject under test, a direct Testing Library change event may be more appropriate than repeated user-event typing.
 
 ---
 
@@ -282,18 +305,19 @@ When testing a large controlled MUI input and per-character behavior is not the 
 Required order:
 
 1. inspect the active component and its API/context dependencies
-2. identify the behavior boundary
+2. identify the behaviour boundary
 3. add or update focused characterization tests
 4. run the focused test
 5. make the smallest responsible implementation change
 6. rerun the focused test
-7. run `npm test -- --run`
-8. run `npm run build`
-9. run `git diff --check`
-10. stage exact paths only
-11. compare intended paths with `git diff --cached --name-only`
-12. commit only when all gates pass
-13. create a recovery tag only at a stable wave boundary
+7. run affected regression tests
+8. run `npm test -- --run`
+9. run `npm run build`
+10. run `git diff --check`
+11. stage exact paths only
+12. compare intended paths with `git diff --cached --name-only`
+13. commit only when all gates pass
+14. create a recovery tag only at a stable wave boundary
 
 Do not use:
 
@@ -303,27 +327,85 @@ Do not delete backups until the commit is confirmed, unless the previous version
 
 ---
 
-## 12. Migration Policy
+## 12. Tenant Profile Media Validation
 
-During backend feature implementation:
+Profile media uploads use multipart form data.
 
-- do not manually migrate the development tenant before focused tests pass
-- temporary test tenants run all tenant migrations during provisioning
-- migration failures should first be diagnosed through isolated test tenants
+Required field:
 
-Before any manual migration:
+    file
 
-1. confirm Git branch
-2. confirm Git status
-3. confirm focused tests
-4. confirm regression tests
-5. confirm full suite
-6. confirm active development tenant
-7. back up important tenant data when necessary
+Accepted formats:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Maximum size:
+
+    2 MB
+
+Rejected:
+
+- SVG
+- files outside the allowed image formats
+- oversized files
+- unauthorized users
+- cross-tenant access
+
+Frontend invariant:
+
+Do not force:
+
+    Content-Type: application/json
+
+when the request body is `FormData`.
+
+The browser or Axios must set the multipart boundary.
+
+Replacement invariant:
+
+Replacing a logo, favicon or director signature must remove the superseded physical file through the media service after the replacement is persisted safely.
 
 ---
 
-## 13. Development Tenant Migration
+## 13. Migration Policy
+
+During backend feature implementation:
+
+- do not manually migrate the development landlord or tenant before focused tests pass
+- temporary test tenants run all tenant migrations during provisioning
+- migration failures should first be diagnosed through isolated test tenants
+- automated tests use only `lab_saas_landlord_test`
+
+The report signatory migration is:
+
+    database/migrations/landlord/2026_07_27_190000_add_report_signatory_fields_to_tenant_profiles_table.php
+
+It was validated against the automated test landlord environment.
+
+Before any manual deployment migration:
+
+1. confirm Git branch and deployed commit
+2. confirm Git status
+3. confirm focused, regression and full-suite evidence
+4. confirm the intended landlord database
+5. back up important data when necessary
+6. inspect migration status
+7. run the repository's normal landlord migration procedure
+8. verify the new columns
+9. perform an authorized profile and report smoke test
+
+Never migrate:
+
+    lab_saas_landlord
+
+as part of automated test execution.
+
+---
+
+## 14. Development Tenant Migration
 
 Development tenant:
 
@@ -343,7 +425,47 @@ Never run tenant migrations against an unresolved tenant connection.
 
 ---
 
-## 14. Git Verification
+## 15. Browser and Print Smoke Checklist
+
+Use a tenant administrator account.
+
+Laboratory profile:
+
+1. open `/settings/laboratory-profile`
+2. confirm the existing profile loads
+3. update a non-destructive text field
+4. save and reload
+5. upload an allowed logo
+6. upload an allowed director signature
+7. confirm validation feedback for an invalid HEX value
+8. save primary, secondary and accent colours
+9. confirm the live preview updates
+
+Report view:
+
+1. open an issued report
+2. confirm the laboratory logo renders
+3. confirm laboratory name and supporting identity text render
+4. confirm director name, qualification, registration number and designation render
+5. confirm accreditation details render when present
+6. confirm the signature renders
+7. confirm primary, secondary and accent colours render from the report snapshot
+8. confirm clinical semantic statuses remain independent of brand colours
+
+Print preview:
+
+1. open browser print preview
+2. confirm logo and signature remain visible
+3. confirm tenant colours remain visible
+4. confirm the report remains readable in black-and-white or reduced-colour printing
+5. confirm the tested report layout does not unexpectedly overflow
+6. do not claim universal one-page output from a single sample report
+
+The PR #12 browser smoke confirmed a one-page print preview for the tested report.
+
+---
+
+## 16. Git Verification
 
 Before implementation:
 
@@ -385,7 +507,7 @@ Do not use:
 
 ---
 
-## 15. Backend Milestone Completion Procedure
+## 17. Backend Milestone Completion Procedure
 
 Required order:
 
@@ -395,70 +517,96 @@ Required order:
 4. run focused tests
 5. run related regression tests
 6. run the full backend suite
-7. migrate the development tenant when required
-8. perform a manual API smoke test when required
+7. migrate the intended environment when required
+8. perform an authorized API or browser smoke test when required
 9. update handover documents
 10. review the Git diff
 11. stage exact reviewed paths
 12. create the local checkpoint commit
 13. push the branch
 14. open the pull request
-15. merge after review
-16. create the baseline tag
+15. merge after review using a normal merge commit
+16. update and verify local `develop`
 
 ---
 
-## 16. Frontend Milestone Completion Procedure
+## 18. Frontend Milestone Completion Procedure
 
 Required order:
 
-1. finish or characterize the focused behavior
+1. finish or characterize the focused behaviour
 2. run the focused Vitest suite
-3. run `npm test -- --run`
-4. run `npm run build`
-5. run `git diff --check`
-6. update handover documents
-7. review the Git diff
-8. stage exact reviewed paths
-9. compare the staged path list with the intended path list
-10. create the local checkpoint commit
-11. create a recovery tag when the wave is stable
-12. push and open the pull request at the milestone boundary
+3. run affected regression tests
+4. run `npm test -- --run`
+5. run `npm run build`
+6. run `git diff --check`
+7. perform browser and print smoke checks when rendering changes
+8. update handover documents
+9. review the Git diff
+10. stage exact reviewed paths
+11. compare the staged path list with the intended path list
+12. create the local checkpoint commit
+13. push and open the pull request at the milestone boundary
+14. merge after review using a normal merge commit
+15. update and verify local `develop`
 
 ---
 
-## 17. Current Branch and Checkpoint
+## 19. Documentation-Only Closeout Procedure
+
+For the current documentation branch:
+
+    docs/close-out-laboratory-profile-milestone
+
+Product tests do not need to be rerun solely because Markdown files changed when:
+
+- the documentation records already validated milestone evidence
+- no code, configuration, migration or dependency file changed
+- the documented commands and counts are checked against the completed milestone logs
+
+Required documentation gates:
+
+1. confirm the branch is based on merge commit `81c1e67`
+2. confirm only the five core documentation files changed
+3. normalize UTF-8 without BOM
+4. run `git diff --check`
+5. inspect `git diff --stat`
+6. stage the five exact paths
+7. compare staged paths with the intended list
+8. run `git diff --cached --check`
+9. commit locally
+10. push and open a documentation-only pull request
+11. merge normally into `develop`
+12. update local `develop`
+13. delete the documentation branch locally and remotely
+
+---
+
+## 20. Current Branch and Checkpoint
 
 Canonical integration branch:
 
     develop
 
-Merged frontend foundation milestone:
+Latest merged product milestone:
 
     Pull request:
-        #9
+        #12
 
     Merge commit:
-        f88f993
+        81c1e67
 
-    Final tag:
-        frontend-vite-foundation-complete
+Current documentation branch:
 
-Completed frontend tags:
+    docs/close-out-laboratory-profile-milestone
 
-    frontend-vite-baseline
-    frontend-auth-refactor-wave-1
-    frontend-tenant-management-wave-1
-    frontend-tenant-management-wave-2
-    frontend-vite-foundation-complete
+The PR #12 feature branch has been deleted locally and remotely.
 
-After the documentation closeout is merged, create the next implementation branch from updated `develop`:
-
-    feature/frontend-result-report-integration
+After the documentation closeout is merged, create the next product branch from updated `develop` only after the next scope is agreed.
 
 ---
 
-## 18. Troubleshooting
+## 21. Troubleshooting
 
 ### Frontend build reports that Vite is unavailable
 
@@ -498,7 +646,7 @@ Clear cached configuration when necessary:
 
 ### Tenant request returns 404 for another tenant's UUID
 
-This is expected tenant-isolation behavior.
+This is expected tenant-isolation behaviour.
 
 ### Tenant result endpoint returns 403
 
@@ -511,6 +659,27 @@ Check:
 - tenant header
 - active status
 
+### Laboratory-profile endpoint returns 403
+
+Check:
+
+- the active user role
+- `MANAGE_TENANT_PROFILE`
+- tenant context
+- platform-superadministrator handling
+- route middleware
+- request authorization
+
+### Profile image upload arrives without a file
+
+Check:
+
+- request body is `FormData`
+- field name is `file`
+- the API client did not force JSON content type
+- browser-generated multipart boundary exists
+- file size and extension are allowed
+
 ### Temporary tenant database remains after a failed test
 
 First verify that its name contains the required automated-test pattern.
@@ -521,7 +690,7 @@ Do not manually run a broad database-drop command.
 
 ---
 
-## 19. Secret and Identity Handling
+## 22. Secret and Identity Handling
 
 Never include:
 
