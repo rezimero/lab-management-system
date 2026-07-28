@@ -20,6 +20,11 @@ export const reportResource:
         'Clinical Diagnostics Laboratory',
       tagline:
         'Accurate results, trusted care',
+      primary_color: '#0057B8',
+      secondary_color: '#1F2937',
+      accent_color: '#00A86B',
+      logo_url:
+        '/storage/laboratory-logo.png',
       full_address:
         '12 Medical Avenue, Abuja',
       director_name:

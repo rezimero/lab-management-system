@@ -22,7 +22,6 @@ const api: AxiosInstance = axios.create({
 
   headers: {
     Accept: 'application/json',
-    'Content-Type': 'application/json',
   },
 
   withCredentials: false,
@@ -32,6 +31,18 @@ api.interceptors.request.use(
   (
     config: InternalAxiosRequestConfig
   ): InternalAxiosRequestConfig => {
+    /*
+     * Let the browser create the multipart boundary.
+     * A forced JSON content type serializes File objects
+     * as empty JSON objects and Laravel receives no upload.
+     */
+    if (
+      typeof FormData !== 'undefined' &&
+      config.data instanceof FormData
+    ) {
+      delete config.headers['Content-Type'];
+    }
+
     const token =
       localStorage.getItem('token');
 

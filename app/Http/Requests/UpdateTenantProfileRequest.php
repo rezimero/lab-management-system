@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Tenant\User as TenantUser;
+use App\Support\Tenant\TenantUserPermissionCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTenantProfileRequest extends FormRequest
@@ -11,7 +13,13 @@ class UpdateTenantProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+
+        return $user instanceof TenantUser
+            && $user->hasPermission(
+                TenantUserPermissionCatalog::
+                    MANAGE_TENANT_PROFILE
+            );
     }
 
     /**
@@ -153,6 +161,30 @@ class UpdateTenantProfileRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:255',
+            ],
+
+            'director_qualification' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'director_registration_number' => [
+                'nullable',
+                'string',
+                'max:150',
+            ],
+
+            'signatory_designation' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'accreditation_details' => [
+                'nullable',
+                'string',
+                'max:2000',
             ],
 
             /*

@@ -68,6 +68,10 @@ class TenantProfile extends Model
         */
         'report_footer',
         'director_name',
+        'director_qualification',
+        'director_registration_number',
+        'signatory_designation',
+        'accreditation_details',
 
         /*
         |--------------------------------------------------------------------------

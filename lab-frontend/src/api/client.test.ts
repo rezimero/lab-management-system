@@ -12,6 +12,7 @@ import {
 } from './serverErrorSanitizer';
 interface RequestConfig {
   headers: Record<string, string>;
+  data?: unknown;
 }
 
 interface ClientError {
@@ -239,7 +240,23 @@ describe('API client interceptor characterization', () => {
     );
   });
 
+  it('removes JSON content type from FormData requests', async () => {
+    const { requestFulfilled } =
+      await loadClientInterceptors();
+
+    const config = requestFulfilled({
+      data: new FormData(),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    expect(
+      config.headers
+    ).not.toHaveProperty('Content-Type');
+  });
   it('excludes tenant context from superadmin requests', async () => {
+
     localStorage.setItem(
       'token',
       'platform-token'

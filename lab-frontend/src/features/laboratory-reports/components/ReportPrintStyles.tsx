@@ -81,6 +81,13 @@ const ReportPrintStyles = () => (
           line-height: 1.15 !important;
         }
 
+        .report-laboratory-logo {
+          width: auto !important;
+          max-width: 24mm !important;
+          max-height: 14mm !important;
+          object-fit: contain !important;
+        }
+
         .report-paper .MuiTypography-h6 {
           font-size: 10.5pt !important;
         }

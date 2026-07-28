@@ -4,53 +4,59 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Media extends Model
 {
     use HasFactory;
+    use SoftDeletes;
+
+    /**
+     * Media metadata is stored centrally in the landlord database.
+     */
+    protected $connection = 'landlord';
 
     protected $fillable = [
+        'uuid',
+        'tenant_id',
+        'uploaded_by',
+
         'mediaable_type',
         'mediaable_id',
 
         'collection',
 
         'disk',
-
-        'path',
-
-        'file_name',
-
-        'mime_type',
-
+        'directory',
+        'filename',
+        'original_filename',
         'extension',
-
+        'mime_type',
         'size',
+        'path',
+        'hash',
+        'metadata',
     ];
 
     protected $casts = [
+        'tenant_id' => 'integer',
+        'uploaded_by' => 'integer',
         'size' => 'integer',
+        'metadata' => 'array',
+        'deleted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Polymorphic owner.
+     */
     public function mediaable()
     {
         return $this->morphTo();
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Accessors
-    |--------------------------------------------------------------------------
-    */
 
     /**
      * Public URL.
@@ -69,18 +75,27 @@ class Media extends Model
         $bytes = $this->size;
 
         if ($bytes >= 1073741824) {
-            return round($bytes / 1073741824, 2) . ' GB';
+            return round(
+                $bytes / 1073741824,
+                2
+            ).' GB';
         }
 
         if ($bytes >= 1048576) {
-            return round($bytes / 1048576, 2) . ' MB';
+            return round(
+                $bytes / 1048576,
+                2
+            ).' MB';
         }
 
         if ($bytes >= 1024) {
-            return round($bytes / 1024, 2) . ' KB';
+            return round(
+                $bytes / 1024,
+                2
+            ).' KB';
         }
 
-        return $bytes . ' B';
+        return $bytes.' B';
     }
 
     /**
@@ -124,16 +139,18 @@ class Media extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Model Events
-    |--------------------------------------------------------------------------
-    */
-
+    /**
+     * Assign public identifiers and remove physical files on deletion.
+     */
     protected static function booted(): void
     {
-        static::deleting(function (Media $media) {
+        static::creating(function (Media $media): void {
+            if (! $media->uuid) {
+                $media->uuid = (string) Str::uuid();
+            }
+        });
 
+        static::deleting(function (Media $media): void {
             if (
                 Storage::disk($media->disk)
                     ->exists($media->path)

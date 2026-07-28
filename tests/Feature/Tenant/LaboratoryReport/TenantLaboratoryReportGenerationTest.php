@@ -142,7 +142,101 @@ class TenantLaboratoryReportGenerationTest extends
             );
     }
 
+
+    public function test_signatory_snapshot_remains_unchanged(): void
+    {
+        $context = $this->authenticatedReportContext(
+            'report-signatory-snapshot'
+        );
+
+        $this->configureReportProfile(
+            $context['tenant'],
+            [
+                'director_name' => 'Dr Original Director',
+                'director_qualification' => 'MBBS, FMCPath',
+                'director_registration_number' => 'MDCN-1001',
+                'signatory_designation' => (
+                    'Consultant Pathologist'
+                ),
+                'accreditation_details' => (
+                    'ISO 15189 accredited laboratory.'
+                ),
+            ]
+        );
+
+        $order = $this->createReportReadyOrder(
+            $context['tenant'],
+            $context['headers']
+        );
+
+        $response = $this
+            ->generateReport(
+                $context['headers'],
+                $order
+            )
+            ->assertCreated()
+            ->assertJsonPath(
+                'data.laboratory.director_qualification',
+                'MBBS, FMCPath'
+            )
+            ->assertJsonPath(
+                'data.laboratory.director_registration_number',
+                'MDCN-1001'
+            )
+            ->assertJsonPath(
+                'data.laboratory.signatory_designation',
+                'Consultant Pathologist'
+            )
+            ->assertJsonPath(
+                'data.laboratory.accreditation_details',
+                'ISO 15189 accredited laboratory.'
+            );
+
+        $reportUuid = $response->json('data.uuid');
+
+        TenantProfile::query()
+            ->where(
+                'tenant_id',
+                $context['tenant']->id
+            )
+            ->update([
+                'director_name' => 'Dr Changed Director',
+                'director_qualification' => 'Changed',
+                'director_registration_number' => 'CHANGED',
+                'signatory_designation' => 'Changed',
+                'accreditation_details' => 'Changed',
+            ]);
+
+        $this
+            ->withHeaders($context['headers'])
+            ->getJson(
+                '/api/laboratory-reports/'
+                .$reportUuid
+            )
+            ->assertOk()
+            ->assertJsonPath(
+                'data.laboratory.director_name',
+                'Dr Original Director'
+            )
+            ->assertJsonPath(
+                'data.laboratory.director_qualification',
+                'MBBS, FMCPath'
+            )
+            ->assertJsonPath(
+                'data.laboratory.director_registration_number',
+                'MDCN-1001'
+            )
+            ->assertJsonPath(
+                'data.laboratory.signatory_designation',
+                'Consultant Pathologist'
+            )
+            ->assertJsonPath(
+                'data.laboratory.accreditation_details',
+                'ISO 15189 accredited laboratory.'
+            );
+    }
     public function test_order_cannot_generate_duplicate_report(): void
+
     {
         $context = $this->authenticatedReportContext(
             'report-duplicate'

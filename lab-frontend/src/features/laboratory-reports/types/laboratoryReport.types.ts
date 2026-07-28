@@ -7,6 +7,9 @@ export interface ReportUser {
 export interface ReportLaboratory {
   lab_name?: string | null;
   tagline?: string | null;
+  primary_color?: string | null;
+  secondary_color?: string | null;
+  accent_color?: string | null;
   email?: string | null;
   phone?: string | null;
   website?: string | null;
@@ -19,6 +22,10 @@ export interface ReportLaboratory {
   registration_number?: string | null;
   report_footer?: string | null;
   director_name?: string | null;
+  director_qualification?: string | null;
+  director_registration_number?: string | null;
+  signatory_designation?: string | null;
+  accreditation_details?: string | null;
   logo_url?: string | null;
   director_signature_url?: string | null;
 }

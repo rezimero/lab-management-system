@@ -2,11 +2,14 @@ import type { ReactElement } from 'react';
 import { Route } from 'react-router-dom';
 
 import PrivateRoute from '../components/PrivateRoute';
+import TenantAdminRoute from '../components/TenantAdminRoute';
+
 import {
   Dashboard,
   LaboratoryOrders,
   LaboratoryOrderCreate,
   LaboratoryOrderView,
+  LaboratoryProfile,
   LaboratoryReports,
   LaboratoryReportView,
   LabTestForm,
@@ -22,6 +25,16 @@ import {
 
 const protect = (element: ReactElement) => (
   <PrivateRoute>{element}</PrivateRoute>
+);
+
+const protectAdministrator = (
+  element: ReactElement
+) => (
+  <PrivateRoute>
+    <TenantAdminRoute>
+      {element}
+    </TenantAdminRoute>
+  </PrivateRoute>
 );
 
 export const tenantRoutes = (
@@ -89,6 +102,12 @@ export const tenantRoutes = (
     <Route
       path="/laboratory-reports/:id"
       element={protect(<LaboratoryReportView />)}
+    />
+    <Route
+      path="/settings/laboratory-profile"
+      element={protectAdministrator(
+        <LaboratoryProfile />
+      )}
     />
     <Route
       path="/users"

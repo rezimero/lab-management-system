@@ -62,6 +62,18 @@ abstract class LaboratoryReportTestCase extends
                         'director_name' => (
                             'Dr Report Director'
                         ),
+                        'director_qualification' => (
+                            'MBBS, FMCPath'
+                        ),
+                        'director_registration_number' => (
+                            'MDCN-REPORT-1001'
+                        ),
+                        'signatory_designation' => (
+                            'Consultant Pathologist'
+                        ),
+                        'accreditation_details' => (
+                            'ISO 15189 accredited laboratory.'
+                        ),
                     ],
                     $overrides
                 )
