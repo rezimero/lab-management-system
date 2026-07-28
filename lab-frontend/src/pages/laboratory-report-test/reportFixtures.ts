@@ -20,6 +20,8 @@ export const reportResource:
         'Clinical Diagnostics Laboratory',
       tagline:
         'Accurate results, trusted care',
+      logo_url:
+        '/storage/laboratory-logo.png',
       full_address:
         '12 Medical Avenue, Abuja',
       director_name:

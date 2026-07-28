@@ -69,6 +69,15 @@ describe('LaboratoryReportView', () => {
     );
 
     expect(
+      screen.getByRole('img', {
+        name: 'Laboratory logo',
+      })
+    ).toHaveAttribute(
+      'src',
+      '/storage/laboratory-logo.png'
+    );
+
+    expect(
       screen.getByTestId('report-print-root')
     ).toHaveClass('report-print-root');
 
@@ -114,6 +123,9 @@ describe('LaboratoryReportView', () => {
     );
     expect(styles).not.toContain(
       'position: absolute'
+    );
+    expect(styles).toContain(
+      '.report-laboratory-logo'
     );
     expect(styles).toContain(
       'display: table-header-group'

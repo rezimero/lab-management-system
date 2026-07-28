@@ -34,27 +34,55 @@ const ReportIdentitySection = ({
         gap: 2,
       }}
     >
-      <Box>
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 800,
-            color: 'primary.main',
-          }}
-        >
-          {report.laboratory
-            ?.lab_name ??
-            'Laboratory Report'}
-        </Typography>
-
-        {report.laboratory?.tagline && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
-            {report.laboratory.tagline}
-          </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          minWidth: 0,
+          gap: 1.5,
+        }}
+      >
+        {report.laboratory?.logo_url && (
+          <Box
+            component="img"
+            className="report-laboratory-logo"
+            src={report.laboratory.logo_url}
+            alt="Laboratory logo"
+            sx={{
+              display: 'block',
+              width: {
+                xs: 64,
+                sm: 76,
+              },
+              maxHeight: 64,
+              objectFit: 'contain',
+              flexShrink: 0,
+            }}
+          />
         )}
+
+        <Box sx={{ minWidth: 0 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              color: 'primary.main',
+            }}
+          >
+            {report.laboratory
+              ?.lab_name ??
+              'Laboratory Report'}
+          </Typography>
+
+          {report.laboratory?.tagline && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+            >
+              {report.laboratory.tagline}
+            </Typography>
+          )}
+        </Box>
       </Box>
 
       <Box
