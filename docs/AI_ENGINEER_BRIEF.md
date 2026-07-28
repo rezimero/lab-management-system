@@ -43,7 +43,7 @@ Chat history is context, not project storage.
 Preserve:
 
 - Laravel database-per-tenant design
-- landlord database for tenants and tokens
+- landlord database for tenant metadata, tenant profiles, media metadata and Sanctum tokens
 - `X-Tenant-Domain` tenant resolution
 - `SetTenantContext:required` before Sanctum
 - tenant-bound Sanctum tokens
@@ -52,11 +52,18 @@ Preserve:
 - one result per order item
 - result state machine
 - approved-result order-completion guard
+- immutable laboratory-report snapshots
+- immutable report signatory and branding snapshots
+- tenant-owned laboratory identity and brand colours
+- administrator-only tenant-profile management
+- secure tenant-profile media validation and physical cleanup
 - tenant isolation
 - transactional workflow operations
 - isolated MySQL tenant tests
 
 Do not replace these without an explicit architectural decision.
+
+Rezhel may provide starter or fallback colours, but those defaults do not represent a subscribing laboratory. The laboratory owns its profile, logo, signature and brand colours.
 
 ---
 
@@ -85,9 +92,17 @@ The active authenticated tenant user model is:
 
     App\Models\Tenant\User
 
-Result permissions are evaluated through:
+Tenant permissions are evaluated through:
 
     App\Support\Tenant\TenantUserPermissionCatalog
+
+Result workflow capabilities remain role-specific.
+
+Laboratory-profile management uses the explicit profile-management capability:
+
+    MANAGE_TENANT_PROFILE
+
+Only authorized tenant administrators and platform superadministrators may manage the laboratory profile and its media.
 
 Do not assume Spatie permission calls work on the active tenant user model.
 
@@ -121,6 +136,8 @@ Before writing implementation files, determine:
 - database constraints
 - authorization
 - transaction boundaries
+- snapshot boundaries
+- media validation and cleanup rules
 - required tests
 
 Avoid building partial implementations that require repeated file replacement.
@@ -169,6 +186,27 @@ Run:
 
 after each batch.
 
+### Upload contracts
+
+Profile media uploads use multipart form data with the field:
+
+    file
+
+The frontend API client must allow the browser or Axios to set the multipart boundary. Do not force an application-wide JSON `Content-Type` header onto `FormData` requests.
+
+Allowed tenant-profile image formats are:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Maximum file size:
+
+    2 MB
+
+SVG is not accepted for tenant-profile uploads.
+
 ---
 
 ## Testing Rules
@@ -182,6 +220,8 @@ During development:
 5. modify only files tied to the demonstrated defect
 6. run affected regression tests
 7. run the full suite at milestone completion
+8. run TypeScript validation and the production build for frontend milestones
+9. perform browser and print-preview smoke checks when user-visible report rendering changes
 
 Never run automated tests against:
 
@@ -202,7 +242,14 @@ Current workflow:
 - focused tests run during implementation
 - full suite runs before milestone completion
 - one GitHub pull request should normally represent one substantial milestone
-- merge and tag only after validation
+- normal merge commits are used for milestone pull requests
+- documentation must be synchronized before the next product feature begins
+
+Do not use broad staging commands such as:
+
+    git add .
+
+Stage exact reviewed paths only.
 
 Do not commit failing code.
 
@@ -214,53 +261,72 @@ Do not expose bearer tokens in messages, logs or documentation.
 
 ## Scope Rules
 
-Current priority:
+Completed product milestones include:
 
-1. characterize the existing frontend result and report screens
-2. integrate the Vite frontend with the order-item-driven result API
-3. integrate immutable laboratory-report retrieval and generation
-4. select a compatible PDF renderer before implementing export
+1. backend order-item-driven result workflow
+2. backend immutable laboratory-report generation and retrieval
+3. Vite and TypeScript frontend foundation
+4. frontend result and immutable-report integration
+5. secure tenant laboratory-profile management
+6. tenant logo and director-signature uploads
+7. immutable report signatory details
+8. tenant-owned report brand colours
+9. printable browser report branding
 
-Completed frontend foundations:
+The laboratory-profile and report-branding scope is intentionally limited to:
 
-- Vite and TypeScript application shell
-- authentication-context characterization and session-storage refactor
-- API-client interceptor characterization and authentication-storage refactor
-- landlord tenant-management characterization
-- tenant-management orchestration extraction
-- tenant-management presentation decomposition
+- the laboratory-profile editor
+- report identity
+- report signatory presentation
+- report and print styling
 
-The backend result and immutable-reporting milestones are complete and validated.
+It does not introduce:
 
-Do not reopen completed frontend foundation work without a failing test, security issue, integrity issue or confirmed architecture defect.
+- global tenant application theming
+- sidebar or dashboard theming
+- tenant custom CSS
+- custom fonts
+- a report-template builder
+- replacement of clinical semantic status colours
+
+PDF renderer selection and server-generated PDF export remain deferred until a compatible renderer is deliberately selected.
+
+Do not reopen completed frontend foundation, result/report integration or profile/report-branding work without a failing test, security issue, integrity issue or confirmed architecture defect.
 
 Do not begin broad legacy cleanup unless it blocks the current milestone.
 
 ---
 
-## Verified Frontend Baseline
+## Verified Repository Baseline
 
 Canonical integration branch:
 
     develop
 
-Merged frontend foundation milestone:
+Merged frontend result/report integration:
 
     Pull request:
-        #9
+        #11
 
     Merge commit:
-        f88f993
+        200adfe
 
-    Final milestone tag:
-        frontend-vite-foundation-complete
+Merged laboratory profile and report-branding milestone:
 
-Recovery wave tags remain available:
+    Pull request:
+        #12
 
-    frontend-vite-baseline
-    frontend-auth-refactor-wave-1
-    frontend-tenant-management-wave-1
-    frontend-tenant-management-wave-2
+    Merge commit:
+        81c1e67
+
+Key milestone commits:
+
+    1ac7a0f fix secure tenant profile contract
+    7558a73 feat integrate laboratory profile settings
+    b005572 feat extend report signatory snapshot
+    e32aec6 fix preserve multipart profile uploads
+    9cf11fb fix render laboratory logo on reports
+    eb5b299 feat add tenant laboratory brand colours
 
 Current toolchain:
 
@@ -272,24 +338,34 @@ Current toolchain:
 - Axios 1.18.1
 - MUI 9.x
 
-Validation commands:
+Latest confirmed backend result:
 
-    cd lab-frontend
-    npm test -- --run
-    npm run build
+    138 tests passed
+    3,597 assertions
 
 Latest confirmed frontend result:
 
-    5 test files passed
-    47 tests passed
+    31 test files passed
+    119 tests passed
     TypeScript validation passed
     Vite production build passed
 
-Do not describe Create React App as the active frontend toolchain.
+Manual validation completed:
 
-Begin the next implementation milestone from updated `develop` on a new feature branch. The planned branch is:
+- laboratory-profile browser smoke
+- logo upload and rendering
+- director-signature upload and rendering
+- tenant brand-colour update and preview
+- report-view branding
+- one-page print-preview rendering
 
-    feature/frontend-result-report-integration
+The PR #12 feature branch was deleted locally and remotely after merge verification.
+
+The current documentation closeout branch is:
+
+    docs/close-out-laboratory-profile-milestone
+
+After the documentation pull request is merged, begin the next product feature from updated `develop` on a newly named feature branch. No next product feature is frozen in these documents.
 
 Do not expose Git author or tagger email addresses in shared logs.
 
