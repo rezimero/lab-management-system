@@ -25,6 +25,14 @@ Route::get('/laboratory-reports', [
 ]);
 
 Route::get(
+    '/laboratory-reports/{laboratoryReport}/pdf',
+    [
+        LaboratoryReportController::class,
+        'downloadPdf',
+    ]
+);
+
+Route::get(
     '/laboratory-reports/{laboratoryReport}',
     [
         LaboratoryReportController::class,
