@@ -2,7 +2,7 @@
 
 Updated:
 
-    28 July 2026
+    30 July 2026
 
 ## 1. Project Identity
 
@@ -14,11 +14,29 @@ Repository:
 
     lab-management-system
 
-Latest completed product milestone:
+Current completed and validated feature milestone:
+
+    Immutable laboratory report PDF export
+
+Active branch:
+
+    feature/laboratory-report-pdf-export
+
+Product checkpoint before documentation:
+
+    218ac1f
+
+Latest integration baseline:
+
+    Pull request:
+        #13
+
+    Merge commit:
+        cce1e62
+
+Latest merged product milestone:
 
     Tenant laboratory profile, secure media, immutable signatory details and tenant-owned report branding
-
-GitHub closeout:
 
     Pull request:
         #12
@@ -26,22 +44,14 @@ GitHub closeout:
     Merge commit:
         81c1e67
 
-Previous product milestone:
-
-    Frontend result and immutable-report integration
-
-    Pull request:
-        #11
-
-    Merge commit:
-        200adfe
-
 Current validated status:
 
-    Backend result, reporting and tenant-profile workflows are complete
-    Frontend result, report and laboratory-profile integration is complete
-    Printable browser report branding is complete
-    Server-generated PDF export remains deferred
+    Backend result, reporting, tenant-profile and PDF workflows are complete
+    Frontend result, report, laboratory-profile and PDF-download integration is complete
+    Browser print branding remains available
+    Server-generated immutable PDF export is complete
+    Full backend and frontend validation passed
+    Feature-branch push and pull request remain pending
 
 ---
 
@@ -69,11 +79,13 @@ The system manages the operational lifecycle of a diagnostic laboratory, includi
 - order completion
 - immutable reporting
 - historical signatory and branding preservation
-- printable report presentation
+- immutable report-owned media preservation
+- printable browser report presentation
+- downloadable server-generated PDF reports
 
-The backend result, reporting and profile workflows are stable.
+The backend result, reporting, profile and PDF workflows are stable.
 
-The frontend result, report and profile integrations are complete.
+The frontend result, report, profile and PDF-download integrations are complete.
 
 The next product feature has not yet been frozen.
 
@@ -89,6 +101,9 @@ Backend:
 - Laravel Sanctum 4.3.2
 - Spatie Laravel Permission 8.1
 - Spatie Laravel Multitenancy
+- `barryvdh/laravel-dompdf` 3.1.2
+- `dompdf/dompdf` 3.1.6
+- `guzzlehttp/guzzle` 7.15.2
 - PHPUnit through Laravel Artisan testing
 
 Frontend:
@@ -312,17 +327,21 @@ Completed:
 - immutable signatory designation
 - immutable accreditation details
 - immutable primary, secondary and accent colours
-- immutable logo and signature references
+- immutable report-owned logo and signature copies
+- image path, MIME and SHA-256 snapshot metadata
+- report-media cleanup when generation fails
 - generating-user audit
 - UUID route binding
 - tenant isolation
 - view and generation authorization
 - JSON report resources
 - printable browser report presentation
-
-Deferred:
-
-- server-generated PDF rendering and export
+- Dompdf server-generated PDF rendering
+- snapshot-only PDF data mapping
+- remote-resource, JavaScript and PHP execution disabled
+- local image path, MIME and hash validation
+- sanitized PDF attachment filename
+- tenant-authorized PDF endpoint
 
 ### Tenant laboratory profile
 
@@ -344,8 +363,8 @@ Completed:
 
 Latest confirmed backend baseline:
 
-    138 tests passed
-    3,597 assertions
+    148 tests passed
+    3,979 assertions
 
 ---
 
@@ -445,6 +464,16 @@ Laboratory reporting:
     GET  /api/laboratory-orders/{laboratoryOrder}/report
     GET  /api/laboratory-reports
     GET  /api/laboratory-reports/{laboratoryReport}
+    GET  /api/laboratory-reports/{laboratoryReport}/pdf
+
+The PDF response:
+
+- requires authenticated tenant context
+- reuses report-view authorization
+- uses tenant-scoped UUID route binding
+- returns `application/pdf`
+- downloads with a sanitized attachment filename
+- renders from immutable report snapshots only
 
 Tenant profile:
 
@@ -455,7 +484,7 @@ Tenant profile:
 - tenant isolation
 - administrator-only management
 
-Verify the current route definitions before changing or documenting exact tenant-profile route paths.
+Verify current route definitions before changing or documenting exact tenant-profile route paths.
 
 Legacy standalone result creation and deletion routes must not be reintroduced into the active tenant workflow.
 
@@ -482,7 +511,36 @@ The test suite refuses to run unless the active landlord database is:
 
 Temporary tenant database deletion is guarded by strict database-name validation.
 
-The report signatory landlord migration was validated through the test landlord environment. Deployment migrations must be executed deliberately in the intended environment and must not be conflated with automated-test setup.
+PDF coverage includes:
+
+- permitted PDF download
+- unknown-role default denial
+- cross-tenant UUID isolation
+- attachment filename sanitization
+- snapshot immutability after profile changes
+- successful generation without media
+- report-owned local image embedding
+- remote URL rejection
+- traversal rejection
+- MIME mismatch rejection
+- SHA-256 mismatch rejection
+- frontend blob download and error feedback
+
+Latest complete validation:
+
+    backend:
+        148 tests
+        3,979 assertions
+
+    frontend:
+        32 test files
+        121 tests
+
+    production:
+        TypeScript validation passed
+        Vite build passed
+
+Deployment migrations must be executed deliberately in the intended environment and must not be conflated with automated-test setup.
 
 ---
 
@@ -496,10 +554,10 @@ Canonical integration branch:
 
     develop
 
-Latest merged product baseline:
+Latest integration baseline:
 
-    81c1e67
-    pull request #12
+    cce1e62
+    pull request #13
 
 Current frontend status:
 
@@ -518,11 +576,16 @@ Current frontend status:
 - tenant brand-colour editing and preview integrated
 - report logo, signature and signatory details integrated
 - browser and print report branding integrated
+- authenticated PDF blob request integrated
+- Download PDF action integrated
+- PDF filename parsing and sanitization integrated
+- object URL cleanup integrated
+- download error feedback integrated
 
 Current frontend test baseline:
 
-    31 test files passed
-    119 tests passed
+    32 test files passed
+    121 tests passed
 
 Current build baseline:
 
@@ -537,17 +600,19 @@ Profile feature root:
 
     lab-frontend/src/features/laboratory-profile
 
-Report branding components:
+Report download modules:
 
-    lab-frontend/src/features/laboratory-reports/components/ReportIdentitySection.tsx
-    lab-frontend/src/features/laboratory-reports/components/ReportSignatureFooter.tsx
-    lab-frontend/src/features/laboratory-reports/components/ReportPrintStyles.tsx
+    lab-frontend/src/features/laboratory-reports/api/laboratoryReportApi.ts
+    lab-frontend/src/features/laboratory-reports/components/ReportViewHeader.tsx
+    lab-frontend/src/features/laboratory-reports/hooks/useDownloadLaboratoryReportPdf.ts
+    lab-frontend/src/features/laboratory-reports/utils/downloadBlob.ts
+    lab-frontend/src/pages/LaboratoryReportView.tsx
 
 Brand colours are tenant-owned and report-scoped in the current architecture.
 
 Rezhel starter values are fallback values only.
 
-Issued reports render from immutable snapshot values rather than the current live profile.
+Issued browser reports and PDFs render from immutable snapshot values rather than the current live profile.
 
 Planned sequence status:
 
@@ -558,9 +623,11 @@ Planned sequence status:
 5. landlord tenant-management foundation - completed
 6. frontend result and report integration - completed
 7. secure laboratory profile and report branding - completed
-8. documentation closeout - active
-9. next product feature - not yet frozen
-10. compatible server-side PDF renderer - deferred backlog
+8. immutable server-generated PDF export - completed
+9. authenticated frontend PDF download - completed
+10. documentation synchronization - active
+11. feature push and pull request - pending
+12. next product feature - not yet frozen
 
 ---
 
@@ -573,11 +640,11 @@ Known but non-blocking items:
 - tenant authorization and platform authorization use different models
 - the role-and-permission seeder still describes historical Spatie-based tenant permissions
 - some test-support and orchestration files exceed the preferred line-count target
-- server-generated PDF rendering and export are not implemented
+- reports issued before immutable report-media copying are not backfilled and may omit logo or signature images in PDFs
 - global tenant application theming is not implemented
 - report-template customization is not implemented
 
-The last two items were intentionally excluded from PR #12 and require separate architecture and accessibility decisions.
+The final two items remain intentionally excluded and require separate architecture and accessibility decisions.
 
 Resolved items that should not be reported as current debt:
 
@@ -591,6 +658,9 @@ Resolved items that should not be reported as current debt:
 - report logo rendering
 - immutable report signatory fields
 - tenant-owned report brand colours
+- server-generated PDF rendering and export
+- immutable report-owned media storage
+- frontend PDF download
 
 ---
 
@@ -600,7 +670,15 @@ Canonical integration branch:
 
     develop
 
-Latest merged milestone:
+Latest integration baseline:
+
+    Pull request:
+        #13
+
+    Merge commit:
+        cce1e62
+
+Latest merged product milestone:
 
     Pull request:
         #12
@@ -608,21 +686,30 @@ Latest merged milestone:
     Merge commit:
         81c1e67
 
-The completed feature branch:
+Current feature branch:
 
-    feature/laboratory-profile-report-signatory
+    feature/laboratory-report-pdf-export
 
-was deleted locally and remotely after merge verification.
+Branch base:
 
-Current documentation branch:
+    cce1e62
 
-    docs/close-out-laboratory-profile-milestone
+Product checkpoints:
 
-The documentation branch began from:
+    4eb0980 chore add laboratory report PDF renderer
+    570ae31 feat preserve immutable report media
+    bfb1fbe feat add laboratory report PDF export
+    218ac1f feat add laboratory report PDF download
 
-    81c1e67
+The branch has not yet been pushed and no pull request has been opened.
 
-After this documentation closeout is merged, begin the next implementation milestone from updated `develop` on a descriptive feature branch agreed for that scope.
+After documentation is reviewed and committed:
+
+1. push the feature branch
+2. open one pull request into `develop`
+3. merge normally after review
+4. update and verify local `develop`
+5. delete the feature branch locally and remotely
 
 Use exact-path staging.
 

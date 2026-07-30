@@ -2,7 +2,7 @@
 
 Updated:
 
-    28 July 2026
+    30 July 2026
 
 This document is the current repository handover snapshot.
 
@@ -20,6 +20,15 @@ Canonical integration branch:
 
     develop
 
+Latest integration baseline:
+
+    Pull request:
+        #13
+
+    Merge commit:
+        cce1e62
+        Merge pull request #13 from rezimero/docs/close-out-laboratory-profile-milestone
+
 Latest merged product milestone:
 
     Tenant laboratory profile, secure media, immutable signatory details and tenant-owned report branding
@@ -31,50 +40,35 @@ Latest merged product milestone:
         81c1e67
         Merge pull request #12 from rezimero/feature/laboratory-profile-report-signatory
 
-Previous merged product milestone:
+Active product branch:
 
-    Frontend result and immutable-report integration
+    feature/laboratory-report-pdf-export
 
-    Pull request:
-        #11
+The branch was created from:
 
-    Merge commit:
-        200adfe
-        Merge pull request #11 from rezimero/feature/frontend-result-report-integration
+    cce1e62
 
-PR #12 milestone commits:
+Product checkpoints:
 
-    1ac7a0f fix secure tenant profile contract
-    7558a73 feat integrate laboratory profile settings
-    b005572 feat extend report signatory snapshot
-    e32aec6 fix preserve multipart profile uploads
-    9cf11fb fix render laboratory logo on reports
-    eb5b299 feat add tenant laboratory brand colours
-    81c1e67 Merge pull request #12 from rezimero/feature/laboratory-profile-report-signatory
+    4eb0980 chore add laboratory report PDF renderer
+    570ae31 feat preserve immutable report media
+    bfb1fbe feat add laboratory report PDF export
+    218ac1f feat add laboratory report PDF download
 
-The PR #12 feature branch was deleted locally and remotely after merge verification.
+Product checkpoint before documentation synchronization:
 
-Verified post-merge state:
+    218ac1f
 
-    local develop:
-        81c1e67
-
-    origin/develop:
-        81c1e67
+Validated state before this documentation update:
 
     worktree:
         clean
 
-    ahead/behind:
-        0 / 0
+    branch pushed:
+        no
 
-Current documentation branch:
-
-    docs/close-out-laboratory-profile-milestone
-
-The branch was created from `81c1e67` and was clean with no commits ahead of `origin/develop` before this documentation update.
-
-The documentation branch must be reviewed, committed, pushed and merged into `develop` before the next product feature begins.
+    pull request opened:
+        no
 
 Historical frontend recovery tags remain available:
 
@@ -104,6 +98,10 @@ Preserve:
 - approved-result order-completion guard
 - immutable laboratory report snapshots
 - immutable signatory and brand-colour snapshots
+- immutable report-owned logo and director-signature media
+- server-generated PDFs rendered only from report snapshots
+- local PDF image validation by report path, MIME and hash
+- remote PDF resources, JavaScript and PHP execution disabled
 - tenant-owned laboratory identity and colours
 - administrator-only laboratory-profile management
 - secure tenant-profile image validation and physical cleanup
@@ -168,11 +166,19 @@ Completed and validated backend capabilities include:
 - signatory-designation snapshot
 - accreditation-details snapshot
 - tenant primary, secondary and accent colour snapshotting
+- report-owned immutable logo and director-signature copies
+- report-media path, MIME and SHA-256 snapshot metadata
+- cleanup of copied report media when generation fails
+- Dompdf server-side PDF generation
+- snapshot-only PDF view-data mapping
+- secure local PDF image embedding
+- sanitized PDF attachment filenames
+- tenant-authorized PDF download endpoint
 
 Latest confirmed backend baseline:
 
-    138 tests passed
-    3,597 assertions
+    148 tests passed
+    3,979 assertions
 
 ---
 
@@ -246,6 +252,9 @@ Laboratory reporting:
     GET  /api/laboratory-orders/{laboratoryOrder}/report
     GET  /api/laboratory-reports
     GET  /api/laboratory-reports/{laboratoryReport}
+    GET  /api/laboratory-reports/{laboratoryReport}/pdf
+
+The PDF route uses the same tenant context, UUID route binding and report-view authorization boundary as JSON report retrieval.
 
 Tenant laboratory profile:
 
@@ -256,9 +265,7 @@ Tenant laboratory profile:
 - administrator-only tenant-management boundary
 - tenant-isolation contract tests
 
-The exact route list must be verified from the current route definitions before changing the profile contract.
-
-Server-generated PDF export remains deferred until a compatible renderer is deliberately selected.
+The exact route list must be verified from current route definitions before changing the profile contract.
 
 ---
 
@@ -357,6 +364,24 @@ Merged baseline:
     pull request #12
     merge commit 81c1e67
 
+### Server-generated laboratory-report PDF export
+
+Completed and validated on the active feature branch:
+
+- authenticated blob request through the shared Axios client
+- Download PDF action on the issued-report view
+- downloading and error states
+- response filename parsing and sanitization
+- temporary object URL creation and cleanup
+- focused download success and failure tests
+- newly issued PDF smoke validation with logo and director signature
+
+Product checkpoint:
+
+    218ac1f
+
+GitHub closeout remains pending.
+
 ---
 
 ## 9. Frontend Authentication and API Client Structure
@@ -405,7 +430,7 @@ Profile feature root:
 
     lab-frontend/src/features/laboratory-profile
 
-Key modules:
+Key profile modules:
 
     api/laboratoryProfileApi.ts
     components/LaboratoryBrandColors.tsx
@@ -417,7 +442,7 @@ Key modules:
     utils/laboratoryProfileMapper.ts
     utils/profileErrorMessage.ts
 
-Route-level page:
+Route-level profile page:
 
     lab-frontend/src/pages/LaboratoryProfile.tsx
 
@@ -425,17 +450,39 @@ Authorization boundary:
 
     lab-frontend/src/components/TenantAdminRoute.tsx
 
-Report identity and signatory components:
+Browser report components:
 
     lab-frontend/src/features/laboratory-reports/components/ReportIdentitySection.tsx
     lab-frontend/src/features/laboratory-reports/components/ReportSignatureFooter.tsx
     lab-frontend/src/features/laboratory-reports/components/ReportPrintStyles.tsx
+    lab-frontend/src/features/laboratory-reports/components/ReportViewHeader.tsx
 
-Report rendering must use the report snapshot rather than the live laboratory profile.
+Server PDF services:
+
+    app/Services/Tenant/LaboratoryReport/LaboratoryReportPdfService.php
+    app/Services/Tenant/LaboratoryReport/LaboratoryReportPdfViewDataFactory.php
+    app/Services/Tenant/LaboratoryReport/LaboratoryReportPdfImageResolver.php
+    app/Services/Tenant/LaboratoryReport/LaboratoryReportPdfFilename.php
+
+Server PDF views:
+
+    resources/views/pdf/laboratory-report.blade.php
+    resources/views/pdf/laboratory-report/
+
+Frontend PDF modules:
+
+    lab-frontend/src/features/laboratory-reports/api/laboratoryReportApi.ts
+    lab-frontend/src/features/laboratory-reports/hooks/useDownloadLaboratoryReportPdf.ts
+    lab-frontend/src/features/laboratory-reports/utils/downloadBlob.ts
+    lab-frontend/src/pages/LaboratoryReportView.tsx
+
+Browser and PDF report rendering must use the report snapshot rather than the live laboratory profile.
 
 Brand colours are tenant-owned. Rezhel defaults are only starter or fallback values.
 
 Clinical semantic colours remain separate from tenant branding.
+
+The PDF renderer embeds only report-owned immutable images and never fetches current profile URLs.
 
 ---
 
@@ -443,16 +490,22 @@ Clinical semantic colours remain separate from tenant branding.
 
 Backend:
 
-    138 tests passed
-    3,597 assertions
+    148 tests passed
+    3,979 assertions
+    duration 2,279.04 seconds
+    validated 30 July 2026
 
 Frontend:
 
-    31 test files passed
-    119 tests passed
+    32 test files passed
+    121 tests passed
+    duration 1,211.13 seconds
+    validated 30 July 2026
 
 Production validation:
 
+    Composer validation passed
+    Composer platform requirements passed
     TypeScript validation passed
     Vite production build passed
 
@@ -463,16 +516,23 @@ Manual smoke validation:
 - logo uploaded and rendered
 - director signature uploaded and rendered
 - tenant brand colours saved and previewed
-- report view rendered tenant identity and signatory information
-- print preview retained logo, branding and signature
-- report fit on one printed page in the confirmed smoke scenario
+- browser report rendered tenant identity and signatory information
+- browser print preview retained logo, branding and signature
+- authenticated Download PDF action returned a server-generated PDF
+- newly issued PDF displayed the immutable laboratory logo
+- newly issued PDF displayed the immutable director signature
+- PDF signatory details, accreditation details and snapshot colours rendered
+- an older pre-media-snapshot report omitted images without reading current profile media
 
-Commands:
+Validated commands:
 
-    php artisan test
+    composer validate --no-check-publish
+    composer check-platform-reqs
+    php artisan test --stop-on-failure
 
     cd lab-frontend
-    npm test -- --run
+    npm test -- --no-file-parallelism --testTimeout=15000
+    npm run typecheck
     npm run build
 
 ---
@@ -512,8 +572,8 @@ Known but non-blocking items:
 - tenant authorization and landlord authorization use different user models
 - the historical role-and-permission seeder does not describe the active tenant authorization path
 - some test-support and orchestration files exceed the preferred line-count target
-- server-generated PDF rendering and export are not implemented
-- global tenant application theming is not implemented and was deliberately excluded from PR #12
+- legacy reports issued before immutable report-media copying are not backfilled and may omit logo or signature images in server-generated PDFs
+- global tenant application theming is not implemented and remains intentionally excluded
 - report-template customization is not implemented and requires a separate architecture decision
 
 Resolved items that must not remain in technical-debt lists:
@@ -529,6 +589,9 @@ Resolved items that must not remain in technical-debt lists:
 - report logo rendering
 - tenant-owned report brand colours
 - immutable signatory snapshot fields
+- server-generated PDF rendering and export
+- authenticated frontend PDF download
+- immutable report-owned logo and signature storage
 
 ---
 
@@ -544,7 +607,7 @@ No frontend typecheck or build failure exists.
 
 No known uncommitted product-code change exists.
 
-The only active closeout task is synchronization of the five core documentation files.
+The only active closeout task is synchronization and commit of the five core documentation files before pushing the feature branch and opening the milestone pull request.
 
 ---
 
@@ -552,61 +615,73 @@ The only active closeout task is synchronization of the five core documentation 
 
 Milestone:
 
-    Tenant laboratory profile and immutable report branding
+    Immutable laboratory report PDF export
 
 Status:
 
-    secure backend tenant-profile contract completed
-    tenant profile and media authorization completed
-    frontend profile settings completed
-    immutable signatory fields completed
-    multipart upload handling corrected
-    report logo rendering corrected
-    tenant-owned brand colours completed
-    focused and full backend tests passed
-    focused and full frontend tests passed
+    compatible server-side renderer selected
+    exact PDF dependency versions locked
+    Guzzle security update completed
+    immutable report-owned logo and signature copying completed
+    report-media MIME and SHA-256 metadata completed
+    generation-failure media cleanup completed
+    snapshot-only PDF view-data mapping completed
+    remote-resource, JavaScript and PHP execution disabled
+    secure local image embedding completed
+    filename sanitization completed
+    tenant-authorized PDF endpoint completed
+    frontend Download PDF integration completed
+    focused backend PDF tests passed
+    full backend suite passed
+    focused frontend PDF tests passed
+    full frontend suite passed
     TypeScript validation passed
     production build passed
-    browser and print smoke checks passed
-    pull request #12 merged into develop
-    merge commit 81c1e67 verified locally and remotely
-    completed feature branch deleted locally and remotely
-    documentation closeout in progress
+    browser download smoke passed
+    newly issued PDF logo and director-signature smoke passed
+    product checkpoints committed locally
+    documentation synchronization in progress
+    branch push and pull request pending
 
-No product-code change belongs on the documentation closeout branch.
+No additional product-code change is currently required for this milestone.
 
 ---
 
 ## 16. Immediate Next Task
 
-Complete the documentation closeout:
+Complete the milestone closeout:
 
-1. review the five updated documents
+1. review the five updated documentation files
 2. run `git diff --check`
 3. verify that only the five intended documentation paths changed
 4. stage the five exact paths
-5. commit the documentation closeout
-6. push the documentation branch
-7. open and merge a documentation-only pull request into `develop`
-8. update local `develop`
-9. delete the documentation branch locally and remotely
-10. freeze the scope and exact branch name for the next product feature
+5. commit the documentation checkpoint
+6. rerun the final clean-state review
+7. push `feature/laboratory-report-pdf-export`
+8. open one pull request into `develop`
+9. review and merge using a normal merge commit
+10. update local `develop`
+11. verify local and remote merge state
+12. delete the completed feature branch locally and remotely
+13. freeze the next product scope before creating another branch
 
-No next product feature is frozen in this document.
-
-Server-generated PDF export remains a backlog item, not an active instruction.
+The next product feature is not frozen in this document.
 
 ---
 
 ## 17. Git Continuation
 
-Current documentation branch:
+Current feature branch:
 
-    docs/close-out-laboratory-profile-milestone
+    feature/laboratory-report-pdf-export
 
 Required base commit:
 
-    81c1e67
+    cce1e62
+
+Product checkpoint before documentation:
+
+    218ac1f
 
 Before committing documentation:
 
@@ -629,11 +704,17 @@ Do not use:
 
     git add .
 
-After the documentation pull request is merged:
+After the documentation checkpoint:
 
-    git switch develop
-    git pull --ff-only origin develop
-    git status -sb
-    git log --oneline --decorate -8
+1. verify a clean worktree
+2. push the feature branch
+3. open a pull request into `develop`
+4. merge normally after review
+5. switch to `develop`
+6. pull with `--ff-only`
+7. verify local and remote merge commits
+8. delete the feature branch locally and remotely
 
 Create the next product branch only after its scope and descriptive name are agreed.
+
+---
