@@ -9,6 +9,11 @@ interface WrappedReport {
   data: LaboratoryReportResource;
 }
 
+export interface LaboratoryReportPdfDownload {
+  blob: Blob;
+  contentDisposition?: string;
+}
+
 const unwrapReport = (
   payload:
     | LaboratoryReportResource
@@ -65,4 +70,31 @@ export const generateLaboratoryReport =
     );
 
     return unwrapReport(response.data);
+  };
+
+export const downloadLaboratoryReportPdf =
+  async (
+    uuid: string
+  ): Promise<LaboratoryReportPdfDownload> => {
+    const response = await api.get<Blob>(
+      `/laboratory-reports/${uuid}/pdf`,
+      {
+        responseType: 'blob',
+      }
+    );
+
+    const contentDisposition =
+      response.headers[
+        'content-disposition'
+      ];
+
+    return {
+      blob: response.data,
+      ...(
+        typeof contentDisposition ===
+          'string'
+          ? { contentDisposition }
+          : {}
+      ),
+    };
   };

@@ -4,7 +4,7 @@ This document records decisions that should not be reopened without a clear tech
 
 Updated:
 
-    28 July 2026
+    30 July 2026
 
 ---
 
@@ -509,8 +509,6 @@ The report snapshots:
 
 - landlord-side laboratory profile
 - tenant-owned primary, secondary and accent colours
-- laboratory logo reference
-- director-signature reference
 - director name
 - director qualification
 - director registration number
@@ -521,13 +519,24 @@ The report snapshots:
 - approved result values
 - result-entry, submission and review audit users
 
+Before the report row is created, the generation service pre-generates the report UUID and copies the current profile logo and director signature into report-owned immutable storage:
+
+    laboratory-reports/{report-uuid}/...
+
+The laboratory snapshot records, when present:
+
+- report-owned image path
+- detected MIME type
+- SHA-256 hash
+- retained display URL for API compatibility
+
+Report generation failure removes any copied report-media directory.
+
 The report record also stores the generating tenant-user relationship and generation timestamp.
 
 Issued report records are not updated or deleted when source records later change.
 
-Printable browser reports render from the persisted report snapshot.
-
-A server-side PDF renderer remains deferred until a dedicated compatible renderer is selected.
+Browser reports and server-generated PDFs render from the persisted report snapshot.
 
 Report authorization uses `TenantUserPermissionCatalog`:
 
@@ -537,9 +546,15 @@ Report authorization uses `TenantUserPermissionCatalog`:
 - doctor: view and generate
 - receptionist: view only
 
+Reason:
+
+Historical clinical reports must remain reproducible after profile, patient, order, result, logo, signature or colour changes.
+
 Consequence:
 
-Historical report data remains reproducible, tenant isolated and visually stable after a laboratory later changes its profile, logo, signature or colours.
+Replacing or deleting current tenant-profile media does not remove report-owned immutable media.
+
+Reports issued before report-owned media snapshotting may lack immutable image paths. Those reports may omit images in server-generated PDFs rather than reading mutable live-profile media.
 
 ---
 
@@ -792,7 +807,8 @@ Brand colours currently apply to:
 - report identity
 - report divider and supporting identity text
 - issued-report badge
-- print rendering
+- browser print rendering
+- server-generated PDF rendering
 
 Brand colours do not currently apply to:
 
@@ -813,3 +829,56 @@ A tenant's identity must not be confused with Rezhel's platform identity, and hi
 Consequence:
 
 Any future expansion into global tenant theming or template customization requires a separate architecture decision, accessibility review and regression plan.
+
+---
+
+## ADR-027: Server-Generated Immutable Laboratory Report PDFs
+
+Status:
+
+    Accepted
+
+Decision:
+
+Rezhel generates downloadable laboratory-report PDFs on the server using:
+
+- `barryvdh/laravel-dompdf` 3.1.2
+- `dompdf/dompdf` 3.1.6
+
+The tenant endpoint is:
+
+    GET /api/laboratory-reports/{laboratoryReport}/pdf
+
+The endpoint reuses the report-view authorization request and tenant-scoped UUID route binding.
+
+The PDF renderer:
+
+- reads the persisted report row and its four immutable snapshots only
+- does not query current patient, order, result or tenant-profile records
+- validates six-digit snapshot brand colours and applies safe fallbacks
+- embeds only report-owned local image bytes
+- requires the image path to remain under the current report UUID directory
+- rejects traversal, backslashes and null bytes
+- verifies detected MIME type against the snapshot MIME type
+- verifies SHA-256 when a snapshot hash is present
+- embeds accepted images as data URIs
+- disables remote resources
+- disables JavaScript
+- disables PHP execution
+- sanitizes the attachment filename
+
+The React frontend downloads the PDF through the authenticated shared Axios client with `responseType: 'blob'`, creates a temporary object URL, clicks a temporary hidden anchor and revokes the object URL.
+
+Reason:
+
+A downloadable clinical report must preserve the exact issued snapshot, avoid remote-resource fetching and remain independent of later source-record or profile changes.
+
+Consequence:
+
+The server-generated PDF is the authoritative downloadable artifact for an issued report.
+
+Browser printing remains available as a separate presentation path.
+
+Legacy reports that lack report-owned media descriptors may render without logo or signature images. The implementation does not weaken immutability by substituting current live-profile media.
+
+---

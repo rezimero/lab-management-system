@@ -10,9 +10,11 @@ use App\Http\Resources\LaboratoryReportResource;
 use App\Models\LaboratoryOrder;
 use App\Models\LaboratoryReport;
 use App\Services\Tenant\LaboratoryReport\LaboratoryReportGenerationService;
+use App\Services\Tenant\LaboratoryReport\LaboratoryReportPdfService;
 use App\Services\Tenant\LaboratoryReport\LaboratoryReportQueryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 
 class LaboratoryReportController extends Controller
 {
@@ -20,7 +22,9 @@ class LaboratoryReportController extends Controller
         private readonly LaboratoryReportGenerationService
             $generationService,
         private readonly LaboratoryReportQueryService
-            $queryService
+            $queryService,
+        private readonly LaboratoryReportPdfService
+            $pdfService
     ) {
     }
 
@@ -91,6 +95,18 @@ class LaboratoryReportController extends Controller
             $laboratoryReport->load(
                 'generatedBy'
             )
+        );
+    }
+
+    /**
+     * Download one immutable report as a PDF.
+     */
+    public function downloadPdf(
+        ViewLaboratoryReportRequest $request,
+        LaboratoryReport $laboratoryReport
+    ): Response {
+        return $this->pdfService->download(
+            $laboratoryReport
         );
     }
 }

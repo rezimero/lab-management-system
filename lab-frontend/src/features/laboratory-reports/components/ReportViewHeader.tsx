@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  CircularProgress,
   IconButton,
   Typography,
 } from '@mui/material';
@@ -8,16 +9,23 @@ import {
 import ArrowBackRounded from
   '@mui/icons-material/ArrowBackRounded';
 
+import DownloadRounded from
+  '@mui/icons-material/DownloadRounded';
+
 import PrintRounded from
   '@mui/icons-material/PrintRounded';
 
 interface Props {
+  downloadingPdf: boolean;
   onBack: () => void;
+  onDownloadPdf: () => void;
   onPrint: () => void;
 }
 
 const ReportViewHeader = ({
+  downloadingPdf,
   onBack,
+  onDownloadPdf,
   onPrint,
 }: Props) => (
   <Box
@@ -69,13 +77,41 @@ const ReportViewHeader = ({
       </Box>
     </Box>
 
-    <Button
-      variant="outlined"
-      startIcon={<PrintRounded />}
-      onClick={onPrint}
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 1,
+      }}
     >
-      Print report
-    </Button>
+      <Button
+        variant="contained"
+        disabled={downloadingPdf}
+        startIcon={
+          downloadingPdf
+            ? (
+              <CircularProgress
+                color="inherit"
+                size={16}
+              />
+            )
+            : <DownloadRounded />
+        }
+        onClick={onDownloadPdf}
+      >
+        {downloadingPdf
+          ? 'Downloading PDF...'
+          : 'Download PDF'}
+      </Button>
+
+      <Button
+        variant="outlined"
+        startIcon={<PrintRounded />}
+        onClick={onPrint}
+      >
+        Print report
+      </Button>
+    </Box>
   </Box>
 );
 

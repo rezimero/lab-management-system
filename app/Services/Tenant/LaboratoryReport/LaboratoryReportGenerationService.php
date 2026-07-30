@@ -7,8 +7,10 @@ use App\Models\LaboratoryReport;
 use App\Models\Tenant;
 use App\Services\TenantProfileService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use LogicException;
+use Throwable;
 
 class LaboratoryReportGenerationService
 {
@@ -17,6 +19,8 @@ class LaboratoryReportGenerationService
             $eligibilityService,
         private readonly LaboratoryReportSnapshotService
             $snapshotService,
+        private readonly LaboratoryReportMediaSnapshotService
+            $mediaSnapshotService,
         private readonly TenantProfileService
             $tenantProfileService
     ) {
@@ -37,91 +41,116 @@ class LaboratoryReportGenerationService
             );
         }
 
-        return DB::connection('tenant')->transaction(
-            function () use (
-                $orderUuid,
-                $userId,
-                $tenant
-            ): LaboratoryReport {
-                $order = LaboratoryOrder::query()
-                    ->where('uuid', $orderUuid)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+        $reportUuid = (string) Str::uuid();
 
-                $order->load([
-                    'patient',
-                    'orderedBy',
-                    'items' => (
-                        static fn ($query) => (
-                            $query->orderBy('id')
-                        )
-                    ),
-                    'items.testResult.enteredBy',
-                    'items.testResult.submittedBy',
-                    'items.testResult.reviewedBy',
-                ]);
+        try {
+            return DB::connection('tenant')->transaction(
+                function () use (
+                    $orderUuid,
+                    $userId,
+                    $tenant,
+                    $reportUuid
+                ): LaboratoryReport {
+                    $order = LaboratoryOrder::query()
+                        ->where('uuid', $orderUuid)
+                        ->lockForUpdate()
+                        ->firstOrFail();
 
-                $this->assertNotGenerated(
-                    $order
-                );
-
-                $this->eligibilityService
-                    ->assertEligible(
-                        $order
-                    );
-
-                $profile = $this
-                    ->tenantProfileService
-                    ->getProfile(
-                        $tenant
-                    );
-
-                $snapshots = $this
-                    ->snapshotService
-                    ->build(
-                        $profile,
-                        $order
-                    );
-
-                $report = LaboratoryReport::query()
-                    ->create([
-                        'report_number' => (
-                            'RPT-'.$order->order_number
+                    $order->load([
+                        'patient',
+                        'orderedBy',
+                        'items' => (
+                            static fn ($query) => (
+                                $query->orderBy('id')
+                            )
                         ),
-                        'laboratory_order_id' => (
-                            $order->id
-                        ),
-                        'generated_by' => $userId,
-                        'laboratory_snapshot' => (
-                            $snapshots[
-                                'laboratory_snapshot'
-                            ]
-                        ),
-                        'patient_snapshot' => (
-                            $snapshots[
-                                'patient_snapshot'
-                            ]
-                        ),
-                        'order_snapshot' => (
-                            $snapshots[
-                                'order_snapshot'
-                            ]
-                        ),
-                        'results_snapshot' => (
-                            $snapshots[
-                                'results_snapshot'
-                            ]
-                        ),
-                        'generated_at' => now(),
+                        'items.testResult.enteredBy',
+                        'items.testResult.submittedBy',
+                        'items.testResult.reviewedBy',
                     ]);
 
-                return $report->load(
-                    'generatedBy'
-                );
-            }
-        );
-    }
+                    $this->assertNotGenerated(
+                        $order
+                    );
 
+                    $this->eligibilityService
+                        ->assertEligible(
+                            $order
+                        );
+
+                    $profile = $this
+                        ->tenantProfileService
+                        ->getProfile(
+                            $tenant
+                        );
+
+                    $snapshots = $this
+                        ->snapshotService
+                        ->build(
+                            $profile,
+                            $order
+                        );
+
+                    $snapshots['laboratory_snapshot'] = (
+                        array_merge(
+                            $snapshots[
+                                'laboratory_snapshot'
+                            ],
+                            $this->mediaSnapshotService
+                                ->snapshot(
+                                    $profile,
+                                    $reportUuid
+                                )
+                        )
+                    );
+
+                    $report = LaboratoryReport::query()
+                        ->create([
+                            'uuid' => $reportUuid,
+                            'report_number' => (
+                                'RPT-'.$order->order_number
+                            ),
+                            'laboratory_order_id' => (
+                                $order->id
+                            ),
+                            'generated_by' => $userId,
+                            'laboratory_snapshot' => (
+                                $snapshots[
+                                    'laboratory_snapshot'
+                                ]
+                            ),
+                            'patient_snapshot' => (
+                                $snapshots[
+                                    'patient_snapshot'
+                                ]
+                            ),
+                            'order_snapshot' => (
+                                $snapshots[
+                                    'order_snapshot'
+                                ]
+                            ),
+                            'results_snapshot' => (
+                                $snapshots[
+                                    'results_snapshot'
+                                ]
+                            ),
+                            'generated_at' => now(),
+                        ]);
+
+                    return $report->load(
+                        'generatedBy'
+                    );
+                }
+            );
+        } catch (Throwable $exception) {
+            $this->mediaSnapshotService
+                ->deleteReportMedia(
+                    $reportUuid
+                );
+
+            throw $exception;
+        }
+    }
     /**
      * Prevent duplicate report issuance.
      */

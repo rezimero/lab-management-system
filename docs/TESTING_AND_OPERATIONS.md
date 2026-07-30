@@ -2,7 +2,7 @@
 
 Updated:
 
-    28 July 2026
+    30 July 2026
 
 ## 1. Safety Principle
 
@@ -181,7 +181,20 @@ Reporting routes:
     php artisan route:list `
         --path=api/laboratory-reports
 
-Profile routes must be verified directly from the current route definitions before changing the contract:
+Expected report routes:
+
+    GET   api/laboratory-reports
+    GET   api/laboratory-reports/{laboratoryReport}
+    GET   api/laboratory-reports/{laboratoryReport}/pdf
+
+The PDF route must remain behind:
+
+    SetTenantContext:required
+    auth:sanctum
+
+and must use the report-view authorization request.
+
+Profile routes must be verified directly from current route definitions before changing the contract:
 
     php artisan route:list |
         Select-String "profile|logo|favicon|signature"
@@ -194,10 +207,12 @@ Do not document guessed profile route paths.
 
 Latest confirmed complete backend result:
 
-    138 tests passed
-    3,597 assertions
+    148 tests passed
+    3,979 assertions
+    duration 2,279.04 seconds
+    validated 30 July 2026
 
-Relevant profile and reporting coverage includes:
+Relevant profile, reporting and PDF coverage includes:
 
 - tenant-profile resource contract
 - administrator and superadministrator authorization
@@ -206,18 +221,31 @@ Relevant profile and reporting coverage includes:
 - logo, favicon and director-signature uploads
 - media ownership and UUID handling
 - invalid file type and size rejection
-- physical cleanup when media is replaced
+- physical cleanup when profile media is replaced
 - immutable signatory snapshot fields
 - immutable tenant brand-colour snapshots
 - report generation and retrieval
+- immutable report-owned media copying
+- report-media cleanup on failed generation
+- report-media path, MIME and SHA-256 metadata
+- permitted PDF download
+- unknown-role denial
+- cross-tenant report isolation
+- filename sanitization
+- snapshot-only PDF rendering
+- PDF generation without media
+- remote image rejection
+- traversal rejection
+- MIME mismatch rejection
+- hash mismatch rejection
 
 At backend milestone completion:
 
-    php artisan test
+    php artisan test --stop-on-failure
 
-Do not create a backend milestone commit until the required focused, regression and full suites pass.
+Do not create a backend milestone commit until required focused, regression and full suites pass.
 
-Record the final test count, assertion count, duration and date in:
+Record final test count, assertion count, duration and date in:
 
     docs/CURRENT_STATE.md
 
@@ -240,13 +268,21 @@ Focused test examples:
     npm test -- `
         src/features/laboratory-reports/components/ReportSignatureFooter.test.tsx
 
-Complete frontend suite:
+    npm test -- `
+        src/pages/LaboratoryReportView.test.tsx `
+        src/pages/LaboratoryReportView.download.test.tsx
 
-    npm test -- --run
+Complete frontend suite for the validated Windows environment:
+
+    npm test -- `
+        --no-file-parallelism `
+        --testTimeout=15000
+
+The serial command avoids observed test-runner resource contention. It does not change the repository-wide Vitest timeout.
 
 TypeScript validation:
 
-    npx tsc --noEmit
+    npm run typecheck
 
 Production validation:
 
@@ -258,10 +294,11 @@ The build command executes:
 
 Latest confirmed frontend baseline:
 
-    31 test files passed
-    119 tests passed
+    32 test files passed
+    121 tests passed
     TypeScript validation passed
     production build passed
+    validated 30 July 2026
 
 Relevant profile and report test files include:
 
@@ -272,27 +309,9 @@ Relevant profile and report test files include:
     src/features/laboratory-reports/components/ReportSignatureFooter.test.tsx
     src/pages/LaboratoryProfile.test.tsx
     src/pages/LaboratoryReportView.test.tsx
+    src/pages/LaboratoryReportView.download.test.tsx
 
-Use a single `Push-Location` and `finally` block so failures do not leave PowerShell in the wrong directory:
-
-    Push-Location .\lab-frontend
-
-    try {
-        npm test -- --run
-
-        if ($LASTEXITCODE -ne 0) {
-            throw "Frontend tests failed."
-        }
-
-        npm run build
-
-        if ($LASTEXITCODE -ne 0) {
-            throw "Frontend build failed."
-        }
-    }
-    finally {
-        Pop-Location
-    }
+Use a single `Push-Location` and `finally` block so failures do not leave PowerShell in the wrong directory.
 
 Do not raise the global Vitest timeout merely because one test is slow.
 
@@ -425,7 +444,7 @@ Never run tenant migrations against an unresolved tenant connection.
 
 ---
 
-## 15. Browser and Print Smoke Checklist
+## 15. Browser, Print and PDF Smoke Checklist
 
 Use a tenant administrator account.
 
@@ -441,16 +460,17 @@ Laboratory profile:
 8. save primary, secondary and accent colours
 9. confirm the live preview updates
 
-Report view:
+Browser report view:
 
-1. open an issued report
-2. confirm the laboratory logo renders
-3. confirm laboratory name and supporting identity text render
-4. confirm director name, qualification, registration number and designation render
-5. confirm accreditation details render when present
-6. confirm the signature renders
-7. confirm primary, secondary and accent colours render from the report snapshot
-8. confirm clinical semantic statuses remain independent of brand colours
+1. issue a new report after profile media is present
+2. open the issued report
+3. confirm the laboratory logo renders
+4. confirm laboratory name and supporting identity text render
+5. confirm director name, qualification, registration number and designation render
+6. confirm accreditation details render when present
+7. confirm the signature renders
+8. confirm primary, secondary and accent colours render from the report snapshot
+9. confirm clinical semantic statuses remain independent of brand colours
 
 Print preview:
 
@@ -461,7 +481,26 @@ Print preview:
 5. confirm the tested report layout does not unexpectedly overflow
 6. do not claim universal one-page output from a single sample report
 
-The PR #12 browser smoke confirmed a one-page print preview for the tested report.
+Server-generated PDF:
+
+1. click `Download PDF`
+2. confirm the browser downloads an `application/pdf` attachment
+3. confirm the filename uses the report number
+4. open the downloaded PDF
+5. confirm the report number, patient, order and results match the issued report
+6. confirm snapshot colours render
+7. confirm the immutable laboratory logo renders
+8. confirm the immutable director signature renders
+9. confirm signatory and accreditation details render
+10. change the live profile and confirm the issued report PDF remains unchanged
+
+Legacy compatibility:
+
+- reports issued before report-owned media snapshotting may omit logo or signature images
+- do not treat live-profile media substitution as an acceptable fix
+- issue a new report to validate the current immutable media flow
+
+The 29 July 2026 smoke report confirmed both the immutable laboratory logo and director signature in the downloaded server-generated PDF.
 
 ---
 
@@ -516,17 +555,19 @@ Required order:
 3. run whitespace checks
 4. run focused tests
 5. run related regression tests
-6. run the full backend suite
-7. migrate the intended environment when required
-8. perform an authorized API or browser smoke test when required
-9. update handover documents
-10. review the Git diff
-11. stage exact reviewed paths
-12. create the local checkpoint commit
-13. push the branch
-14. open the pull request
-15. merge after review using a normal merge commit
-16. update and verify local `develop`
+6. run Composer validation when dependencies change
+7. run Composer platform checks when dependencies or PHP extensions change
+8. run the full backend suite
+9. migrate the intended environment when required
+10. perform an authorized API, browser or PDF smoke test when required
+11. update handover documents
+12. review the Git diff
+13. stage exact reviewed paths
+14. create the local checkpoint commit
+15. push the branch
+16. open the pull request
+17. merge after review using a normal merge commit
+18. update and verify local `develop`
 
 ---
 
@@ -537,18 +578,19 @@ Required order:
 1. finish or characterize the focused behaviour
 2. run the focused Vitest suite
 3. run affected regression tests
-4. run `npm test -- --run`
-5. run `npm run build`
-6. run `git diff --check`
-7. perform browser and print smoke checks when rendering changes
-8. update handover documents
-9. review the Git diff
-10. stage exact reviewed paths
-11. compare the staged path list with the intended path list
-12. create the local checkpoint commit
-13. push and open the pull request at the milestone boundary
-14. merge after review using a normal merge commit
-15. update and verify local `develop`
+4. run the complete frontend suite
+5. run `npm run typecheck`
+6. run `npm run build`
+7. run `git diff --check`
+8. perform browser, print and download smoke checks when rendering or file delivery changes
+9. update handover documents
+10. review the Git diff
+11. stage exact reviewed paths
+12. compare the staged path list with the intended path list
+13. create the local checkpoint commit
+14. push and open the pull request at the milestone boundary
+15. merge after review using a normal merge commit
+16. update and verify local `develop`
 
 ---
 
@@ -588,21 +630,55 @@ Canonical integration branch:
 
     develop
 
-Latest merged product milestone:
+Latest integration baseline:
 
     Pull request:
-        #12
+        #13
 
     Merge commit:
-        81c1e67
+        cce1e62
 
-Current documentation branch:
+Current feature branch:
 
-    docs/close-out-laboratory-profile-milestone
+    feature/laboratory-report-pdf-export
 
-The PR #12 feature branch has been deleted locally and remotely.
+Branch base:
 
-After the documentation closeout is merged, create the next product branch from updated `develop` only after the next scope is agreed.
+    cce1e62
+
+Product checkpoint before documentation:
+
+    218ac1f
+
+Milestone commits:
+
+    4eb0980 chore add laboratory report PDF renderer
+    570ae31 feat preserve immutable report media
+    bfb1fbe feat add laboratory report PDF export
+    218ac1f feat add laboratory report PDF download
+
+Validation state:
+
+    backend:
+        148 tests passed
+        3,979 assertions
+
+    frontend:
+        32 test files passed
+        121 tests passed
+
+    typecheck:
+        passed
+
+    production build:
+        passed
+
+    browser PDF smoke:
+        passed with logo and director signature
+
+The feature branch has not yet been pushed and no pull request has been opened.
+
+After documentation is committed, push the feature branch and open one milestone pull request into `develop`.
 
 ---
 
@@ -680,6 +756,39 @@ Check:
 - browser-generated multipart boundary exists
 - file size and extension are allowed
 
+### PDF downloads but logo or signature is missing
+
+First determine whether the report was issued before immutable report-media copying was introduced.
+
+For a newly issued report, inspect:
+
+- `laboratory_snapshot.logo_path`
+- `laboratory_snapshot.logo_mime_type`
+- `laboratory_snapshot.logo_hash`
+- `laboratory_snapshot.director_signature_path`
+- `laboratory_snapshot.director_signature_mime_type`
+- `laboratory_snapshot.director_signature_hash`
+- the corresponding files on the `public` disk
+- actual MIME detection
+- SHA-256 agreement
+- report UUID path ownership
+
+Do not make the renderer fetch current live-profile URLs.
+
+A legacy report without report-owned media metadata may omit the images by design.
+
+### PDF download request fails in the browser
+
+Check:
+
+- authenticated bearer token
+- `X-Tenant-Domain`
+- report UUID
+- tenant isolation
+- report-view permission
+- response type `blob`
+- API error sanitization
+- object URL creation and cleanup
 ### Temporary tenant database remains after a failed test
 
 First verify that its name contains the required automated-test pattern.

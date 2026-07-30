@@ -54,6 +54,10 @@ Preserve:
 - approved-result order-completion guard
 - immutable laboratory-report snapshots
 - immutable report signatory and branding snapshots
+- immutable report-owned logo and director-signature media copies
+- server-generated PDFs rendered only from the issued report snapshot
+- local report-image embedding with path, MIME and hash validation
+- remote-resource, JavaScript and PHP execution disabled in PDF rendering
 - tenant-owned laboratory identity and brand colours
 - administrator-only tenant-profile management
 - secure tenant-profile media validation and physical cleanup
@@ -64,6 +68,8 @@ Preserve:
 Do not replace these without an explicit architectural decision.
 
 Rezhel may provide starter or fallback colours, but those defaults do not represent a subscribing laboratory. The laboratory owns its profile, logo, signature and brand colours.
+
+Historical reports must not read the current live profile to fill missing snapshot data. Reports issued before immutable report-media copying may omit logo or signature images in server-generated PDFs.
 
 ---
 
@@ -272,13 +278,18 @@ Completed product milestones include:
 7. immutable report signatory details
 8. tenant-owned report brand colours
 9. printable browser report branding
+10. immutable report-owned media preservation
+11. server-generated laboratory-report PDF export
+12. authenticated frontend PDF download
 
-The laboratory-profile and report-branding scope is intentionally limited to:
+The laboratory-profile and report-branding scope remains intentionally limited to:
 
 - the laboratory-profile editor
 - report identity
 - report signatory presentation
 - report and print styling
+- immutable server-generated report PDFs
+- authenticated PDF download
 
 It does not introduce:
 
@@ -289,9 +300,9 @@ It does not introduce:
 - a report-template builder
 - replacement of clinical semantic status colours
 
-PDF renderer selection and server-generated PDF export remain deferred until a compatible renderer is deliberately selected.
+The accepted PDF implementation uses `barryvdh/laravel-dompdf` and Dompdf. It renders from persisted report snapshots only, embeds validated report-owned local images as data URIs and does not fetch remote profile resources.
 
-Do not reopen completed frontend foundation, result/report integration or profile/report-branding work without a failing test, security issue, integrity issue or confirmed architecture defect.
+Do not reopen completed frontend foundation, result/report integration, profile/report-branding or PDF-export work without a failing test, security issue, integrity issue or confirmed architecture defect.
 
 Do not begin broad legacy cleanup unless it blocks the current milestone.
 
@@ -303,15 +314,15 @@ Canonical integration branch:
 
     develop
 
-Merged frontend result/report integration:
+Latest integration baseline:
 
     Pull request:
-        #11
+        #13
 
     Merge commit:
-        200adfe
+        cce1e62
 
-Merged laboratory profile and report-branding milestone:
+Latest merged product milestone:
 
     Pull request:
         #12
@@ -319,16 +330,28 @@ Merged laboratory profile and report-branding milestone:
     Merge commit:
         81c1e67
 
-Key milestone commits:
+Active milestone branch:
 
-    1ac7a0f fix secure tenant profile contract
-    7558a73 feat integrate laboratory profile settings
-    b005572 feat extend report signatory snapshot
-    e32aec6 fix preserve multipart profile uploads
-    9cf11fb fix render laboratory logo on reports
-    eb5b299 feat add tenant laboratory brand colours
+    feature/laboratory-report-pdf-export
 
-Current toolchain:
+Product checkpoint before documentation synchronization:
+
+    218ac1f feat add laboratory report PDF download
+
+PDF milestone commits:
+
+    4eb0980 chore add laboratory report PDF renderer
+    570ae31 feat preserve immutable report media
+    bfb1fbe feat add laboratory report PDF export
+    218ac1f feat add laboratory report PDF download
+
+Current PDF packages:
+
+- `barryvdh/laravel-dompdf` 3.1.2
+- `dompdf/dompdf` 3.1.6
+- `guzzlehttp/guzzle` 7.15.2
+
+Current frontend toolchain:
 
 - React 19.2.7
 - Vite 8.1.5
@@ -340,32 +363,42 @@ Current toolchain:
 
 Latest confirmed backend result:
 
-    138 tests passed
-    3,597 assertions
+    148 tests passed
+    3,979 assertions
 
 Latest confirmed frontend result:
 
-    31 test files passed
-    119 tests passed
+    32 test files passed
+    121 tests passed
     TypeScript validation passed
     Vite production build passed
 
 Manual validation completed:
 
 - laboratory-profile browser smoke
-- logo upload and rendering
-- director-signature upload and rendering
+- logo and director-signature upload
 - tenant brand-colour update and preview
-- report-view branding
-- one-page print-preview rendering
+- browser report branding
+- browser print-preview rendering
+- authenticated server-generated PDF download
+- newly issued PDF displayed the immutable laboratory logo
+- newly issued PDF displayed the immutable director signature
+- PDF identity, signatory details and snapshot colours remained visible
 
-The PR #12 feature branch was deleted locally and remotely after merge verification.
+Legacy compatibility:
 
-The current documentation closeout branch is:
+- reports issued before report-owned media snapshotting may omit logo or signature images in server-generated PDFs
+- the renderer does not substitute mutable live-profile media for missing historical snapshot media
 
-    docs/close-out-laboratory-profile-milestone
+Current closeout task:
 
-After the documentation pull request is merged, begin the next product feature from updated `develop` on a newly named feature branch. No next product feature is frozen in these documents.
+1. synchronize the five core documentation files
+2. commit the documentation checkpoint on the active feature branch
+3. push the feature branch
+4. open and review one milestone pull request
+5. merge normally into `develop`
+6. update local `develop`
+7. delete the completed feature branch locally and remotely
 
 Do not expose Git author or tagger email addresses in shared logs.
 
