@@ -22,6 +22,10 @@ import ReportViewHeader from
   '../features/laboratory-reports/components/ReportViewHeader';
 
 import {
+  useDownloadLaboratoryReportPdf,
+} from '../features/laboratory-reports/hooks/useDownloadLaboratoryReportPdf';
+
+import {
   useLaboratoryReport,
 } from '../features/laboratory-reports/hooks/useLaboratoryReport';
 
@@ -36,6 +40,12 @@ const LaboratoryReportView = () => {
 
   const resource =
     useLaboratoryReport(uuid);
+
+  const pdfDownload =
+    useDownloadLaboratoryReportPdf(
+      uuid,
+      resource.report?.report_number
+    );
 
   if (resource.loading) {
     return (
@@ -72,15 +82,31 @@ const LaboratoryReportView = () => {
       <ReportPrintStyles />
 
       <ReportViewHeader
+        downloadingPdf={
+          pdfDownload.downloading
+        }
         onBack={() => {
           navigate(
             '/laboratory-reports'
           );
         }}
+        onDownloadPdf={() => {
+          void pdfDownload.download();
+        }}
         onPrint={() => {
           window.print();
         }}
       />
+
+      {pdfDownload.error && (
+        <Alert
+          className="no-print"
+          severity="error"
+          sx={{ mb: 2 }}
+        >
+          {pdfDownload.error}
+        </Alert>
+      )}
 
       <Box
         className="report-print-root"
