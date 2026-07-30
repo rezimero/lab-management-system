@@ -1,0 +1,153 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: lab_saas_landlord_test
+          MYSQL_ROOT_HOST: "%"
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=root"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    env:
+      APP_DEBUG: "true"
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      BCRYPT_ROUNDS: "4"
+      BROADCAST_CONNECTION: "null"
+      CACHE_STORE: array
+      DB_CONNECTION: landlord
+      DB_HOST: 127.0.0.1
+      DB_LANDLORD_DATABASE: lab_saas_landlord_test
+      DB_PASSWORD: root
+      DB_PORT: "3306"
+      DB_TENANT_DATABASE: tenant_test_unresolved
+      DB_USERNAME: root
+      MAIL_MAILER: array
+      NIGHTWATCH_ENABLED: "false"
+      PULSE_ENABLED: "false"
+      QUEUE_CONNECTION: sync
+      SESSION_DRIVER: array
+      TELESCOPE_ENABLED: "false"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          coverage: none
+          extensions: >-
+            bcmath,
+            curl,
+            dom,
+            fileinfo,
+            gd,
+            intl,
+            mbstring,
+            pdo_mysql,
+            xml,
+            xmlreader,
+            xmlwriter,
+            zip
+          ini-values: memory_limit=-1
+          tools: composer:v2
+
+      - name: Validate Composer manifest
+        run: composer validate --strict --no-interaction
+
+      - name: Install backend dependencies
+        run: >-
+          composer install
+          --no-interaction
+          --prefer-dist
+          --no-progress
+
+      - name: Audit locked backend dependencies
+        run: composer audit --locked --no-interaction
+
+      - name: Check backend platform requirements
+        run: composer check-platform-reqs --no-interaction
+
+      - name: Migrate shared landlord tables
+        run: >-
+          php artisan migrate
+          --database=landlord
+          --path=database/migrations
+          --force
+          --no-interaction
+
+      - name: Migrate landlord-domain tables
+        run: >-
+          php artisan migrate
+          --database=landlord
+          --path=database/migrations/landlord
+          --force
+          --no-interaction
+
+      - name: Run backend test suite
+        run: php artisan test --stop-on-failure
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    defaults:
+      run:
+        working-directory: lab-frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      - name: Install frontend dependencies
+        run: npm ci --ignore-scripts --no-fund
+
+      - name: Run frontend test suite
+        run: >-
+          npm test --
+          --no-file-parallelism
+          --testTimeout=15000
+
+      - name: Run TypeScript validation
+        run: npm run typecheck
+
+      - name: Build frontend
+        run: npm run build
