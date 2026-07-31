@@ -356,101 +356,111 @@ Canonical integration branch:
 
     develop
 
-Latest integration baseline:
+Latest merged architecture and operations milestone:
 
     Pull request:
-        #14
+        #15
 
     Merge commit:
-        81e9c0066609691d7ec537ce166a4cde3389ec02
-        Merge pull request #14 from rezimero/feature/laboratory-report-pdf-export
+        d0321d66b263f435711a9f58f6d4697a08373c7f
+        Merge pull request #15 from rezimero/chore/core-roadmap-ci-baseline
 
-Latest merged product milestone:
-
-    Immutable laboratory report PDF export and authenticated frontend download
-
-Active milestone branch:
-
-    chore/core-roadmap-ci-baseline
-
-Branch base:
-
-    81e9c0066609691d7ec537ce166a4cde3389ec02
-
-Current milestone checkpoint:
+Merged milestone commits:
 
     eead0c8c20906907e4604f8acfcc8284f5be3308
     chore add continuous integration baseline
 
-Current CI workflow:
+    803c2b7582c83e0dc7d313589775453ea5d61c70
+    docs define core roadmap and CI baseline
 
-    .github/workflows/ci.yml
+Milestone result:
 
-The workflow provides:
+- the GitHub Actions CI baseline is merged
+- commercial and integration modules are recorded as mandatory core scope
+- the dependency-driven product roadmap is recorded
+- stale repository and milestone documentation was corrected
+- backend CI passed
+- frontend CI passed
+- the milestone branch was removed locally and remotely
 
-- pull-request checks targeting `develop`
-- push checks on `develop`
-- manual execution
-- PHP 8.5 and MySQL 8.4 backend validation
-- isolated `lab_saas_landlord_test` database usage
-- Composer validation, audit and platform checks
-- complete backend test execution
-- Node.js 24 frontend validation
-- complete frontend tests
-- TypeScript validation
-- Vite production build
-- read-only repository permissions
-- cancellation of superseded runs
+Verified GitHub Actions run:
 
-Current workflow status:
+    workflow:
+        Continuous Integration
 
-- committed locally
-- not pushed
-- not yet executed by GitHub Actions
-- no product behaviour changed
+    run:
+        30633924711
 
-Current backend validation baseline:
+    event:
+        pull_request
 
-    148 tests passed
-    3,979 assertions
+    head:
+        803c2b7582c83e0dc7d313589775453ea5d61c70
 
-Current frontend validation baseline:
+    conclusion:
+        success
 
-    32 test files passed
-    121 tests passed
-    TypeScript validation passed
-    Vite production build passed
+    jobs:
+        Backend - passed
+        Frontend - passed
 
-Manual validation completed for the previous product milestone:
+Current product-feature state:
 
-- laboratory-profile browser smoke
-- logo and director-signature upload
-- tenant brand-colour update and preview
-- browser report branding
-- browser print-preview rendering
-- authenticated server-generated PDF download
-- newly issued PDF displayed the immutable laboratory logo
-- newly issued PDF displayed the immutable director signature
-- PDF identity, signatory details and snapshot colours remained visible
+    No product feature branch is active.
+
+Documentation synchronization branch used for this revision:
+
+    docs/close-out-core-roadmap-ci-baseline
+
+Documentation revision base:
+
+    d0321d66b263f435711a9f58f6d4697a08373c7f
+
+Next product milestone:
+
+    Controlled laboratory-report amendment and supersession
+
+The amendment implementation branch must not be created until a read-only architecture inspection is completed and the following contract is frozen:
+
+- amendment eligibility
+- immutable original-report preservation
+- version and sequence rules
+- supersession relationships
+- amendment reasons
+- authorization boundaries
+- audit-event requirements
+- PDF and browser presentation
+- legacy-report behaviour
+- tenant-isolation requirements
+- notification consequences
+- downstream integration consequences
+
+The documentation-closeout revision changes project memory only. It does not alter clinical, commercial or integration behaviour.
+
+Current validation baseline:
+
+    backend:
+        148 tests passed
+        3,979 assertions
+
+    frontend:
+        32 test files passed
+        121 tests passed
+
+    typecheck:
+        passed
+
+    production build:
+        passed
+
+    GitHub Actions:
+        Backend passed
+        Frontend passed
 
 Legacy compatibility:
 
 - reports issued before report-owned media snapshotting may omit logo or signature images in server-generated PDFs
 - the renderer does not substitute mutable live-profile media for missing historical snapshot media
-
-Current milestone closeout:
-
-1. synchronize the five core documentation files
-2. validate documentation encoding, whitespace and exact changed paths
-3. commit the documentation checkpoint
-4. push `chore/core-roadmap-ci-baseline`
-5. open one pull request into `develop`
-6. allow GitHub Actions to exercise the workflow
-7. resolve any genuine CI-environment incompatibility
-8. review and merge using a normal merge commit
-9. update and verify local `develop`
-10. delete the completed milestone branch locally and remotely
-11. freeze the report-amendment contract before creating its feature branch
 
 Inspection, review and backup artifacts must be written under:
 

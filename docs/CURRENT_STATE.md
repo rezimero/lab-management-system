@@ -20,49 +20,48 @@ Canonical integration branch:
 
     develop
 
-Latest integration baseline:
+Latest merged architecture and operations milestone:
 
     Pull request:
-        #14
+        #15
 
     Merge commit:
-        81e9c0066609691d7ec537ce166a4cde3389ec02
-        Merge pull request #14 from rezimero/feature/laboratory-report-pdf-export
+        d0321d66b263f435711a9f58f6d4697a08373c7f
+        Merge pull request #15 from rezimero/chore/core-roadmap-ci-baseline
 
-Latest merged product milestone:
-
-    Immutable laboratory report PDF export and authenticated frontend download
-
-Active milestone branch:
-
-    chore/core-roadmap-ci-baseline
-
-The branch was created from:
-
-    81e9c0066609691d7ec537ce166a4cde3389ec02
-
-Current milestone checkpoint:
+Merged milestone commits:
 
     eead0c8c20906907e4604f8acfcc8284f5be3308
     chore add continuous integration baseline
 
-Current state:
+    803c2b7582c83e0dc7d313589775453ea5d61c70
+    docs define core roadmap and CI baseline
 
-    worktree:
-        clean before documentation update
+Milestone result:
 
-    branch pushed:
-        no
+    Backend CI passed
+    Frontend CI passed
+    normal merge commit verified
+    local develop synchronized
+    origin/develop synchronized
+    milestone branch removed locally
+    milestone branch removed remotely
 
-    pull request opened:
-        no
+Product feature branch:
 
-    GitHub Actions remotely exercised:
-        no
+    none
 
-Current milestone:
+Next product milestone:
 
-    Core roadmap, documentation correction and CI baseline
+    Controlled laboratory-report amendment and supersession
+
+Documentation synchronization branch used for this revision:
+
+    docs/close-out-core-roadmap-ci-baseline
+
+Documentation revision base:
+
+    d0321d66b263f435711a9f58f6d4697a08373c7f
 
 Historical frontend recovery tags remain available:
 
@@ -604,17 +603,17 @@ No known frontend test failure exists.
 
 No known frontend typecheck or build failure exists.
 
+No CI failure exists for the merged roadmap and CI milestone.
+
 No uncommitted product-code change exists.
 
-The GitHub Actions workflow has been committed locally but has not yet been exercised remotely. Remote execution is a milestone closeout gate, not a confirmed product blocker.
-
-The active work is documentation synchronization followed by branch push, pull-request review and first CI execution.
+The next product milestone is intentionally blocked from implementation until its architecture contract is inspected and frozen. This is a design gate, not a defect.
 
 ---
 
 ## 15. Current Milestone Status
 
-Milestone:
+Completed milestone:
 
     Core roadmap, documentation correction and CI baseline
 
@@ -629,63 +628,67 @@ Status:
     Composer manifest validation passed
     Composer platform validation passed
     Composer locked-dependency audit passed
-    exact workflow path verified
-    CI workflow checkpoint committed locally
-    documentation synchronization in progress
-    branch push pending
-    pull request pending
-    first remote GitHub Actions execution pending
+    CI workflow committed
+    roadmap documentation committed
+    milestone branch pushed
+    pull request #15 opened
+    Backend CI passed
+    Frontend CI passed
+    pull request #15 merged normally
+    merge commit verified
+    local develop synchronized
+    origin/develop synchronized
+    milestone branch removed locally and remotely
 
-Checkpoint:
+Merge commit:
 
-    eead0c8c20906907e4604f8acfcc8284f5be3308
-    chore add continuous integration baseline
+    d0321d66b263f435711a9f58f6d4697a08373c7f
 
-No clinical, commercial or integration behaviour is changed by this milestone.
+No clinical, commercial or integration behaviour was changed by this milestone.
+
+Documentation-closeout purpose:
+
+    Record the verified PR #15 merge and successful first remote CI execution.
 
 ---
 
 ## 16. Immediate Next Task
 
-Complete the roadmap and CI milestone:
+After this documentation-only revision is integrated:
 
-1. review the five updated core documentation files
-2. verify UTF-8 without BOM
-3. run whitespace validation
-4. verify exactly the five intended documentation files changed
-5. stage the five exact paths
-6. commit the documentation checkpoint
-7. push `chore/core-roadmap-ci-baseline`
-8. open one pull request into `develop`
-9. inspect both GitHub Actions jobs
-10. correct only confirmed CI-environment incompatibilities
-11. merge using a normal merge commit after all checks pass
-12. update and verify local `develop`
-13. delete the completed milestone branch locally and remotely
-14. perform a read-only amendment-workflow architecture inspection
-15. freeze the amendment and supersession contract
-16. create the amendment feature branch only after the contract is agreed
+1. update local `develop` with `--ff-only`
+2. verify a clean worktree
+3. delete the completed documentation branch locally and remotely
+4. perform a read-only inspection of the existing result, report, authorization, audit and PDF architecture
+5. identify every existing model, migration, service, controller, policy, route, test and frontend surface affected by report amendment
+6. define amendment eligibility and authorization rules
+7. define immutable original-report preservation
+8. define report versioning and supersession relationships
+9. define amendment reasons and audit-event requirements
+10. define browser, print and PDF presentation rules
+11. define legacy-report compatibility
+12. define notification and downstream-integration consequences
+13. record the contract in an architecture decision
+14. create the report-amendment feature branch only after the contract is approved
+15. begin implementation with characterization and contract tests
 
 The next product feature is:
 
     Controlled laboratory-report amendment and supersession
 
+No amendment implementation should begin during documentation closeout.
+
 ---
 
 ## 17. Git Continuation
 
-Current milestone branch:
+Documentation revision branch:
 
-    chore/core-roadmap-ci-baseline
+    docs/close-out-core-roadmap-ci-baseline
 
-Required base commit:
+Documentation revision base:
 
-    81e9c0066609691d7ec537ce166a4cde3389ec02
-
-Current committed checkpoint:
-
-    eead0c8c20906907e4604f8acfcc8284f5be3308
-    chore add continuous integration baseline
+    d0321d66b263f435711a9f58f6d4697a08373c7f
 
 Required documentation paths:
 
@@ -695,37 +698,32 @@ Required documentation paths:
     docs/PROJECT_HANDOVER.md
     docs/TESTING_AND_OPERATIONS.md
 
-Before the documentation commit:
+For this documentation revision:
 
-    git status -sb
-    git diff --check
-    git diff --name-status
-    git diff --stat
-
-Stage exact paths only.
+1. verify only the five intended documentation files changed
+2. verify UTF-8 without BOM
+3. verify final newlines
+4. run `git diff --check`
+5. stage the five exact paths
+6. commit locally
+7. verify a clean worktree
+8. push the documentation branch
+9. open one documentation-only pull request into `develop`
+10. review and merge normally
+11. update local `develop` with `--ff-only`
+12. verify local and remote merge identity
+13. delete the documentation branch locally and remotely
 
 Do not use:
 
     git add .
 
-After the documentation checkpoint:
-
-1. verify a clean worktree
-2. push `chore/core-roadmap-ci-baseline`
-3. open a pull request into `develop`
-4. wait for and inspect backend and frontend CI jobs
-5. merge normally only after successful review
-6. switch to `develop`
-7. pull with `--ff-only`
-8. verify local and remote merge identity
-9. delete the milestone branch locally and remotely
-
 Generated inspection, review and backup artifacts belong under:
 
     $env:TEMP\lab-management-system\core-roadmap-ci-baseline
 
-Do not place them on the Desktop or in the repository.
+Do not place generated review artifacts on the Desktop or inside the repository.
 
-Create the report-amendment feature branch only after its architecture contract is frozen.
+After documentation closeout, perform the read-only amendment architecture inspection before creating a product branch.
 
 ---

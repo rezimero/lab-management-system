@@ -460,7 +460,13 @@ Verified merged milestones include:
         pull request #14
         merge commit 81e9c0066609691d7ec537ce166a4cde3389ec02
 
-New implementation work must begin from updated `develop` on a separate feature or milestone branch.
+    core roadmap and CI baseline:
+        pull request #15
+        merge commit d0321d66b263f435711a9f58f6d4697a08373c7f
+
+New product implementation work must begin from updated `develop` on a separate feature or milestone branch.
+
+A documentation-only closeout branch may be created after a milestone merge to record the verified pull-request, merge and CI state. It must not contain product-code changes.
 
 ---
 
@@ -952,7 +958,7 @@ The project-wide completion baseline after pull request #14 is approximately 45 
 
 Status:
 
-    Accepted
+    Accepted and remotely validated
 
 Decision:
 
@@ -993,12 +999,38 @@ Reason:
 
 The remaining commercial and integration milestones will modify foundational models and services. Automated pull-request checks reduce the risk of merging tenant-isolation, clinical-workflow or frontend regressions.
 
+Remote validation:
+
+    pull request:
+        #15
+
+    workflow:
+        Continuous Integration
+
+    run:
+        30633924711
+
+    head:
+        803c2b7582c83e0dc7d313589775453ea5d61c70
+
+    conclusion:
+        success
+
+    Backend:
+        passed
+
+    Frontend:
+        passed
+
+    merge commit:
+        d0321d66b263f435711a9f58f6d4697a08373c7f
+
 Consequence:
 
-A pull request must not be merged while a configured CI job is failing.
-
-CI complements local focused testing; it does not replace characterization tests, exact-path review or local milestone validation.
-
-The first remote workflow execution remains pending until `chore/core-roadmap-ci-baseline` is pushed.
+- a pull request must not be merged while a configured CI job is failing
+- CI complements local focused and characterization testing
+- CI does not replace exact-path review or local milestone validation
+- automated tests must never target the production landlord database
+- CI-environment changes require the same review discipline as product configuration changes
 
 ---

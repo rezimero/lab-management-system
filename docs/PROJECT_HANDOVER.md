@@ -14,46 +14,44 @@ Repository:
 
     lab-management-system
 
-Latest integration baseline:
+Latest merged architecture and operations milestone:
 
     Pull request:
-        #14
+        #15
 
     Merge commit:
-        81e9c0066609691d7ec537ce166a4cde3389ec02
+        d0321d66b263f435711a9f58f6d4697a08373c7f
 
-Latest merged product milestone:
-
-    Immutable laboratory report PDF export and authenticated frontend download
-
-Active milestone:
+Milestone:
 
     Core roadmap, documentation correction and CI baseline
 
-Active branch:
+Milestone validation:
 
-    chore/core-roadmap-ci-baseline
+    Backend CI passed
+    Frontend CI passed
+    normal merge commit verified
+    local develop synchronized
+    origin/develop synchronized
+    milestone branch removed locally and remotely
 
-Branch base:
+Documentation synchronization branch used for this revision:
 
-    81e9c0066609691d7ec537ce166a4cde3389ec02
+    docs/close-out-core-roadmap-ci-baseline
 
-Current checkpoint:
+Documentation revision base:
 
-    eead0c8c20906907e4604f8acfcc8284f5be3308
-    chore add continuous integration baseline
+    d0321d66b263f435711a9f58f6d4697a08373c7f
 
-Current validated status:
+Current product-feature state:
 
-    Backend result, reporting, tenant-profile and PDF workflows are complete
-    Frontend result, report, laboratory-profile and PDF-download integration is complete
-    Browser print branding remains available
-    Server-generated immutable PDF export is complete
-    Previous full backend and frontend validation passed
-    GitHub Actions workflow is committed locally
-    Documentation synchronization is active
-    Branch push and pull request are pending
-    First remote CI execution is pending
+    No product feature branch is active.
+
+Next product milestone:
+
+    Controlled laboratory-report amendment and supersession
+
+The amendment implementation branch must not be created until the architecture contract has been inspected, documented and approved.
 
 ---
 
@@ -652,22 +650,23 @@ Planned sequence status:
 7. secure laboratory profile and report branding - completed
 8. immutable server-generated PDF export - completed
 9. authenticated frontend PDF download - completed
-10. GitHub Actions CI baseline - committed locally
-11. core roadmap and documentation synchronization - active
-12. milestone push, pull request and first CI execution - pending
-13. report amendment and supersession - next product milestone
-14. multi-branch and collection-centre foundation - pending
-15. SaaS plans, subscriptions and feature entitlements - pending
-16. pricing, invoices, payments, receipts and account billing - pending
-17. barcode labels and specimen chain of custody - pending
-18. reagents, consumables and inventory - pending
-19. referral laboratory and send-out workflow - pending
-20. notifications and critical-result escalation - pending
-21. patient and clinician portals - pending
-22. analyzer integration framework - pending
-23. HL7, ASTM, FHIR and external-system interoperability - pending
-24. operational and commercial analytics - pending
-25. deployment and production hardening - pending
+10. core roadmap and GitHub Actions CI baseline - completed and merged in PR #15
+11. PR #15 remote Backend and Frontend CI validation - completed
+12. roadmap and CI documentation closeout - current repository-maintenance revision
+13. report-amendment architecture inspection and contract freeze - next
+14. controlled report amendment and supersession implementation - pending
+15. multi-branch and collection-centre foundation - pending
+16. SaaS plans, subscriptions and feature entitlements - pending
+17. pricing, invoices, payments, receipts and account billing - pending
+18. barcode labels and specimen chain of custody - pending
+19. reagents, consumables and inventory - pending
+20. referral laboratory and send-out workflow - pending
+21. notifications and critical-result escalation - pending
+22. patient and clinician portals - pending
+23. analyzer integration framework - pending
+24. HL7, ASTM, FHIR and external-system interoperability - pending
+25. operational and commercial analytics - pending
+26. deployment and production hardening - pending
 ---
 
 ## 14. Known Technical Debt
@@ -715,55 +714,60 @@ Canonical integration branch:
 
     develop
 
-Latest integration baseline:
+Latest merged architecture and operations milestone:
 
     Pull request:
-        #14
+        #15
 
     Merge commit:
-        81e9c0066609691d7ec537ce166a4cde3389ec02
+        d0321d66b263f435711a9f58f6d4697a08373c7f
 
-Latest merged product milestone:
-
-    Immutable laboratory report PDF export and authenticated frontend download
-
-Current milestone branch:
-
-    chore/core-roadmap-ci-baseline
-
-Branch base:
-
-    81e9c0066609691d7ec537ce166a4cde3389ec02
-
-Current checkpoint:
+Milestone commits:
 
     eead0c8c20906907e4604f8acfcc8284f5be3308
     chore add continuous integration baseline
 
-Current branch state before this documentation update:
+    803c2b7582c83e0dc7d313589775453ea5d61c70
+    docs define core roadmap and CI baseline
 
-    worktree clean
-    branch not pushed
-    no pull request opened
-    GitHub Actions not yet remotely executed
+Verified CI run:
 
-After documentation is reviewed and committed:
+    workflow:
+        Continuous Integration
 
-1. push the milestone branch
-2. open one pull request into `develop`
-3. inspect both GitHub Actions jobs
-4. resolve only confirmed CI-environment incompatibilities
-5. merge normally after all checks pass
-6. update and verify local `develop`
-7. delete the milestone branch locally and remotely
+    run:
+        30633924711
+
+    Backend:
+        passed
+
+    Frontend:
+        passed
+
+Documentation synchronization branch used for this revision:
+
+    docs/close-out-core-roadmap-ci-baseline
+
+Documentation revision base:
+
+    d0321d66b263f435711a9f58f6d4697a08373c7f
+
+No product feature branch is active.
+
+After this documentation revision is merged:
+
+1. update local `develop` using `--ff-only`
+2. verify local and remote merge identity
+3. delete the documentation branch locally and remotely
+4. perform the report-amendment architecture inspection
+5. freeze and record the amendment contract
+6. create the product feature branch only after contract approval
 
 Use exact-path staging.
 
 Do not use:
 
     git add .
-
-Do not include repository-root investigation reports or archives in production commits.
 
 Temporary inspection, review and backup files must be stored under:
 
