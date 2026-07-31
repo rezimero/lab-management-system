@@ -267,7 +267,7 @@ Do not expose bearer tokens in messages, logs or documentation.
 
 ## Scope Rules
 
-Completed product milestones include:
+Completed and validated product milestones include:
 
 1. backend order-item-driven result workflow
 2. backend immutable laboratory-report generation and retrieval
@@ -282,7 +282,47 @@ Completed product milestones include:
 11. server-generated laboratory-report PDF export
 12. authenticated frontend PDF download
 
-The laboratory-profile and report-branding scope remains intentionally limited to:
+The complete Rezhel LIMS product includes all of the following core areas:
+
+- multi-tenant platform administration
+- clinical laboratory operations
+- report amendment and supersession
+- multi-branch and collection-centre operations
+- SaaS plans, subscriptions and feature entitlements
+- test pricing, quotations, invoices, payments and receipts
+- corporate and insurance billing
+- barcode labels and specimen chain of custody
+- reagents, consumables and inventory
+- referral laboratories and send-out testing
+- notifications and critical-result escalation
+- patient and clinician portals
+- analyzer and instrument integration
+- HL7, ASTM, FHIR and external health-system interoperability
+- operational, clinical and commercial analytics
+- deployment, monitoring, backup, recovery and production support
+
+Commercial and integration modules are mandatory core product features. They must never be described as optional enhancements.
+
+Current delivery order:
+
+1. core roadmap, documentation and CI baseline
+2. laboratory-report amendment and supersession
+3. multi-branch and collection-centre foundation
+4. SaaS plans, subscriptions and feature entitlements
+5. pricing, invoices, payments, receipts, corporate and insurance billing
+6. barcode labels and specimen chain of custody
+7. reagents, consumables and inventory
+8. referral laboratories and send-out testing
+9. notifications and critical-result escalation
+10. patient and clinician portals
+11. analyzer integration framework
+12. HL7, ASTM, FHIR and external health-system interoperability
+13. operational and commercial analytics
+14. deployment and production hardening
+
+This dependency order may be changed only through an explicit architecture decision.
+
+The laboratory-profile and report-branding implementation remains intentionally limited to:
 
 - the laboratory-profile editor
 - report identity
@@ -299,6 +339,8 @@ It does not introduce:
 - custom fonts
 - a report-template builder
 - replacement of clinical semantic status colours
+
+Those presentation exclusions do not make the commercial or integration modules optional.
 
 The accepted PDF implementation uses `barryvdh/laravel-dompdf` and Dompdf. It renders from persisted report snapshots only, embeds validated report-owned local images as data URIs and does not fetch remote profile resources.
 
@@ -317,63 +359,69 @@ Canonical integration branch:
 Latest integration baseline:
 
     Pull request:
-        #13
+        #14
 
     Merge commit:
-        cce1e62
+        81e9c0066609691d7ec537ce166a4cde3389ec02
+        Merge pull request #14 from rezimero/feature/laboratory-report-pdf-export
 
 Latest merged product milestone:
 
-    Pull request:
-        #12
-
-    Merge commit:
-        81c1e67
+    Immutable laboratory report PDF export and authenticated frontend download
 
 Active milestone branch:
 
-    feature/laboratory-report-pdf-export
+    chore/core-roadmap-ci-baseline
 
-Product checkpoint before documentation synchronization:
+Branch base:
 
-    218ac1f feat add laboratory report PDF download
+    81e9c0066609691d7ec537ce166a4cde3389ec02
 
-PDF milestone commits:
+Current milestone checkpoint:
 
-    4eb0980 chore add laboratory report PDF renderer
-    570ae31 feat preserve immutable report media
-    bfb1fbe feat add laboratory report PDF export
-    218ac1f feat add laboratory report PDF download
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
 
-Current PDF packages:
+Current CI workflow:
 
-- `barryvdh/laravel-dompdf` 3.1.2
-- `dompdf/dompdf` 3.1.6
-- `guzzlehttp/guzzle` 7.15.2
+    .github/workflows/ci.yml
 
-Current frontend toolchain:
+The workflow provides:
 
-- React 19.2.7
-- Vite 8.1.5
-- TypeScript 6.0.3
-- Vitest 4.1.10
-- React Router DOM 7.18.1
-- Axios 1.18.1
-- MUI 9.x
+- pull-request checks targeting `develop`
+- push checks on `develop`
+- manual execution
+- PHP 8.5 and MySQL 8.4 backend validation
+- isolated `lab_saas_landlord_test` database usage
+- Composer validation, audit and platform checks
+- complete backend test execution
+- Node.js 24 frontend validation
+- complete frontend tests
+- TypeScript validation
+- Vite production build
+- read-only repository permissions
+- cancellation of superseded runs
 
-Latest confirmed backend result:
+Current workflow status:
+
+- committed locally
+- not pushed
+- not yet executed by GitHub Actions
+- no product behaviour changed
+
+Current backend validation baseline:
 
     148 tests passed
     3,979 assertions
 
-Latest confirmed frontend result:
+Current frontend validation baseline:
 
     32 test files passed
     121 tests passed
     TypeScript validation passed
     Vite production build passed
 
-Manual validation completed:
+Manual validation completed for the previous product milestone:
 
 - laboratory-profile browser smoke
 - logo and director-signature upload
@@ -390,15 +438,25 @@ Legacy compatibility:
 - reports issued before report-owned media snapshotting may omit logo or signature images in server-generated PDFs
 - the renderer does not substitute mutable live-profile media for missing historical snapshot media
 
-Current closeout task:
+Current milestone closeout:
 
 1. synchronize the five core documentation files
-2. commit the documentation checkpoint on the active feature branch
-3. push the feature branch
-4. open and review one milestone pull request
-5. merge normally into `develop`
-6. update local `develop`
-7. delete the completed feature branch locally and remotely
+2. validate documentation encoding, whitespace and exact changed paths
+3. commit the documentation checkpoint
+4. push `chore/core-roadmap-ci-baseline`
+5. open one pull request into `develop`
+6. allow GitHub Actions to exercise the workflow
+7. resolve any genuine CI-environment incompatibility
+8. review and merge using a normal merge commit
+9. update and verify local `develop`
+10. delete the completed milestone branch locally and remotely
+11. freeze the report-amendment contract before creating its feature branch
+
+Inspection, review and backup artifacts must be written under:
+
+    $env:TEMP\lab-management-system\<milestone>
+
+Do not place generated investigation artifacts on the Desktop or inside the repository.
 
 Do not expose Git author or tagger email addresses in shared logs.
 

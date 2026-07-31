@@ -452,7 +452,15 @@ Verified merged milestones include:
         pull request #12
         merge commit 81c1e67
 
-New implementation work must begin from updated `develop` on a separate feature branch.
+    laboratory-profile documentation closeout:
+        pull request #13
+        merge commit cce1e62
+
+    immutable laboratory report PDF export:
+        pull request #14
+        merge commit 81e9c0066609691d7ec537ce166a4cde3389ec02
+
+New implementation work must begin from updated `develop` on a separate feature or milestone branch.
 
 ---
 
@@ -880,5 +888,117 @@ The server-generated PDF is the authoritative downloadable artifact for an issue
 Browser printing remains available as a separate presentation path.
 
 Legacy reports that lack report-owned media descriptors may render without logo or signature images. The implementation does not weaken immutability by substituting current live-profile media.
+
+---
+
+## ADR-028: Commercial and Integration Modules Are Core Product Scope
+
+Status:
+
+    Accepted
+
+Decision:
+
+Rezhel is a complete commercial and integrated Laboratory Information Management System.
+
+The following are mandatory core product capabilities:
+
+- clinical laboratory workflow
+- report governance
+- multi-branch and collection-centre operations
+- SaaS subscriptions and feature entitlements
+- pricing, invoicing, payments, receipts and account billing
+- barcode labels and specimen chain of custody
+- laboratory inventory and reagent management
+- referral laboratory workflows
+- notifications and critical-result escalation
+- patient and clinician portals
+- analyzer and instrument connectivity
+- HL7, ASTM, FHIR and external-system interoperability
+- operational, clinical and commercial analytics
+- production operations and support controls
+
+Commercial and integration capabilities must not be classified as optional enhancements.
+
+Reason:
+
+Order, specimen, report, branch, billing, inventory and integration models affect one another. Treating the commercial and integration layers as late optional additions would create avoidable schema changes, duplicated workflows and incompatible authorization boundaries.
+
+Consequence:
+
+Delivery follows this dependency order:
+
+1. report amendment and supersession
+2. multi-branch and collection-centre foundation
+3. subscriptions and feature entitlements
+4. pricing and financial workflows
+5. barcode and chain of custody
+6. inventory and reagents
+7. referral laboratories
+8. notifications
+9. patient and clinician portals
+10. analyzer integration
+11. interoperability
+12. analytics
+13. production hardening
+
+A change to this order requires a documented dependency review and architecture decision.
+
+The project-wide completion baseline after pull request #14 is approximately 45 percent. This is a planning estimate, not a code-derived metric.
+
+---
+
+## ADR-029: GitHub Actions Continuous Integration Baseline
+
+Status:
+
+    Accepted
+
+Decision:
+
+The repository uses:
+
+    .github/workflows/ci.yml
+
+The workflow runs on:
+
+- pull requests targeting `develop`
+- pushes to `develop`
+- manual workflow dispatch
+
+The backend job uses:
+
+- Ubuntu 24.04
+- PHP 8.5
+- MySQL 8.4
+- `lab_saas_landlord_test`
+- Composer manifest validation
+- locked-dependency security audit
+- platform-requirement validation
+- landlord migration execution
+- the complete Laravel test suite
+
+The frontend job uses:
+
+- Ubuntu 24.04
+- Node.js 24
+- deterministic `npm ci`
+- the complete Vitest suite
+- TypeScript validation
+- the Vite production build
+
+The workflow grants read-only repository-content permission and cancels superseded runs for the same branch or pull request.
+
+Reason:
+
+The remaining commercial and integration milestones will modify foundational models and services. Automated pull-request checks reduce the risk of merging tenant-isolation, clinical-workflow or frontend regressions.
+
+Consequence:
+
+A pull request must not be merged while a configured CI job is failing.
+
+CI complements local focused testing; it does not replace characterization tests, exact-path review or local milestone validation.
+
+The first remote workflow execution remains pending until `chore/core-roadmap-ci-baseline` is pushed.
 
 ---

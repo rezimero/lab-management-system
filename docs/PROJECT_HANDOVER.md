@@ -6,7 +6,7 @@ Updated:
 
 ## 1. Project Identity
 
-This repository contains a multi-tenant Laboratory Information Management System built with Laravel and React.
+This repository contains Rezhel, a multi-tenant Laboratory Information Management System built with Laravel and React.
 
 The system is designed for independent laboratories operating on isolated tenant databases while platform-wide administration, tenant profiles, media metadata and authentication tokens remain in the landlord database.
 
@@ -14,35 +14,34 @@ Repository:
 
     lab-management-system
 
-Current completed and validated feature milestone:
-
-    Immutable laboratory report PDF export
-
-Active branch:
-
-    feature/laboratory-report-pdf-export
-
-Product checkpoint before documentation:
-
-    218ac1f
-
 Latest integration baseline:
 
     Pull request:
-        #13
+        #14
 
     Merge commit:
-        cce1e62
+        81e9c0066609691d7ec537ce166a4cde3389ec02
 
 Latest merged product milestone:
 
-    Tenant laboratory profile, secure media, immutable signatory details and tenant-owned report branding
+    Immutable laboratory report PDF export and authenticated frontend download
 
-    Pull request:
-        #12
+Active milestone:
 
-    Merge commit:
-        81c1e67
+    Core roadmap, documentation correction and CI baseline
+
+Active branch:
+
+    chore/core-roadmap-ci-baseline
+
+Branch base:
+
+    81e9c0066609691d7ec537ce166a4cde3389ec02
+
+Current checkpoint:
+
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
 
 Current validated status:
 
@@ -50,14 +49,19 @@ Current validated status:
     Frontend result, report, laboratory-profile and PDF-download integration is complete
     Browser print branding remains available
     Server-generated immutable PDF export is complete
-    Full backend and frontend validation passed
-    Feature-branch push and pull request remain pending
+    Previous full backend and frontend validation passed
+    GitHub Actions workflow is committed locally
+    Documentation synchronization is active
+    Branch push and pull request are pending
+    First remote CI execution is pending
 
 ---
 
 ## 2. Product Purpose
 
-The system manages the operational lifecycle of a diagnostic laboratory, including:
+The system manages the complete operational, commercial and integration lifecycle of diagnostic laboratories.
+
+Implemented core capabilities include:
 
 - tenant onboarding
 - tenant authentication
@@ -83,11 +87,34 @@ The system manages the operational lifecycle of a diagnostic laboratory, includi
 - printable browser report presentation
 - downloadable server-generated PDF reports
 
+Remaining mandatory core capabilities include:
+
+- report amendment and supersession
+- multi-branch and collection-centre operations
+- SaaS subscriptions and feature entitlements
+- test pricing, quotations, invoices, payments and receipts
+- corporate and insurance accounts
+- barcode labels and specimen chain of custody
+- reagents, consumables and inventory
+- referral laboratories and send-out testing
+- email, SMS and supported WhatsApp notifications
+- critical-result escalation
+- patient and clinician portals
+- analyzer and instrument integration
+- HL7, ASTM and FHIR interoperability
+- hospital and clinic system integration
+- clinical, operational and commercial analytics
+- deployment, monitoring, backups, recovery and production support
+
+Commercial and integration modules are mandatory core product features. They are not optional expansion work.
+
 The backend result, reporting, profile and PDF workflows are stable.
 
 The frontend result, report, profile and PDF-download integrations are complete.
 
-The next product feature has not yet been frozen.
+The project-wide planning completion baseline after pull request #14 is approximately 45 percent.
+
+The next product feature is controlled laboratory-report amendment and supersession, after this roadmap and CI milestone is merged.
 
 ---
 
@@ -625,26 +652,44 @@ Planned sequence status:
 7. secure laboratory profile and report branding - completed
 8. immutable server-generated PDF export - completed
 9. authenticated frontend PDF download - completed
-10. documentation synchronization - active
-11. feature push and pull request - pending
-12. next product feature - not yet frozen
-
+10. GitHub Actions CI baseline - committed locally
+11. core roadmap and documentation synchronization - active
+12. milestone push, pull request and first CI execution - pending
+13. report amendment and supersession - next product milestone
+14. multi-branch and collection-centre foundation - pending
+15. SaaS plans, subscriptions and feature entitlements - pending
+16. pricing, invoices, payments, receipts and account billing - pending
+17. barcode labels and specimen chain of custody - pending
+18. reagents, consumables and inventory - pending
+19. referral laboratory and send-out workflow - pending
+20. notifications and critical-result escalation - pending
+21. patient and clinician portals - pending
+22. analyzer integration framework - pending
+23. HL7, ASTM, FHIR and external-system interoperability - pending
+24. operational and commercial analytics - pending
+25. deployment and production hardening - pending
 ---
 
 ## 14. Known Technical Debt
 
-Known but non-blocking items:
+Known but non-blocking technical-debt items:
 
 - legacy test-result columns remain
+- legacy result rows may lack order-item relationships
 - legacy landlord result tools may still query the old result shape
 - tenant authorization and platform authorization use different models
 - the role-and-permission seeder still describes historical Spatie-based tenant permissions
 - some test-support and orchestration files exceed the preferred line-count target
 - reports issued before immutable report-media copying are not backfilled and may omit logo or signature images in PDFs
+
+Known presentation exclusions:
+
 - global tenant application theming is not implemented
 - report-template customization is not implemented
 
-The final two items remain intentionally excluded and require separate architecture and accessibility decisions.
+The presentation exclusions require separate architecture and accessibility decisions.
+
+Commercial and integration modules are unfinished core scope, not technical debt and not optional features.
 
 Resolved items that should not be reported as current debt:
 
@@ -673,43 +718,44 @@ Canonical integration branch:
 Latest integration baseline:
 
     Pull request:
-        #13
+        #14
 
     Merge commit:
-        cce1e62
+        81e9c0066609691d7ec537ce166a4cde3389ec02
 
 Latest merged product milestone:
 
-    Pull request:
-        #12
+    Immutable laboratory report PDF export and authenticated frontend download
 
-    Merge commit:
-        81c1e67
+Current milestone branch:
 
-Current feature branch:
-
-    feature/laboratory-report-pdf-export
+    chore/core-roadmap-ci-baseline
 
 Branch base:
 
-    cce1e62
+    81e9c0066609691d7ec537ce166a4cde3389ec02
 
-Product checkpoints:
+Current checkpoint:
 
-    4eb0980 chore add laboratory report PDF renderer
-    570ae31 feat preserve immutable report media
-    bfb1fbe feat add laboratory report PDF export
-    218ac1f feat add laboratory report PDF download
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
 
-The branch has not yet been pushed and no pull request has been opened.
+Current branch state before this documentation update:
+
+    worktree clean
+    branch not pushed
+    no pull request opened
+    GitHub Actions not yet remotely executed
 
 After documentation is reviewed and committed:
 
-1. push the feature branch
+1. push the milestone branch
 2. open one pull request into `develop`
-3. merge normally after review
-4. update and verify local `develop`
-5. delete the feature branch locally and remotely
+3. inspect both GitHub Actions jobs
+4. resolve only confirmed CI-environment incompatibilities
+5. merge normally after all checks pass
+6. update and verify local `develop`
+7. delete the milestone branch locally and remotely
 
 Use exact-path staging.
 
@@ -718,6 +764,10 @@ Do not use:
     git add .
 
 Do not include repository-root investigation reports or archives in production commits.
+
+Temporary inspection, review and backup files must be stored under:
+
+    $env:TEMP\lab-management-system\<milestone>
 
 ---
 

@@ -23,52 +23,46 @@ Canonical integration branch:
 Latest integration baseline:
 
     Pull request:
-        #13
+        #14
 
     Merge commit:
-        cce1e62
-        Merge pull request #13 from rezimero/docs/close-out-laboratory-profile-milestone
+        81e9c0066609691d7ec537ce166a4cde3389ec02
+        Merge pull request #14 from rezimero/feature/laboratory-report-pdf-export
 
 Latest merged product milestone:
 
-    Tenant laboratory profile, secure media, immutable signatory details and tenant-owned report branding
+    Immutable laboratory report PDF export and authenticated frontend download
 
-    Pull request:
-        #12
+Active milestone branch:
 
-    Merge commit:
-        81c1e67
-        Merge pull request #12 from rezimero/feature/laboratory-profile-report-signatory
-
-Active product branch:
-
-    feature/laboratory-report-pdf-export
+    chore/core-roadmap-ci-baseline
 
 The branch was created from:
 
-    cce1e62
+    81e9c0066609691d7ec537ce166a4cde3389ec02
 
-Product checkpoints:
+Current milestone checkpoint:
 
-    4eb0980 chore add laboratory report PDF renderer
-    570ae31 feat preserve immutable report media
-    bfb1fbe feat add laboratory report PDF export
-    218ac1f feat add laboratory report PDF download
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
 
-Product checkpoint before documentation synchronization:
-
-    218ac1f
-
-Validated state before this documentation update:
+Current state:
 
     worktree:
-        clean
+        clean before documentation update
 
     branch pushed:
         no
 
     pull request opened:
         no
+
+    GitHub Actions remotely exercised:
+        no
+
+Current milestone:
+
+    Core roadmap, documentation correction and CI baseline
 
 Historical frontend recovery tags remain available:
 
@@ -564,7 +558,7 @@ Do not raise global test timeouts to hide a slow test without identifying the ca
 
 ## 13. Known Technical Debt
 
-Known but non-blocking items:
+Known but non-blocking technical-debt items:
 
 - legacy test-result columns remain for compatibility
 - legacy result rows may lack an order-item relationship
@@ -573,8 +567,13 @@ Known but non-blocking items:
 - the historical role-and-permission seeder does not describe the active tenant authorization path
 - some test-support and orchestration files exceed the preferred line-count target
 - legacy reports issued before immutable report-media copying are not backfilled and may omit logo or signature images in server-generated PDFs
-- global tenant application theming is not implemented and remains intentionally excluded
-- report-template customization is not implemented and requires a separate architecture decision
+
+Known presentation exclusions:
+
+- global tenant application theming is not implemented
+- report-template customization is not implemented and requires a separate architecture and accessibility decision
+
+Commercial and integration modules are not technical debt and are not optional. They are unfinished core product scope governed by ADR-028.
 
 Resolved items that must not remain in technical-debt lists:
 
@@ -597,17 +596,19 @@ Resolved items that must not remain in technical-debt lists:
 
 ## 14. Current Blockers
 
-No confirmed production blocker exists.
+No confirmed product-code blocker exists.
 
-No backend test failure exists.
+No known backend test failure exists.
 
-No frontend test failure exists.
+No known frontend test failure exists.
 
-No frontend typecheck or build failure exists.
+No known frontend typecheck or build failure exists.
 
-No known uncommitted product-code change exists.
+No uncommitted product-code change exists.
 
-The only active closeout task is synchronization and commit of the five core documentation files before pushing the feature branch and opening the milestone pull request.
+The GitHub Actions workflow has been committed locally but has not yet been exercised remotely. Remote execution is a milestone closeout gate, not a confirmed product blocker.
+
+The active work is documentation synchronization followed by branch push, pull-request review and first CI execution.
 
 ---
 
@@ -615,88 +616,91 @@ The only active closeout task is synchronization and commit of the five core doc
 
 Milestone:
 
-    Immutable laboratory report PDF export
+    Core roadmap, documentation correction and CI baseline
 
 Status:
 
-    compatible server-side renderer selected
-    exact PDF dependency versions locked
-    Guzzle security update completed
-    immutable report-owned logo and signature copying completed
-    report-media MIME and SHA-256 metadata completed
-    generation-failure media cleanup completed
-    snapshot-only PDF view-data mapping completed
-    remote-resource, JavaScript and PHP execution disabled
-    secure local image embedding completed
-    filename sanitization completed
-    tenant-authorized PDF endpoint completed
-    frontend Download PDF integration completed
-    focused backend PDF tests passed
-    full backend suite passed
-    focused frontend PDF tests passed
-    full frontend suite passed
-    TypeScript validation passed
-    production build passed
-    browser download smoke passed
-    newly issued PDF logo and director-signature smoke passed
-    product checkpoints committed locally
+    remaining-scope audit completed
+    commercial modules confirmed as core product scope
+    integration modules confirmed as core product scope
+    dependency-driven implementation order frozen
+    GitHub Actions workflow created
+    workflow action tags verified
+    Composer manifest validation passed
+    Composer platform validation passed
+    Composer locked-dependency audit passed
+    exact workflow path verified
+    CI workflow checkpoint committed locally
     documentation synchronization in progress
-    branch push and pull request pending
+    branch push pending
+    pull request pending
+    first remote GitHub Actions execution pending
 
-No additional product-code change is currently required for this milestone.
+Checkpoint:
+
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
+
+No clinical, commercial or integration behaviour is changed by this milestone.
 
 ---
 
 ## 16. Immediate Next Task
 
-Complete the milestone closeout:
+Complete the roadmap and CI milestone:
 
-1. review the five updated documentation files
-2. run `git diff --check`
-3. verify that only the five intended documentation paths changed
-4. stage the five exact paths
-5. commit the documentation checkpoint
-6. rerun the final clean-state review
-7. push `feature/laboratory-report-pdf-export`
+1. review the five updated core documentation files
+2. verify UTF-8 without BOM
+3. run whitespace validation
+4. verify exactly the five intended documentation files changed
+5. stage the five exact paths
+6. commit the documentation checkpoint
+7. push `chore/core-roadmap-ci-baseline`
 8. open one pull request into `develop`
-9. review and merge using a normal merge commit
-10. update local `develop`
-11. verify local and remote merge state
-12. delete the completed feature branch locally and remotely
-13. freeze the next product scope before creating another branch
+9. inspect both GitHub Actions jobs
+10. correct only confirmed CI-environment incompatibilities
+11. merge using a normal merge commit after all checks pass
+12. update and verify local `develop`
+13. delete the completed milestone branch locally and remotely
+14. perform a read-only amendment-workflow architecture inspection
+15. freeze the amendment and supersession contract
+16. create the amendment feature branch only after the contract is agreed
 
-The next product feature is not frozen in this document.
+The next product feature is:
+
+    Controlled laboratory-report amendment and supersession
 
 ---
 
 ## 17. Git Continuation
 
-Current feature branch:
+Current milestone branch:
 
-    feature/laboratory-report-pdf-export
+    chore/core-roadmap-ci-baseline
 
 Required base commit:
 
-    cce1e62
+    81e9c0066609691d7ec537ce166a4cde3389ec02
 
-Product checkpoint before documentation:
+Current committed checkpoint:
 
-    218ac1f
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
 
-Before committing documentation:
-
-    git status -sb
-    git diff --check
-    git diff --name-status
-    git diff --stat
-
-Required changed paths:
+Required documentation paths:
 
     docs/AI_ENGINEER_BRIEF.md
     docs/ARCHITECTURE_DECISIONS.md
     docs/CURRENT_STATE.md
     docs/PROJECT_HANDOVER.md
     docs/TESTING_AND_OPERATIONS.md
+
+Before the documentation commit:
+
+    git status -sb
+    git diff --check
+    git diff --name-status
+    git diff --stat
 
 Stage exact paths only.
 
@@ -707,14 +711,21 @@ Do not use:
 After the documentation checkpoint:
 
 1. verify a clean worktree
-2. push the feature branch
+2. push `chore/core-roadmap-ci-baseline`
 3. open a pull request into `develop`
-4. merge normally after review
-5. switch to `develop`
-6. pull with `--ff-only`
-7. verify local and remote merge commits
-8. delete the feature branch locally and remotely
+4. wait for and inspect backend and frontend CI jobs
+5. merge normally only after successful review
+6. switch to `develop`
+7. pull with `--ff-only`
+8. verify local and remote merge identity
+9. delete the milestone branch locally and remotely
 
-Create the next product branch only after its scope and descriptive name are agreed.
+Generated inspection, review and backup artifacts belong under:
+
+    $env:TEMP\lab-management-system\core-roadmap-ci-baseline
+
+Do not place them on the Desktop or in the repository.
+
+Create the report-amendment feature branch only after its architecture contract is frozen.
 
 ---
