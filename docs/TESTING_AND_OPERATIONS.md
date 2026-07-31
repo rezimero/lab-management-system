@@ -636,42 +636,53 @@ Canonical integration branch:
 
     develop
 
-Latest integration baseline:
+Latest merged architecture and operations milestone:
 
     Pull request:
-        #14
+        #15
 
     Merge commit:
-        81e9c0066609691d7ec537ce166a4cde3389ec02
+        d0321d66b263f435711a9f58f6d4697a08373c7f
 
-Current milestone branch:
+Documentation synchronization branch used for this revision:
 
-    chore/core-roadmap-ci-baseline
+    docs/close-out-core-roadmap-ci-baseline
 
-Branch base:
+Documentation revision base:
 
-    81e9c0066609691d7ec537ce166a4cde3389ec02
+    d0321d66b263f435711a9f58f6d4697a08373c7f
 
-Current committed checkpoint:
-
-    eead0c8c20906907e4604f8acfcc8284f5be3308
-    chore add continuous integration baseline
-
-Current workflow:
+Merged CI workflow:
 
     .github/workflows/ci.yml
 
-Local workflow checks completed:
+Verified GitHub Actions run:
 
-    Composer manifest validation passed
-    Composer platform requirements passed
-    Composer locked-dependency audit passed
-    workflow action tags resolved
-    exact workflow path verified
-    UTF-8 without BOM verified
-    whitespace validation passed
+    workflow:
+        Continuous Integration
 
-Previous product validation baseline:
+    run:
+        30633924711
+
+    event:
+        pull_request
+
+    head:
+        803c2b7582c83e0dc7d313589775453ea5d61c70
+
+    status:
+        completed
+
+    conclusion:
+        success
+
+    Backend:
+        passed
+
+    Frontend:
+        passed
+
+Previous local validation baseline:
 
     backend:
         148 tests passed
@@ -690,18 +701,7 @@ Previous product validation baseline:
     browser PDF smoke:
         passed with logo and director signature
 
-Current remote state:
-
-    branch pushed:
-        no
-
-    pull request opened:
-        no
-
-    GitHub Actions executed:
-        no
-
-After documentation is committed, push the branch and open one milestone pull request into `develop`.
+No product tests need to be rerun solely for this documentation-only revision because no source code, workflow, configuration, migration or dependency file is being changed.
 
 ---
 
@@ -903,11 +903,33 @@ Security and safety rules:
 - CI does not replace local focused or characterization testing
 - failed configured checks block milestone merge
 
-The workflow was committed locally at:
+First remote validation:
 
-    eead0c8c20906907e4604f8acfcc8284f5be3308
+    pull request:
+        #15
 
-Its first remote execution remains pending until the milestone branch is pushed.
+    workflow:
+        Continuous Integration
+
+    run:
+        30633924711
+
+    head:
+        803c2b7582c83e0dc7d313589775453ea5d61c70
+
+    Backend:
+        passed in 4 minutes 39 seconds
+
+    Frontend:
+        passed in 2 minutes 43 seconds
+
+    workflow conclusion:
+        success
+
+    merge commit:
+        d0321d66b263f435711a9f58f6d4697a08373c7f
+
+The continuous-integration baseline is operational and is now a required merge gate.
 
 Temporary CI inspection and review artifacts belong under:
 
