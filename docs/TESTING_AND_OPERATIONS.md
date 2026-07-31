@@ -596,31 +596,37 @@ Required order:
 
 ## 19. Documentation-Only Closeout Procedure
 
-For the current documentation branch:
-
-    docs/close-out-laboratory-profile-milestone
-
 Product tests do not need to be rerun solely because Markdown files changed when:
 
 - the documentation records already validated milestone evidence
-- no code, configuration, migration or dependency file changed
-- the documented commands and counts are checked against the completed milestone logs
+- no source code, workflow, configuration, migration or dependency file changed after the validated checkpoint
+- the documented commands and counts are checked against completed milestone logs
 
 Required documentation gates:
 
-1. confirm the branch is based on merge commit `81c1e67`
-2. confirm only the five core documentation files changed
-3. normalize UTF-8 without BOM
-4. run `git diff --check`
-5. inspect `git diff --stat`
-6. stage the five exact paths
-7. compare staged paths with the intended list
-8. run `git diff --cached --check`
-9. commit locally
-10. push and open a documentation-only pull request
-11. merge normally into `develop`
-12. update local `develop`
-13. delete the documentation branch locally and remotely
+1. confirm the current branch and checkpoint
+2. confirm only the intended documentation paths changed
+3. create temporary backups outside the repository
+4. normalize or preserve UTF-8 without BOM
+5. reject trailing whitespace and tab characters
+6. run `git diff --check`
+7. inspect `git diff --name-status`
+8. inspect `git diff --stat`
+9. stage exact reviewed paths
+10. compare staged paths with the intended path list
+11. run `git diff --cached --check`
+12. commit locally
+13. verify a clean worktree
+14. push and open the milestone pull request
+15. merge normally into `develop`
+16. update local `develop`
+17. delete the completed branch locally and remotely
+
+Generated inspection, review and backup files must be stored under:
+
+    $env:TEMP\lab-management-system\<milestone>
+
+Do not place generated review artifacts on the Desktop or inside the repository.
 
 ---
 
@@ -633,31 +639,39 @@ Canonical integration branch:
 Latest integration baseline:
 
     Pull request:
-        #13
+        #14
 
     Merge commit:
-        cce1e62
+        81e9c0066609691d7ec537ce166a4cde3389ec02
 
-Current feature branch:
+Current milestone branch:
 
-    feature/laboratory-report-pdf-export
+    chore/core-roadmap-ci-baseline
 
 Branch base:
 
-    cce1e62
+    81e9c0066609691d7ec537ce166a4cde3389ec02
 
-Product checkpoint before documentation:
+Current committed checkpoint:
 
-    218ac1f
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+    chore add continuous integration baseline
 
-Milestone commits:
+Current workflow:
 
-    4eb0980 chore add laboratory report PDF renderer
-    570ae31 feat preserve immutable report media
-    bfb1fbe feat add laboratory report PDF export
-    218ac1f feat add laboratory report PDF download
+    .github/workflows/ci.yml
 
-Validation state:
+Local workflow checks completed:
+
+    Composer manifest validation passed
+    Composer platform requirements passed
+    Composer locked-dependency audit passed
+    workflow action tags resolved
+    exact workflow path verified
+    UTF-8 without BOM verified
+    whitespace validation passed
+
+Previous product validation baseline:
 
     backend:
         148 tests passed
@@ -676,9 +690,18 @@ Validation state:
     browser PDF smoke:
         passed with logo and director signature
 
-The feature branch has not yet been pushed and no pull request has been opened.
+Current remote state:
 
-After documentation is committed, push the feature branch and open one milestone pull request into `develop`.
+    branch pushed:
+        no
+
+    pull request opened:
+        no
+
+    GitHub Actions executed:
+        no
+
+After documentation is committed, push the branch and open one milestone pull request into `develop`.
 
 ---
 
@@ -825,3 +848,69 @@ Use placeholders:
     <SECRET_KEY>
 
 Shared command logs should also redact Git author and tagger email addresses.
+
+---
+
+## 23. GitHub Actions Continuous Integration
+
+Workflow:
+
+    .github/workflows/ci.yml
+
+Triggers:
+
+- pull requests targeting `develop`
+- pushes to `develop`
+- manual workflow dispatch
+
+Backend environment:
+
+- Ubuntu 24.04
+- PHP 8.5
+- MySQL 8.4
+- Composer 2
+- landlord test database `lab_saas_landlord_test`
+- unresolved tenant placeholder `tenant_test_unresolved`
+
+Backend checks:
+
+1. Composer manifest validation
+2. deterministic dependency installation
+3. locked-dependency security audit
+4. platform-requirement validation
+5. shared landlord migrations
+6. landlord-domain migrations
+7. complete backend test suite
+
+Frontend environment:
+
+- Ubuntu 24.04
+- Node.js 24
+- deterministic `npm ci`
+
+Frontend checks:
+
+1. complete Vitest suite
+2. TypeScript validation
+3. Vite production build
+
+Security and safety rules:
+
+- repository-content permission remains read-only
+- automated tests must never use `lab_saas_landlord`
+- no production secret is stored in the workflow
+- superseded runs are cancelled through workflow concurrency
+- CI does not replace local focused or characterization testing
+- failed configured checks block milestone merge
+
+The workflow was committed locally at:
+
+    eead0c8c20906907e4604f8acfcc8284f5be3308
+
+Its first remote execution remains pending until the milestone branch is pushed.
+
+Temporary CI inspection and review artifacts belong under:
+
+    $env:TEMP\lab-management-system\core-roadmap-ci-baseline
+
+---
