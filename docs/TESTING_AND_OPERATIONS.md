@@ -936,3 +936,28 @@ Temporary CI inspection and review artifacts belong under:
     $env:TEMP\lab-management-system\core-roadmap-ci-baseline
 
 ---
+
+<!-- BEGIN COMMERCIAL-BETA-QUALITY-GATES-2026-08-01 -->
+
+## Commercial-beta release quality gates
+
+The seven-day beta is not releasable until all applicable gates pass:
+
+1. Clean-database tenant migrations.
+2. Existing-data migration and backfill rehearsal.
+3. Complete backend automated tests.
+4. Complete frontend automated tests.
+5. Frontend typecheck.
+6. Frontend production build.
+7. Tenant-isolation and authorization regression coverage.
+8. Report immutability, amendment lineage, and concurrency coverage.
+9. Backup creation and restoration rehearsal.
+10. Deployment and rollback rehearsal.
+11. Staging clinical-workflow smoke test.
+12. Validation of every advertised reference integration.
+13. No unresolved critical security or clinical data-integrity defect.
+
+A marketable beta may limit supported integrations, but it must not bypass
+these quality gates or misrepresent untested compatibility.
+
+<!-- END COMMERCIAL-BETA-QUALITY-GATES-2026-08-01 -->
