@@ -1034,3 +1034,81 @@ Consequence:
 - CI-environment changes require the same review discipline as product configuration changes
 
 ---
+
+<!-- BEGIN ADR-REPORT-AMENDMENT-SUPERSESSION-2026-08-01 -->
+
+## ADR: Controlled Laboratory Report Amendment and Supersession
+
+**Date:** 2026-08-01
+**Status:** Accepted
+**Decision owner:** Product and architecture
+**Detailed contract:** `docs/REPORT_AMENDMENT_SUPERSESSION_ARCHITECTURE.md`
+
+### Context
+
+Issued laboratory reports are immutable clinical records. The product needs a
+controlled way to correct an issued report without overwriting or deleting
+historical clinical evidence.
+
+### Decision
+
+An amendment creates a new immutable report version. The preceding report
+remains retrievable and downloadable and becomes superseded when a successor
+is issued.
+
+The report lineage uses:
+
+- a stable `lineage_uuid`;
+- sequential report `version` values beginning at 1;
+- a unique self-reference to the immediately superseded report;
+- unique report numbers using `-A1`, `-A2`, and later amendment suffixes;
+- database constraints and locked tenant transactions that prevent duplicate
+  versions and lineage branching.
+
+Approved original test-result rows are never edited. Clinical corrections use
+append-only result-amendment records with sequential effective versions and a
+canonical source-payload hash that is revalidated at approval.
+
+The amendment workflow has submitted, approved, and rejected states. It
+preserves requester and reviewer snapshots, requires a meaningful reason,
+allows only explicitly permitted snapshot fields, rejects identical changes,
+and prohibits self-approval.
+
+Permissions are split between requesting and approving amendments. Backend
+authorization is authoritative; frontend visibility is only a convenience.
+
+Approval occurs in one tenant transaction. It locks the request, source
+report, order, current lineage report, and affected results; validates that
+the source remains current; writes append-only corrections; allocates the next
+report version; copies immutable report-owned media; creates the new report;
+and records terminal workflow evidence. Domain events are dispatched only
+after commit.
+
+Order-level report lookup returns the current lineage version. UUID lookup and
+PDF download return the exact historical version requested. Report lists hide
+superseded versions by default and may include them through an explicit
+authorized filter.
+
+Browser and PDF output display Issued, Amended, or Superseded lifecycle
+metadata while preserving the selected report version's immutable clinical,
+laboratory, signatory, and media snapshots.
+
+Existing reports are backfilled as version 1 with their UUID as the lineage
+UUID. Existing report numbers remain unchanged. No legacy report is deleted or
+regenerated.
+
+### Consequences
+
+The existing one-report-per-order constraint must be replaced by one report
+per order and version. New amendment, result-correction, permission, API,
+frontend, PDF, migration, concurrency, tenant-isolation, and regression tests
+are required.
+
+### Non-goals
+
+This decision does not permit mutation or deletion of issued reports, mutation
+of approved original results, self-approval, cross-tenant access, silent use of
+current mutable source data, or universal analyzer and interoperability
+claims.
+
+<!-- END ADR-REPORT-AMENDMENT-SUPERSESSION-2026-08-01 -->

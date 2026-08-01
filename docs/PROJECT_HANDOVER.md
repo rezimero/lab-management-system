@@ -814,3 +814,25 @@ Before modifying code, the engineer must confirm:
 - the next unfinished milestone task
 
 No implementation should begin from assumptions.
+
+<!-- BEGIN MARKET-READY-BETA-HANDOVER-2026-08-01 -->
+
+## Active release target: market-ready commercial beta
+
+The active delivery target is a production-engineered commercial beta by
+2026-08-08, followed by a one-to-two-week hardening window.
+
+The first implementation milestone is controlled laboratory-report amendment
+and supersession. The accepted architecture preserves immutable historical
+reports and original approved results while creating audited, authorized,
+append-only corrected versions.
+
+The beta also includes minimum marketable production workflows for branches,
+subscriptions, billing, inventory, referrals, portals, notifications,
+reference integrations, interoperability foundations, and analytics.
+
+Future engineers must not reduce these modules to placeholders or claim
+universal analyzer, HL7, ASTM, or FHIR compatibility without validated
+external-system testing.
+
+<!-- END MARKET-READY-BETA-HANDOVER-2026-08-01 -->

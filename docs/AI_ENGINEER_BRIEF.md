@@ -544,3 +544,28 @@ Use this prompt when transferring the project to another ChatGPT account:
     - the next exact implementation step
 
     Do not modify code until that summary has been verified.
+
+<!-- BEGIN ACCELERATED-BETA-ENGINEERING-2026-08-01 -->
+
+## Accelerated beta execution constraints
+
+The project is operating under a seven-day commercial-beta deadline.
+
+Engineering work must be packaged into larger controlled milestones rather
+than repeated broad inspections. Each milestone must still preserve:
+
+- exact baseline and clean-worktree checks;
+- tenant isolation;
+- authorization and separation of duties;
+- safe, reversible migrations;
+- immutable clinical history;
+- focused tests before checkpoint commits;
+- full backend and frontend gates before release;
+- honest integration capability statements.
+
+Broad architecture inspection is complete for report amendment and
+supersession. Do not repeat it unless implementation reveals a concrete
+contradiction. Begin product implementation after this accepted decision is
+merged into `develop`.
+
+<!-- END ACCELERATED-BETA-ENGINEERING-2026-08-01 -->

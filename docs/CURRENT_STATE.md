@@ -727,3 +727,32 @@ Do not place generated review artifacts on the Desktop or inside the repository.
 After documentation closeout, perform the read-only amendment architecture inspection before creating a product branch.
 
 ---
+
+<!-- BEGIN MARKET-READY-BETA-SPRINT-2026-08-01 -->
+
+## Seven-day market-ready commercial beta sprint
+
+The project entered an accelerated commercial-beta sprint on 2026-08-01.
+
+The immediate implementation feature is controlled laboratory-report
+amendment and supersession. Its architecture is approved and is recorded in
+`docs/REPORT_AMENDMENT_SUPERSESSION_ARCHITECTURE.md`.
+
+The beta target includes minimum marketable production scope for:
+
+- multi-branch and collection centres;
+- SaaS plans, subscriptions, and feature entitlements;
+- billing, invoices, payments, and receipts;
+- inventory and reagent management;
+- referral laboratories;
+- patient and clinician portals;
+- notifications and critical-result escalation;
+- analyzer integration with a validated reference adapter or simulator;
+- HL7, ASTM, and FHIR integration foundations;
+- operational, commercial, and inventory analytics.
+
+The beta release candidate target is 2026-08-08. A one-to-two-week production
+hardening window follows the beta. No module may be represented by empty
+navigation, fake data, or unsupported compatibility claims.
+
+<!-- END MARKET-READY-BETA-SPRINT-2026-08-01 -->
