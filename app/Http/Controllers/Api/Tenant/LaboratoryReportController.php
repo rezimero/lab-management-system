@@ -19,14 +19,10 @@ use Illuminate\Http\Response;
 class LaboratoryReportController extends Controller
 {
     public function __construct(
-        private readonly LaboratoryReportGenerationService
-            $generationService,
-        private readonly LaboratoryReportQueryService
-            $queryService,
-        private readonly LaboratoryReportPdfService
-            $pdfService
-    ) {
-    }
+        private readonly LaboratoryReportGenerationService $generationService,
+        private readonly LaboratoryReportQueryService $queryService,
+        private readonly LaboratoryReportPdfService $pdfService
+    ) {}
 
     /**
      * List issued tenant reports.
@@ -56,7 +52,9 @@ class LaboratoryReportController extends Controller
 
         return (
             new LaboratoryReportResource(
-                $report
+                $this->queryService->prepareExact(
+                    $report
+                )
             )
         )
             ->additional([
@@ -92,8 +90,22 @@ class LaboratoryReportController extends Controller
         LaboratoryReport $laboratoryReport
     ): LaboratoryReportResource {
         return new LaboratoryReportResource(
-            $laboratoryReport->load(
-                'generatedBy'
+            $this->queryService->prepareExact(
+                $laboratoryReport
+            )
+        );
+    }
+
+    /**
+     * Retrieve every immutable version in one report lineage.
+     */
+    public function lineage(
+        ViewLaboratoryReportRequest $request,
+        LaboratoryReport $laboratoryReport
+    ): AnonymousResourceCollection {
+        return LaboratoryReportResource::collection(
+            $this->queryService->lineage(
+                $laboratoryReport
             )
         );
     }

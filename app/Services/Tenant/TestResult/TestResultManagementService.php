@@ -19,12 +19,13 @@ class TestResultManagementService
         'enteredBy',
         'submittedBy',
         'reviewedBy',
+        'latestAmendment',
     ];
 
     /**
      * Create the single draft result for an order item.
      *
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function createDraft(
         string $orderItemUuid,
@@ -86,7 +87,7 @@ class TestResultManagementService
     /**
      * Update a draft or rejected result.
      *
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     public function updateDraft(
         string $uuid,
@@ -233,7 +234,7 @@ class TestResultManagementService
     /**
      * Normalize submitted parameter results.
      *
-     * @param array<int, array<string, mixed>> $results
+     * @param  array<int, array<string, mixed>>  $results
      * @return array<int, array<string, mixed>>
      */
     private function normalizeResults(

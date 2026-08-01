@@ -23,7 +23,10 @@ class LaboratoryOrderQueryService
             ->with([
                 'patient',
                 'orderedBy',
-                'items',
+                'items.testResult.enteredBy',
+                'items.testResult.submittedBy',
+                'items.testResult.reviewedBy',
+                'items.testResult.latestAmendment',
             ])
             ->when(
                 $search,
@@ -112,7 +115,10 @@ class LaboratoryOrderQueryService
             ->with([
                 'patient',
                 'orderedBy',
-                'items',
+                'items.testResult.enteredBy',
+                'items.testResult.submittedBy',
+                'items.testResult.reviewedBy',
+                'items.testResult.latestAmendment',
                 'specimens.collectedBy',
                 'specimens.orderItems',
             ])

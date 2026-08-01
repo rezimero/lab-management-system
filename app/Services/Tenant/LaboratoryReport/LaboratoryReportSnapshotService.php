@@ -210,6 +210,8 @@ class LaboratoryReportSnapshotService
                             $item->parameters_snapshot ?? []
                         ),
                         'result_uuid' => $result->uuid,
+                        'effective_version' => 1,
+                        'result_amendment_uuid' => null,
                         'results_data' => (
                             $result->results_data ?? []
                         ),

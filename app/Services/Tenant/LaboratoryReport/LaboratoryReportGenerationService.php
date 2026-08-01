@@ -15,16 +15,11 @@ use Throwable;
 class LaboratoryReportGenerationService
 {
     public function __construct(
-        private readonly LaboratoryReportEligibilityService
-            $eligibilityService,
-        private readonly LaboratoryReportSnapshotService
-            $snapshotService,
-        private readonly LaboratoryReportMediaSnapshotService
-            $mediaSnapshotService,
-        private readonly TenantProfileService
-            $tenantProfileService
-    ) {
-    }
+        private readonly LaboratoryReportEligibilityService $eligibilityService,
+        private readonly LaboratoryReportSnapshotService $snapshotService,
+        private readonly LaboratoryReportMediaSnapshotService $mediaSnapshotService,
+        private readonly TenantProfileService $tenantProfileService
+    ) {}
 
     /**
      * Generate one immutable report for an order.
@@ -107,6 +102,8 @@ class LaboratoryReportGenerationService
                     $report = LaboratoryReport::query()
                         ->create([
                             'uuid' => $reportUuid,
+                            'lineage_uuid' => $reportUuid,
+                            'version' => 1,
                             'report_number' => (
                                 'RPT-'.$order->order_number
                             ),
@@ -151,6 +148,7 @@ class LaboratoryReportGenerationService
             throw $exception;
         }
     }
+
     /**
      * Prevent duplicate report issuance.
      */

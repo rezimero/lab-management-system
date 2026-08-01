@@ -18,8 +18,7 @@ class IndexLaboratoryReportRequest extends FormRequest
 
         return $user instanceof TenantUser
             && $user->hasPermission(
-                TenantUserPermissionCatalog::
-                    VIEW_LABORATORY_REPORTS
+                TenantUserPermissionCatalog::VIEW_LABORATORY_REPORTS
             );
     }
 
@@ -47,6 +46,18 @@ class IndexLaboratoryReportRequest extends FormRequest
             $normalized[$field] = is_string($value)
                 ? trim($value)
                 : $value;
+        }
+
+        if ($this->has('include_superseded')) {
+            $value = filter_var(
+                $this->input('include_superseded'),
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            );
+
+            $normalized['include_superseded'] = (
+                $value ?? $this->input('include_superseded')
+            );
         }
 
         $this->merge($normalized);
@@ -88,6 +99,11 @@ class IndexLaboratoryReportRequest extends FormRequest
                 'after_or_equal:from_date',
             ],
 
+            'include_superseded' => [
+                'nullable',
+                'boolean',
+            ],
+
             'page' => [
                 'nullable',
                 'integer',
@@ -106,6 +122,7 @@ class IndexLaboratoryReportRequest extends FormRequest
                     'generated_at',
                     'created_at',
                     'report_number',
+                    'version',
                 ]),
             ],
 

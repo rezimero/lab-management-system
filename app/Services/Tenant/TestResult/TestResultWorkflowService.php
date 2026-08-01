@@ -19,12 +19,12 @@ class TestResultWorkflowService
         'enteredBy',
         'submittedBy',
         'reviewedBy',
+        'latestAmendment',
     ];
 
     public function __construct(
         private readonly TestResultSubmissionValidator $submissionValidator
-    ) {
-    }
+    ) {}
 
     /**
      * Submit a complete draft for review.

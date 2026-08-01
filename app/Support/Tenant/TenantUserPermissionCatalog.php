@@ -28,6 +28,14 @@ final class TenantUserPermissionCatalog
         'generate_laboratory_reports'
     );
 
+    public const REQUEST_LABORATORY_REPORT_AMENDMENTS = (
+        'request_laboratory_report_amendments'
+    );
+
+    public const APPROVE_LABORATORY_REPORT_AMENDMENTS = (
+        'approve_laboratory_report_amendments'
+    );
+
     public const MANAGE_TENANT_PROFILE = (
         'manage_tenant_profile'
     );
@@ -45,6 +53,8 @@ final class TenantUserPermissionCatalog
             self::APPROVE_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
+            self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
+            self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
             self::MANAGE_TENANT_PROFILE,
         ],
 
@@ -55,6 +65,8 @@ final class TenantUserPermissionCatalog
             self::APPROVE_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
+            self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
+            self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
             self::MANAGE_TENANT_PROFILE,
         ],
 
@@ -64,6 +76,7 @@ final class TenantUserPermissionCatalog
             self::EDIT_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
+            self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
         ],
 
         'receptionist' => [
@@ -76,6 +89,8 @@ final class TenantUserPermissionCatalog
             self::APPROVE_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
+            self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
+            self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
         ],
     ];
 

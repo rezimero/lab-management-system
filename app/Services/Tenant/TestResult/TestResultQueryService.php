@@ -18,12 +18,13 @@ class TestResultQueryService
         'enteredBy',
         'submittedBy',
         'reviewedBy',
+        'latestAmendment',
     ];
 
     /**
      * Return paginated order-driven results.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     public function paginate(
         array $filters
@@ -125,8 +126,8 @@ class TestResultQueryService
     /**
      * Apply supported result filters.
      *
-     * @param Builder<TestResult> $query
-     * @param array<string, mixed> $filters
+     * @param  Builder<TestResult>  $query
+     * @param  array<string, mixed>  $filters
      */
     private function applyFilters(
         Builder $query,
@@ -202,7 +203,7 @@ class TestResultQueryService
     /**
      * Search result, order, test and patient fields.
      *
-     * @param Builder<TestResult> $query
+     * @param  Builder<TestResult>  $query
      */
     private function applySearch(
         Builder $query,

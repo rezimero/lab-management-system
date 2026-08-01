@@ -5,19 +5,37 @@ namespace App\Services\Tenant\LaboratoryReport;
 use App\Models\LaboratoryOrder;
 use App\Models\LaboratoryReport;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 
 class LaboratoryReportQueryService
 {
     /**
+     * Relations required by report responses.
+     *
+     * @var array<int, string>
+     */
+    private const RELATIONS = [
+        'generatedBy',
+        'amendedBy',
+        'supersedes',
+        'supersededBy',
+        'lineageReports',
+    ];
+
+    /**
      * Paginate tenant laboratory reports.
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      */
     public function paginate(
         array $filters
     ): LengthAwarePaginator {
         $query = LaboratoryReport::query()
-            ->with('generatedBy');
+            ->with(self::RELATIONS);
+
+        if (! ($filters['include_superseded'] ?? false)) {
+            $query->whereDoesntHave('supersededBy');
+        }
 
         $search = $filters['search'] ?? null;
 
@@ -99,17 +117,48 @@ class LaboratoryReportQueryService
     }
 
     /**
-     * Retrieve the report issued for one order.
+     * Retrieve the current report issued for one order.
      */
     public function findForOrder(
         LaboratoryOrder $order
     ): LaboratoryReport {
         return LaboratoryReport::query()
-            ->with('generatedBy')
+            ->with(self::RELATIONS)
             ->where(
                 'laboratory_order_id',
                 $order->id
             )
+            ->whereDoesntHave('supersededBy')
+            ->orderByDesc('version')
             ->firstOrFail();
+    }
+
+    /**
+     * Prepare one exact historical report response.
+     */
+    public function prepareExact(
+        LaboratoryReport $report
+    ): LaboratoryReport {
+        return $report->loadMissing(
+            self::RELATIONS
+        );
+    }
+
+    /**
+     * Return every report version in sequence.
+     *
+     * @return Collection<int, LaboratoryReport>
+     */
+    public function lineage(
+        LaboratoryReport $report
+    ): Collection {
+        return LaboratoryReport::query()
+            ->with(self::RELATIONS)
+            ->where(
+                'lineage_uuid',
+                $report->lineage_uuid
+            )
+            ->orderBy('version')
+            ->get();
     }
 }
