@@ -8,18 +8,33 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class TestResultResource extends JsonResource
 {
     /**
-     * Transform a test result.
+     * Transform a test result using its latest approved effective values.
      */
     public function toArray(
         Request $request
     ): array {
+        $latest = $this->relationLoaded('latestAmendment')
+            ? $this->latestAmendment
+            : $this->latestAmendment()->first();
+
+        $effectiveVersion = $latest?->version ?? 1;
+        $effectiveResults = $latest?->corrected_results_data
+            ?? $this->results_data
+            ?? [];
+        $effectiveNotes = $latest !== null
+            ? $latest->corrected_notes
+            : $this->notes;
+
         return [
             'uuid' => $this->uuid,
             'status' => $this->status,
-            'results_data' => (
-                $this->results_data ?? []
-            ),
-            'notes' => $this->notes,
+            'results_data' => $effectiveResults,
+            'notes' => $effectiveNotes,
+            'effective_version' => (int) $effectiveVersion,
+            'is_amended' => $latest !== null,
+            'effective_results_data' => $effectiveResults,
+            'effective_notes' => $effectiveNotes,
+            'latest_amendment_uuid' => $latest?->uuid,
             'rejection_reason' => (
                 $this->rejection_reason
             ),

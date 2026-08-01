@@ -114,11 +114,25 @@ class LaboratoryOrder extends Model
     }
 
     /**
-     * Issued immutable report for this order.
+     * Current immutable report for this order.
      */
     public function report(): HasOne
     {
         return $this->hasOne(
+            LaboratoryReport::class,
+            'laboratory_order_id'
+        )->ofMany(
+            'version',
+            'max'
+        );
+    }
+
+    /**
+     * Every immutable report version for this order.
+     */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(
             LaboratoryReport::class,
             'laboratory_order_id'
         );

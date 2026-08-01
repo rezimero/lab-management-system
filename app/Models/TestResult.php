@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
 class TestResult extends Model
@@ -110,6 +112,31 @@ class TestResult extends Model
         return $this->belongsTo(
             User::class,
             'reviewed_by'
+        );
+    }
+
+    /**
+     * Approved append-only corrections.
+     */
+    public function amendments(): HasMany
+    {
+        return $this->hasMany(
+            TestResultAmendment::class,
+            'test_result_id'
+        );
+    }
+
+    /**
+     * Latest approved effective correction.
+     */
+    public function latestAmendment(): HasOne
+    {
+        return $this->hasOne(
+            TestResultAmendment::class,
+            'test_result_id'
+        )->ofMany(
+            'version',
+            'max'
         );
     }
 

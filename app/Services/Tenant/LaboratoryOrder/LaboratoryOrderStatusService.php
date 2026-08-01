@@ -109,6 +109,7 @@ class LaboratoryOrderStatusService
                         'items.testResult.enteredBy',
                         'items.testResult.submittedBy',
                         'items.testResult.reviewedBy',
+                        'items.testResult.latestAmendment',
                         'specimens.collectedBy',
                         'specimens.orderItems',
                     ]);
