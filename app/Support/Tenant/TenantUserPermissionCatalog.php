@@ -40,6 +40,18 @@ final class TenantUserPermissionCatalog
         'manage_tenant_profile'
     );
 
+    public const VIEW_BRANCHES = 'view_branches';
+
+    public const MANAGE_BRANCHES = 'manage_branches';
+
+    public const VIEW_BILLING = 'view_billing';
+
+    public const MANAGE_BILLING = 'manage_billing';
+
+    public const MANAGE_PRICE_LISTS = 'manage_price_lists';
+
+    public const RECORD_PAYMENTS = 'record_payments';
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -56,6 +68,12 @@ final class TenantUserPermissionCatalog
             self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
             self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
             self::MANAGE_TENANT_PROFILE,
+            self::VIEW_BRANCHES,
+            self::MANAGE_BRANCHES,
+            self::VIEW_BILLING,
+            self::MANAGE_BILLING,
+            self::MANAGE_PRICE_LISTS,
+            self::RECORD_PAYMENTS,
         ],
 
         'admin' => [
@@ -68,6 +86,12 @@ final class TenantUserPermissionCatalog
             self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
             self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
             self::MANAGE_TENANT_PROFILE,
+            self::VIEW_BRANCHES,
+            self::MANAGE_BRANCHES,
+            self::VIEW_BILLING,
+            self::MANAGE_BILLING,
+            self::MANAGE_PRICE_LISTS,
+            self::RECORD_PAYMENTS,
         ],
 
         'lab_technician' => [
@@ -77,11 +101,16 @@ final class TenantUserPermissionCatalog
             self::VIEW_LABORATORY_REPORTS,
             self::GENERATE_LABORATORY_REPORTS,
             self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
+            self::VIEW_BRANCHES,
         ],
 
         'receptionist' => [
             self::VIEW_TEST_RESULTS,
             self::VIEW_LABORATORY_REPORTS,
+            self::VIEW_BRANCHES,
+            self::VIEW_BILLING,
+            self::MANAGE_BILLING,
+            self::RECORD_PAYMENTS,
         ],
 
         'doctor' => [
@@ -91,6 +120,8 @@ final class TenantUserPermissionCatalog
             self::GENERATE_LABORATORY_REPORTS,
             self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
             self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
+            self::VIEW_BRANCHES,
+            self::VIEW_BILLING,
         ],
     ];
 

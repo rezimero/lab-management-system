@@ -2,8 +2,14 @@
 
 use App\Http\Controllers\Api\LabTestController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\Tenant\BranchController;
+use App\Http\Controllers\Api\Tenant\CorporateAccountController;
 use App\Http\Controllers\Api\Tenant\DepartmentController;
+use App\Http\Controllers\Api\Tenant\EntitlementController;
+use App\Http\Controllers\Api\Tenant\InvoiceController;
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderController;
+use App\Http\Controllers\Api\Tenant\PaymentController;
+use App\Http\Controllers\Api\Tenant\PriceListController;
 use App\Http\Controllers\Api\Tenant\SpecimenCollectionController;
 use App\Http\Controllers\Api\Tenant\SpecimenController;
 use App\Http\Controllers\Api\Tenant\SpecimenReplacementController;
@@ -49,6 +55,43 @@ Route::middleware([
             'uploadDirectorSignature',
         ]
     );
+
+    // ============================================
+    // SUBSCRIPTION ENTITLEMENTS
+    // ============================================
+
+    Route::get('/tenant/entitlements', EntitlementController::class);
+
+    // ============================================
+    // BRANCHES AND COLLECTION CENTRES
+    // ============================================
+
+    Route::get('/branches', [BranchController::class, 'index']);
+    Route::post('/branches', [BranchController::class, 'store']);
+    Route::get('/branches/{branch}', [BranchController::class, 'show']);
+    Route::put('/branches/{branch}', [BranchController::class, 'update']);
+    Route::put('/branches/{branch}/users', [BranchController::class, 'assignUsers']);
+    Route::patch('/branches/{branch}/deactivate', [BranchController::class, 'deactivate']);
+
+    // ============================================
+    // BILLING, INVOICES, PAYMENTS AND RECEIPTS
+    // ============================================
+
+    Route::get('/price-lists', [PriceListController::class, 'index']);
+    Route::post('/price-lists', [PriceListController::class, 'store']);
+    Route::put('/price-lists/{priceList}', [PriceListController::class, 'update']);
+
+    Route::get('/corporate-accounts', [CorporateAccountController::class, 'index']);
+    Route::post('/corporate-accounts', [CorporateAccountController::class, 'store']);
+    Route::put('/corporate-accounts/{corporateAccount}', [CorporateAccountController::class, 'update']);
+
+    Route::get('/invoices', [InvoiceController::class, 'index']);
+    Route::post('/invoices', [InvoiceController::class, 'store']);
+    Route::get('/invoices/{invoice}', [InvoiceController::class, 'show']);
+    Route::post('/invoices/{invoice}/issue', [InvoiceController::class, 'issue']);
+    Route::post('/invoices/{invoice}/void', [InvoiceController::class, 'void']);
+    Route::post('/invoices/{invoice}/payments', [PaymentController::class, 'store']);
+    Route::get('/payments/{payment}/receipt', [PaymentController::class, 'receipt']);
 
     // ============================================
     // DEPARTMENTS

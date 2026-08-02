@@ -4,6 +4,8 @@ use App\Http\Controllers\Api\Landlord\DashboardController;
 use App\Http\Controllers\Api\Landlord\ImpersonationController;
 use App\Http\Controllers\Api\Landlord\LabTestController as LandlordLabTestController;
 use App\Http\Controllers\Api\Landlord\PatientController as LandlordPatientController;
+use App\Http\Controllers\Api\Landlord\PlanController;
+use App\Http\Controllers\Api\Landlord\SubscriptionController;
 use App\Http\Controllers\Api\Landlord\TenantController;
 use App\Http\Controllers\Api\Landlord\TestResultController as LandlordTestResultController;
 use App\Http\Controllers\Api\Landlord\UserController as LandlordUserController;
@@ -31,6 +33,16 @@ Route::middleware(['auth:sanctum', 'superadmin'])
             DashboardController::class,
             'recentActivity',
         ]);
+
+        // ============================================
+        // PLANS AND SUBSCRIPTIONS
+        // ============================================
+
+        Route::get('/plans', [PlanController::class, 'index']);
+        Route::post('/plans', [PlanController::class, 'store']);
+        Route::put('/plans/{plan}', [PlanController::class, 'update']);
+        Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+        Route::put('/tenants/{tenant}/subscription', [SubscriptionController::class, 'assign']);
 
         // ============================================
         // TENANTS

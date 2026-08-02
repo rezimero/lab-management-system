@@ -4,6 +4,7 @@ namespace App\Services\Authentication;
 
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use App\Services\Tenant\Branch\BranchBootstrapService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -12,9 +13,9 @@ class TenantAuthenticationService
     public function __construct(
         protected TenantSwitcher $tenantSwitcher,
         protected SessionService $sessionService,
-        protected AuthenticationService $authenticationService
-    ) {
-    }
+        protected AuthenticationService $authenticationService,
+        protected BranchBootstrapService $branchBootstrap,
+    ) {}
 
     /**
      * Authenticate a tenant user.
@@ -29,6 +30,13 @@ class TenantAuthenticationService
             $credentials['email'],
             $credentials['password']
         );
+
+        if (! $user->branches()->exists()) {
+            $this->branchBootstrap->assignDefault(
+                $user,
+                $user
+            );
+        }
 
         // Start authenticated tenant session
         $this->sessionService->startTenantSession(

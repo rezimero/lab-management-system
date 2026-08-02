@@ -67,9 +67,13 @@ const Layout = ({
 
   const groups = useMemo(
     () => buildNavigationGroups(
-      canManageUsers
+      canManageUsers,
+      auth.user?.role
     ),
-    [canManageUsers]
+    [
+      auth.user?.role,
+      canManageUsers,
+    ]
   );
 
   const activeItem = groups

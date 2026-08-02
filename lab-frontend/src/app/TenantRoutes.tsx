@@ -5,6 +5,8 @@ import PrivateRoute from '../components/PrivateRoute';
 import TenantAdminRoute from '../components/TenantAdminRoute';
 
 import {
+  Billing,
+  Branches,
   Dashboard,
   LaboratoryOrders,
   LaboratoryOrderCreate,
@@ -102,6 +104,14 @@ export const tenantRoutes = (
     <Route
       path="/laboratory-reports/:id"
       element={protect(<LaboratoryReportView />)}
+    />
+    <Route
+      path="/branches"
+      element={protect(<Branches />)}
+    />
+    <Route
+      path="/billing"
+      element={protect(<Billing />)}
     />
     <Route
       path="/settings/laboratory-profile"
