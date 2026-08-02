@@ -40,6 +40,24 @@ class Tenant extends BaseTenant
         return $this->hasOne(TenantProfile::class);
     }
 
+    /**
+     * Subscription history, newest first.
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(TenantSubscription::class)
+            ->latest('starts_at');
+    }
+
+    /**
+     * Most recently created subscription record.
+     */
+    public function subscription()
+    {
+        return $this->hasOne(TenantSubscription::class)
+            ->latestOfMany('starts_at');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Current Tenant

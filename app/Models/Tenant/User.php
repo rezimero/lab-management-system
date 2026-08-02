@@ -2,8 +2,10 @@
 
 namespace App\Models\Tenant;
 
+use App\Models\Branch;
 use App\Support\Tenant\TenantUserPermissionCatalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -55,6 +57,20 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Branches assigned to this tenant user.
+     */
+    public function branches(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Branch::class,
+            'branch_user',
+            'user_id',
+            'branch_id'
+        )->withPivot(['is_primary', 'assigned_by'])
+            ->withTimestamps();
     }
 
     /**

@@ -82,6 +82,12 @@ class IndexLaboratoryOrderRequest extends FormRequest
                 'min:1',
             ],
 
+            'branch_uuid' => [
+                'nullable',
+                'uuid',
+                'exists:branches,uuid',
+            ],
+
             'date_from' => [
                 'nullable',
                 'date',

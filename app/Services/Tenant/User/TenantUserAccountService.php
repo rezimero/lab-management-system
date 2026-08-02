@@ -4,6 +4,7 @@ namespace App\Services\Tenant\User;
 
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use App\Services\Tenant\Branch\BranchBootstrapService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -17,8 +18,8 @@ class TenantUserAccountService
         protected TenantUserService $users,
         protected TenantAdministratorGuard $guard,
         protected TenantUserSessionService $sessions,
-    ) {
-    }
+        protected BranchBootstrapService $branchBootstrap,
+    ) {}
 
     public function create(
         Tenant $tenant,
@@ -38,6 +39,11 @@ class TenantUserAccountService
 
         $data = $this->normalise($data);
         $user = $this->users->create($data);
+
+        $this->branchBootstrap->assignDefault(
+            $user,
+            $actor
+        );
 
         $this->audit(
             'tenant_user_created',
@@ -429,8 +435,7 @@ class TenantUserAccountService
         $changedFields = [];
 
         foreach (
-            ['name', 'email', 'role', 'is_active']
-            as $field
+            ['name', 'email', 'role', 'is_active'] as $field
         ) {
             if (
                 array_key_exists($field, $data)
@@ -451,7 +456,7 @@ class TenantUserAccountService
     }
 
     /**
-     * @param array<int, string> $changedFields
+     * @param  array<int, string>  $changedFields
      */
     private function containsSensitiveChange(
         array $changedFields
@@ -468,7 +473,7 @@ class TenantUserAccountService
     }
 
     /**
-     * @param array<int, string> $changedFields
+     * @param  array<int, string>  $changedFields
      */
     private function audit(
         string $event,

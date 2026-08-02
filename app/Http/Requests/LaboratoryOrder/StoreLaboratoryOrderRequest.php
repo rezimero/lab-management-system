@@ -64,6 +64,24 @@ class StoreLaboratoryOrderRequest extends FormRequest
                 'min:1',
             ],
 
+            'collection_branch_uuid' => [
+                'nullable',
+                'uuid',
+                'exists:branches,uuid',
+            ],
+
+            'processing_branch_uuid' => [
+                'nullable',
+                'uuid',
+                'exists:branches,uuid',
+            ],
+
+            'price_list_uuid' => [
+                'nullable',
+                'uuid',
+                'exists:price_lists,uuid',
+            ],
+
             'referring_clinician' => [
                 'nullable',
                 'string',

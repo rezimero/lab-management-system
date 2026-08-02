@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class LabTest extends Model
@@ -27,8 +28,13 @@ class LabTest extends Model
         'is_active' => 'boolean',
     ];
 
+    public function priceListItems(): HasMany
+    {
+        return $this->hasMany(PriceListItem::class);
+    }
+
     // Relationship with test results
-    public function testResults()
+    public function test_results()
     {
         return $this->hasMany(TestResult::class);
     }

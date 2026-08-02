@@ -52,6 +52,14 @@ export const LaboratoryReportView = lazy(
   () => import('../pages/LaboratoryReportView')
 );
 
+export const Branches = lazy(
+  () => import('../pages/Branches')
+);
+
+export const Billing = lazy(
+  () => import('../pages/Billing')
+);
+
 export const LaboratoryProfile = lazy(
   () => import('../pages/LaboratoryProfile')
 );

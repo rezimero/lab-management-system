@@ -14,6 +14,7 @@ import KeyboardArrowDownRounded from '@mui/icons-material/KeyboardArrowDownRound
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
+import WorkspacePremiumRounded from '@mui/icons-material/WorkspacePremiumRounded';
 import ShieldRounded from '@mui/icons-material/ShieldRounded';
 
 import {
@@ -47,6 +48,7 @@ import {
 
 import AllTenants from '../components/landlords/AllTenants';
 import AllUsers from '../components/landlords/AllUsers';
+import CommercialSubscriptions from '../components/landlords/CommercialSubscriptions';
 import DashboardStats from '../components/landlords/DashboardStats';
 import ImpersonateButton from '../components/landlords/ImpersonateButton';
 
@@ -91,6 +93,12 @@ const navigationItems: NavigationItem[] = [
     description: 'Users across all tenants',
     path: '/landlord/users',
     icon: <GroupsRounded />,
+  },
+  {
+    label: 'Plans and subscriptions',
+    description: 'Commercial plans and tenant lifecycle',
+    path: '/landlord/subscriptions',
+    icon: <WorkspacePremiumRounded />,
   },
   {
     label: 'Patient intelligence',
@@ -1163,6 +1171,11 @@ const LandlordDashboard = () => {
             <Route
               path="users"
               element={<AllUsers />}
+            />
+
+            <Route
+              path="subscriptions"
+              element={<CommercialSubscriptions />}
             />
 
             <Route

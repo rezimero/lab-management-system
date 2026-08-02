@@ -5,7 +5,9 @@ namespace App\Services\Tenant\Provisioning;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
 use App\Services\Authentication\TenantSwitcher;
+use App\Services\Landlord\Subscription\SubscriptionProvisioningService;
 use App\Services\Landlord\TenantContextRunner;
+use App\Services\Tenant\Branch\BranchBootstrapService;
 use Closure;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -19,8 +21,9 @@ class TenantProvisioner
         protected TenantDatabaseManager $databaseManager,
         protected TenantContextRunner $contextRunner,
         protected TenantSwitcher $tenantSwitcher,
-    ) {
-    }
+        protected BranchBootstrapService $branchBootstrap,
+        protected SubscriptionProvisioningService $subscriptionProvisioning,
+    ) {}
 
     /**
      * Provision a tenant database and its first administrator.
@@ -69,6 +72,9 @@ class TenantProvisioner
                     $administrator = $this
                         ->createAdministrator($data);
 
+                    $this->branchBootstrap
+                        ->ensureForUser($administrator);
+
                     $contextResult = $withinTenant !== null
                         ? $withinTenant(
                             $tenant,
@@ -83,6 +89,9 @@ class TenantProvisioner
                     );
                 }
             );
+
+            $this->subscriptionProvisioning
+                ->ensureTrial($tenant);
 
             if ($afterRestore !== null) {
                 $afterRestore(
@@ -113,7 +122,7 @@ class TenantProvisioner
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     private function createTenantRecord(
         array $data,
@@ -151,7 +160,7 @@ class TenantProvisioner
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      */
     private function createAdministrator(
         array $data

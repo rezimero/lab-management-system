@@ -28,6 +28,9 @@ class LaboratoryOrder extends Model
         'order_number',
         'patient_id',
         'ordered_by',
+        'collection_branch_id',
+        'processing_branch_id',
+        'price_list_id',
         'referring_clinician',
         'priority',
         'status',
@@ -94,6 +97,36 @@ class LaboratoryOrder extends Model
     }
 
     /**
+     * Branch where the order or specimen was collected.
+     */
+    public function collectionBranch(): BelongsTo
+    {
+        return $this->belongsTo(
+            Branch::class,
+            'collection_branch_id'
+        );
+    }
+
+    /**
+     * Laboratory branch responsible for processing.
+     */
+    public function processingBranch(): BelongsTo
+    {
+        return $this->belongsTo(
+            Branch::class,
+            'processing_branch_id'
+        );
+    }
+
+    /**
+     * Price list used to freeze order prices.
+     */
+    public function priceList(): BelongsTo
+    {
+        return $this->belongsTo(PriceList::class);
+    }
+
+    /**
      * Tests included in the order.
      */
     public function items(): HasMany
@@ -110,6 +143,17 @@ class LaboratoryOrder extends Model
     {
         return $this->hasMany(
             Specimen::class
+        );
+    }
+
+    /**
+     * Commercial invoice generated for this order.
+     */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(
+            Invoice::class,
+            'laboratory_order_id'
         );
     }
 
