@@ -48,6 +48,7 @@ export interface Patient {
 
 export interface LabTest {
   id: number;
+  uuid?: string;
   name: string;
   description: string | null;
   category: string;

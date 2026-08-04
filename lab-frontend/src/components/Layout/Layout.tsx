@@ -19,6 +19,10 @@ import {
 } from '../../contexts/AuthContext';
 
 import {
+  useTenantEntitlements,
+} from '../../features/commercial/hooks/useTenantEntitlements';
+
+import {
   drawerWidth,
   topBarHeight,
 } from './layoutConstants';
@@ -49,6 +53,7 @@ const Layout = ({
   const navigate = useNavigate();
   const location = useLocation();
   const auth = useAuth();
+  const entitlements = useTenantEntitlements();
 
   const [
     mobileOpen,
@@ -68,11 +73,15 @@ const Layout = ({
   const groups = useMemo(
     () => buildNavigationGroups(
       canManageUsers,
-      auth.user?.role
+      auth.user?.role,
+      Boolean(
+        entitlements.data?.features.inventory?.enabled
+      )
     ),
     [
       auth.user?.role,
       canManageUsers,
+      entitlements.data?.features.inventory?.enabled,
     ]
   );
 

@@ -88,4 +88,39 @@ describe('laboratory profile navigation', () => {
     ).toBe(false);
   });
 
+  it('shows inventory only when role and entitlement allow it', () => {
+    const enabled = buildNavigationGroups(
+      false,
+      'lab_technician',
+      true
+    );
+
+    const disabled = buildNavigationGroups(
+      false,
+      'lab_technician',
+      false
+    );
+
+    const receptionist = buildNavigationGroups(
+      false,
+      'receptionist',
+      true
+    );
+
+    expect(
+      enabled.flatMap((group) => group.items)
+        .some((item) => item.path === '/inventory')
+    ).toBe(true);
+
+    expect(
+      disabled.flatMap((group) => group.items)
+        .some((item) => item.path === '/inventory')
+    ).toBe(false);
+
+    expect(
+      receptionist.flatMap((group) => group.items)
+        .some((item) => item.path === '/inventory')
+    ).toBe(false);
+  });
+
 });

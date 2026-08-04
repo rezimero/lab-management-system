@@ -52,6 +52,18 @@ final class TenantUserPermissionCatalog
 
     public const RECORD_PAYMENTS = 'record_payments';
 
+    public const VIEW_INVENTORY = 'view_inventory';
+
+    public const MANAGE_INVENTORY_CATALOG = 'manage_inventory_catalog';
+
+    public const RECEIVE_INVENTORY_STOCK = 'receive_inventory_stock';
+
+    public const ADJUST_INVENTORY_STOCK = 'adjust_inventory_stock';
+
+    public const RECORD_INVENTORY_CONSUMPTION = 'record_inventory_consumption';
+
+    public const MANAGE_TEST_INVENTORY_REQUIREMENTS = 'manage_test_inventory_requirements';
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -74,6 +86,12 @@ final class TenantUserPermissionCatalog
             self::MANAGE_BILLING,
             self::MANAGE_PRICE_LISTS,
             self::RECORD_PAYMENTS,
+            self::VIEW_INVENTORY,
+            self::MANAGE_INVENTORY_CATALOG,
+            self::RECEIVE_INVENTORY_STOCK,
+            self::ADJUST_INVENTORY_STOCK,
+            self::RECORD_INVENTORY_CONSUMPTION,
+            self::MANAGE_TEST_INVENTORY_REQUIREMENTS,
         ],
 
         'admin' => [
@@ -92,6 +110,12 @@ final class TenantUserPermissionCatalog
             self::MANAGE_BILLING,
             self::MANAGE_PRICE_LISTS,
             self::RECORD_PAYMENTS,
+            self::VIEW_INVENTORY,
+            self::MANAGE_INVENTORY_CATALOG,
+            self::RECEIVE_INVENTORY_STOCK,
+            self::ADJUST_INVENTORY_STOCK,
+            self::RECORD_INVENTORY_CONSUMPTION,
+            self::MANAGE_TEST_INVENTORY_REQUIREMENTS,
         ],
 
         'lab_technician' => [
@@ -102,6 +126,9 @@ final class TenantUserPermissionCatalog
             self::GENERATE_LABORATORY_REPORTS,
             self::REQUEST_LABORATORY_REPORT_AMENDMENTS,
             self::VIEW_BRANCHES,
+            self::VIEW_INVENTORY,
+            self::RECEIVE_INVENTORY_STOCK,
+            self::RECORD_INVENTORY_CONSUMPTION,
         ],
 
         'receptionist' => [

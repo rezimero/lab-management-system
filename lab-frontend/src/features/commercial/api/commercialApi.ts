@@ -11,6 +11,7 @@ import type {
   PaymentReceipt,
   SubscriptionPage,
   TenantSubscriptionSummary,
+  TenantEntitlementSummary,
 } from '../types/commercial.types';
 
 interface DataEnvelope<T> {
@@ -154,6 +155,14 @@ export const assignSubscription = async (
       status,
       billing_interval: billingInterval,
     }
+  );
+
+  return response.data.data;
+};
+
+export const fetchTenantEntitlements = async (): Promise<TenantEntitlementSummary> => {
+  const response = await api.get<DataEnvelope<TenantEntitlementSummary>>(
+    '/tenant/entitlements'
   );
 
   return response.data.data;

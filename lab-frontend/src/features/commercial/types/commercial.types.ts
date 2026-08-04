@@ -190,3 +190,27 @@ export interface CommercialPlanPayload {
     limit_value?: number | null;
   }>;
 }
+
+export interface TenantEntitlementFeature {
+  enabled: boolean;
+  limit: number | null;
+  name: string;
+}
+
+export interface TenantEntitlementSummary {
+  subscription: {
+    uuid: string;
+    status: string;
+    billing_interval: string;
+    starts_at: string;
+    trial_ends_at?: string | null;
+    current_period_ends_at?: string | null;
+    plan: {
+      uuid: string;
+      code: string;
+      name: string;
+      currency: string;
+    };
+  } | null;
+  features: Partial<Record<CommercialFeatureKey, TenantEntitlementFeature>>;
+}

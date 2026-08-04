@@ -10,6 +10,7 @@ import GroupsRounded from '@mui/icons-material/GroupsRounded';
 import HubRounded from '@mui/icons-material/HubRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import ScienceRounded from '@mui/icons-material/ScienceRounded';
+import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded';
 
 export interface NavigationItem {
   label: string;
@@ -24,7 +25,8 @@ export interface NavigationGroup {
 
 export const buildNavigationGroups = (
   canManageUsers: boolean,
-  role?: string
+  role?: string,
+  inventoryEnabled = false
 ): NavigationGroup[] => {
   const groups: NavigationGroup[] = [
     {
@@ -69,6 +71,12 @@ export const buildNavigationGroups = (
     },
   ];
 
+  const canViewInventory = inventoryEnabled && [
+    'superadmin',
+    'admin',
+    'lab_technician',
+  ].includes(role ?? '');
+
   const canViewBilling = [
     'superadmin',
     'admin',
@@ -84,6 +92,15 @@ export const buildNavigationGroups = (
         path: '/branches',
         icon: <HubRounded />,
       },
+      ...(canViewInventory
+        ? [
+            {
+              label: 'Inventory and reagents',
+              path: '/inventory',
+              icon: <Inventory2Rounded />,
+            },
+          ]
+        : []),
       ...(canViewBilling
         ? [
             {

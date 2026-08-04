@@ -84,6 +84,16 @@ class Branch extends Model
         return $this->hasMany(LaboratoryOrder::class, 'processing_branch_id');
     }
 
+    public function inventoryBranchItems(): HasMany
+    {
+        return $this->hasMany(InventoryBranchItem::class);
+    }
+
+    public function inventoryStockBalances(): HasMany
+    {
+        return $this->hasMany(InventoryStockBalance::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
