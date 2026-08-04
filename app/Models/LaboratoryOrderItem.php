@@ -128,6 +128,29 @@ class LaboratoryOrderItem extends Model
     }
 
     /**
+     * Every referral attempt for this test item.
+     */
+    public function laboratoryReferrals(): HasMany
+    {
+        return $this->hasMany(
+            LaboratoryReferral::class,
+            'laboratory_order_item_id'
+        );
+    }
+
+    /**
+     * Current non-terminal referral for this test item.
+     */
+    public function currentOpenReferral(): HasOne
+    {
+        return $this->hasOne(
+            LaboratoryReferral::class,
+            'laboratory_order_item_id'
+        )->whereNotNull('open_order_item_key')
+            ->latestOfMany();
+    }
+
+    /**
      * User who started processing the item.
      */
     public function processingStartedBy(): BelongsTo

@@ -127,6 +127,20 @@ class Specimen extends Model
     }
 
     /**
+     * Referral workflows that use this specimen.
+     */
+    public function laboratoryReferrals(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            LaboratoryReferral::class,
+            'laboratory_referral_specimens',
+            'specimen_id',
+            'laboratory_referral_id'
+        )->withPivot(['specimen_snapshot', 'linked_by'])
+            ->withTimestamps();
+    }
+
+    /**
      * Use UUID for public route model binding.
      */
     public function getRouteKeyName(): string

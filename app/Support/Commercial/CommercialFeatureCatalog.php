@@ -57,6 +57,7 @@ final class CommercialFeatureCatalog
             self::MULTI_BRANCH,
             self::BILLING,
             self::INVENTORY,
+            self::REFERRAL_LABS,
         ];
     }
 

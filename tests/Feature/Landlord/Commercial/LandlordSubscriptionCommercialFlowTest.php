@@ -56,6 +56,11 @@ class LandlordSubscriptionCommercialFlowTest extends TenantManagementTestCase
                 ->firstWhere('feature_key', 'inventory')
                 ?->is_enabled
         );
+        $this->assertTrue(
+            (bool) $subscription->plan->features
+                ->firstWhere('feature_key', 'referral_labs')
+                ?->is_enabled
+        );
 
         $plan = Plan::query()->where('code', 'commercial-beta')->firstOrFail();
 
@@ -174,8 +179,8 @@ class LandlordSubscriptionCommercialFlowTest extends TenantManagementTestCase
                         'is_enabled' => true,
                     ],
                     [
-                        'key' => 'referral_labs',
-                        'name' => 'Referral laboratories',
+                        'key' => 'notifications',
+                        'name' => 'Notifications',
                         'is_enabled' => true,
                     ],
                 ],

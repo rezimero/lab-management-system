@@ -99,6 +99,14 @@ class Branch extends Model
         return $this->hasMany(Invoice::class);
     }
 
+    public function laboratoryReferrals(): HasMany
+    {
+        return $this->hasMany(
+            LaboratoryReferral::class,
+            'dispatch_branch_id'
+        );
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
