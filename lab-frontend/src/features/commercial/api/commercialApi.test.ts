@@ -12,6 +12,7 @@ import {
   assignSubscription,
   createBranch,
   createInvoice,
+  fetchTenantEntitlements,
   recordPayment,
   saveCommercialPlan,
 } from './commercialApi';
@@ -22,10 +23,14 @@ import type {
 
 vi.mock('../../../api/client', () => ({
   default: {
+    get: vi.fn(),
     post: vi.fn(),
     put: vi.fn(),
   },
 }));
+
+const getMock =
+  vi.mocked(api.get);
 
 const postMock =
   vi.mocked(api.post);
@@ -36,6 +41,29 @@ const putMock =
 describe('commercial platform API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+
+  it('loads the current tenant entitlement summary', async () => {
+    getMock.mockResolvedValue({
+      data: {
+        data: {
+          subscription: null,
+          features: {
+            inventory: {
+              enabled: true,
+              limit: null,
+              name: 'Inventory and reagent management',
+            },
+          },
+        },
+      },
+    } as never);
+
+    const summary = await fetchTenantEntitlements();
+
+    expect(getMock).toHaveBeenCalledWith('/tenant/entitlements');
+    expect(summary.features.inventory?.enabled).toBe(true);
   });
 
   it('creates a collection centre', async () => {

@@ -15,6 +15,9 @@ import OrderViewState from '../features/laboratory-orders/components/OrderViewSt
 import SpecimenWorkspace from '../features/laboratory-orders/components/SpecimenWorkspace';
 import { useLaboratoryOrder } from '../features/laboratory-orders/hooks/useLaboratoryOrder';
 import { useOrderItemStart } from '../features/laboratory-orders/hooks/useOrderItemStart';
+import InventoryConsumptionPanel from '../features/inventory/components/InventoryConsumptionPanel';
+import { useTenantEntitlements } from '../features/commercial/hooks/useTenantEntitlements';
+import { roleAllowsInventoryAction } from '../features/inventory/permissions/inventoryPermissions';
 import { useOrderReportActions } from '../features/laboratory-orders/hooks/useOrderReportActions';
 import { roleAllowsOrderAction } from '../features/laboratory-orders/permissions/orderPermissions';
 
@@ -24,6 +27,7 @@ const LaboratoryOrderView = () => {
   const { user } = useAuth();
   const resource = useLaboratoryOrder(uuid);
   const itemStart = useOrderItemStart(resource.refresh);
+  const entitlements = useTenantEntitlements();
 
   const report = useOrderReportActions(
     uuid,
@@ -51,6 +55,18 @@ const LaboratoryOrderView = () => {
   const canManageStatus = roleAllowsOrderAction(
     user?.role,
     'manage_order_status'
+  );
+
+  const canViewInventory = Boolean(
+    entitlements.data?.features.inventory?.enabled
+  ) && roleAllowsInventoryAction(
+    user?.role,
+    'view'
+  );
+
+  const canRecordConsumption = roleAllowsInventoryAction(
+    user?.role,
+    'record_consumption'
   );
 
   if (resource.loading || !resource.order) {
@@ -151,6 +167,14 @@ const LaboratoryOrderView = () => {
           );
         }}
       />
+
+
+      {canViewInventory && (
+        <InventoryConsumptionPanel
+          items={order.items ?? []}
+          canRecord={canRecordConsumption}
+        />
+      )}
     </Layout>
   );
 };

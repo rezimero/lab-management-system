@@ -56,6 +56,7 @@ final class CommercialFeatureCatalog
         return [
             self::MULTI_BRANCH,
             self::BILLING,
+            self::INVENTORY,
         ];
     }
 

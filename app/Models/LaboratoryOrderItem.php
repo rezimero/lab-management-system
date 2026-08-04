@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 
@@ -111,6 +112,17 @@ class LaboratoryOrderItem extends Model
     {
         return $this->hasOne(
             TestResult::class,
+            'laboratory_order_item_id'
+        );
+    }
+
+    /**
+     * Explicit inventory consumptions posted for this test item.
+     */
+    public function inventoryConsumptions(): HasMany
+    {
+        return $this->hasMany(
+            InventoryConsumption::class,
             'laboratory_order_item_id'
         );
     }

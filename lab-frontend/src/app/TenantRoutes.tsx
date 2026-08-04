@@ -3,11 +3,13 @@ import { Route } from 'react-router-dom';
 
 import PrivateRoute from '../components/PrivateRoute';
 import TenantAdminRoute from '../components/TenantAdminRoute';
+import InventoryAccessRoute from '../components/InventoryAccessRoute';
 
 import {
   Billing,
   Branches,
   Dashboard,
+  Inventory,
   LaboratoryOrders,
   LaboratoryOrderCreate,
   LaboratoryOrderView,
@@ -27,6 +29,16 @@ import {
 
 const protect = (element: ReactElement) => (
   <PrivateRoute>{element}</PrivateRoute>
+);
+
+const protectInventory = (
+  element: ReactElement
+) => (
+  <PrivateRoute>
+    <InventoryAccessRoute>
+      {element}
+    </InventoryAccessRoute>
+  </PrivateRoute>
 );
 
 const protectAdministrator = (
@@ -108,6 +120,10 @@ export const tenantRoutes = (
     <Route
       path="/branches"
       element={protect(<Branches />)}
+    />
+    <Route
+      path="/inventory"
+      element={protectInventory(<Inventory />)}
     />
     <Route
       path="/billing"

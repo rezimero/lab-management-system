@@ -60,6 +60,10 @@ export const Billing = lazy(
   () => import('../pages/Billing')
 );
 
+export const Inventory = lazy(
+  () => import('../pages/Inventory')
+);
+
 export const LaboratoryProfile = lazy(
   () => import('../pages/LaboratoryProfile')
 );
