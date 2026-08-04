@@ -385,7 +385,7 @@ class ReferralQueryService
             'referralLaboratory',
             'referralLaboratoryTest.labTest',
             'specimens',
-            'latestExternalResult',
+            'latestExternalResult.testResult',
         ];
     }
 
@@ -397,6 +397,13 @@ class ReferralQueryService
         return array_merge(
             $this->listRelations(),
             [
+                'externalResults' => static fn ($query) => (
+                    $query->with([
+                        'receiver',
+                        'supersededResult',
+                        'testResult',
+                    ])->orderBy('version')
+                ),
                 'events' => static fn ($query) => (
                     $query->with('actor')
                         ->orderBy('occurred_at')

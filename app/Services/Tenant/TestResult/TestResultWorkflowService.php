@@ -3,7 +3,12 @@
 namespace App\Services\Tenant\TestResult;
 
 use App\Models\LaboratoryOrderItem;
+use App\Models\LaboratoryReferral;
+use App\Models\LaboratoryReferralEvent;
+use App\Models\LaboratoryReferralResult;
+use App\Models\Tenant\User as TenantUser;
 use App\Models\TestResult;
+use App\Services\Tenant\Referral\ReferralActorSnapshotFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -20,10 +25,12 @@ class TestResultWorkflowService
         'submittedBy',
         'reviewedBy',
         'latestAmendment',
+        'originatingReferralResult.referral',
     ];
 
     public function __construct(
-        private readonly TestResultSubmissionValidator $submissionValidator
+        private readonly TestResultSubmissionValidator $submissionValidator,
+        private readonly ReferralActorSnapshotFactory $actorSnapshots
     ) {}
 
     /**
@@ -86,17 +93,25 @@ class TestResultWorkflowService
 
                 $this->assertProcessingIsActive($item);
 
+                $reviewedAt = now();
+
                 $result->forceFill([
                     'status' => TestResult::STATUS_APPROVED,
                     'reviewed_by' => $userId,
-                    'reviewed_at' => now(),
+                    'reviewed_at' => $reviewedAt,
                     'rejection_reason' => null,
                 ])->save();
 
                 $item->forceFill([
                     'status' => 'completed',
-                    'completed_at' => now(),
+                    'completed_at' => $reviewedAt,
                 ])->save();
+
+                $this->completeOriginatingReferral(
+                    $result,
+                    $userId,
+                    $reviewedAt
+                );
 
                 return $this->refreshResult($result);
             },
@@ -140,6 +155,73 @@ class TestResultWorkflowService
             },
             3
         );
+    }
+
+    /**
+     * Complete the referral that originated the approved result.
+     */
+    private function completeOriginatingReferral(
+        TestResult $result,
+        int $userId,
+        mixed $completedAt
+    ): void {
+        $externalResult = LaboratoryReferralResult::query()
+            ->where('test_result_id', $result->getKey())
+            ->orderByDesc('version')
+            ->lockForUpdate()
+            ->first();
+
+        if ($externalResult === null) {
+            return;
+        }
+
+        $referral = LaboratoryReferral::query()
+            ->whereKey($externalResult->laboratory_referral_id)
+            ->lockForUpdate()
+            ->firstOrFail();
+
+        if (
+            $referral->status
+                !== LaboratoryReferral::STATUS_RESULT_RECEIVED
+        ) {
+            throw ValidationException::withMessages([
+                'test_result' => [
+                    sprintf(
+                        'The originating referral is %s and cannot be completed.',
+                        $referral->status
+                    ),
+                ],
+            ]);
+        }
+
+        $actor = TenantUser::query()
+            ->whereKey($userId)
+            ->firstOrFail();
+
+        $referral->forceFill([
+            'status' => LaboratoryReferral::STATUS_COMPLETED,
+            'open_order_item_key' => null,
+            'completed_by' => $userId,
+            'completed_at' => $completedAt,
+        ])->save();
+
+        LaboratoryReferralEvent::query()->create([
+            'laboratory_referral_id' => $referral->getKey(),
+            'event_type' => 'completed',
+            'from_status' => LaboratoryReferral::STATUS_RESULT_RECEIVED,
+            'to_status' => LaboratoryReferral::STATUS_COMPLETED,
+            'actor_id' => $userId,
+            'actor_snapshot' => $this->actorSnapshots->make($actor),
+            'payload' => [
+                'test_result_uuid' => $result->uuid,
+                'external_result_uuid' => $externalResult->uuid,
+                'external_result_version' => (
+                    (int) $externalResult->version
+                ),
+            ],
+            'occurred_at' => $completedAt,
+            'created_at' => $completedAt,
+        ]);
     }
 
     /**

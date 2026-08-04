@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Tenant\LaboratoryOrderItemReferralController;
 use App\Http\Controllers\Api\Tenant\LaboratoryReferralController;
+use App\Http\Controllers\Api\Tenant\LaboratoryReferralResultController;
 use App\Http\Controllers\Api\Tenant\LaboratoryReferralWorkflowController;
 use App\Http\Controllers\Api\Tenant\ReferralLaboratoryController;
 use App\Http\Controllers\Api\Tenant\ReferralLaboratoryTestController;
@@ -64,6 +65,10 @@ Route::prefix('referrals')->group(function (): void {
     Route::post(
         '/{referral}/cancel',
         [LaboratoryReferralWorkflowController::class, 'cancel']
+    );
+    Route::post(
+        '/{referral}/results',
+        [LaboratoryReferralResultController::class, 'store']
     );
 });
 

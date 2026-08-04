@@ -3,6 +3,7 @@
 namespace App\Services\Tenant\TestResult;
 
 use App\Models\LaboratoryOrderItem;
+use App\Models\LaboratoryReferral;
 use App\Models\TestResult;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -20,6 +21,7 @@ class TestResultManagementService
         'submittedBy',
         'reviewedBy',
         'latestAmendment',
+        'originatingReferralResult.referral',
     ];
 
     /**
@@ -182,6 +184,22 @@ class TestResultManagementService
             throw ValidationException::withMessages([
                 'order_item' => [
                     'Start processing this laboratory order item before entering a result.',
+                ],
+            ]);
+        }
+
+        $hasOpenReferral = LaboratoryReferral::query()
+            ->where(
+                'laboratory_order_item_id',
+                $item->getKey()
+            )
+            ->open()
+            ->exists();
+
+        if ($hasOpenReferral) {
+            throw ValidationException::withMessages([
+                'order_item' => [
+                    'This item has an active laboratory referral. Capture the external result through the referral workflow.',
                 ],
             ]);
         }

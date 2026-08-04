@@ -180,7 +180,9 @@ class LaboratoryReferral extends Model
 
     public function externalResults(): HasMany
     {
-        return $this->hasMany(LaboratoryReferralResult::class);
+        return $this->hasMany(
+            LaboratoryReferralResult::class
+        )->orderBy('version');
     }
 
     public function latestExternalResult(): HasOne

@@ -139,7 +139,33 @@ class LaboratoryReferralResource extends JsonResource
                                 ->received_at
                                 ?->toISOString()
                         ),
+                        'source_payload_hash' => (
+                            $this->latestExternalResult
+                                ->source_payload_hash
+                        ),
                     ]
+            ),
+            'standard_result' => $this->when(
+                $this->relationLoaded('latestExternalResult'),
+                function (): ?array {
+                    $external = $this->latestExternalResult;
+
+                    if (
+                        $external === null
+                        || ! $external->relationLoaded('testResult')
+                        || $external->testResult === null
+                    ) {
+                        return null;
+                    }
+
+                    return [
+                        'uuid' => $external->testResult->uuid,
+                        'status' => $external->testResult->status,
+                    ];
+                }
+            ),
+            'external_results' => LaboratoryReferralResultResource::collection(
+                $this->whenLoaded('externalResults')
             ),
             'timeline' => LaboratoryReferralEventResource::collection(
                 $this->whenLoaded('events')
