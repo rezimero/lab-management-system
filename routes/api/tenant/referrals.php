@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\Tenant\LaboratoryOrderItemReferralController;
+use App\Http\Controllers\Api\Tenant\LaboratoryReferralController;
+use App\Http\Controllers\Api\Tenant\LaboratoryReferralWorkflowController;
 use App\Http\Controllers\Api\Tenant\ReferralLaboratoryController;
 use App\Http\Controllers\Api\Tenant\ReferralLaboratoryTestController;
 use Illuminate\Support\Facades\Route;
@@ -34,4 +37,37 @@ Route::prefix('referrals')->group(function (): void {
         '/laboratory-tests/{mapping}',
         [ReferralLaboratoryTestController::class, 'update']
     );
+
+    Route::get('/', [LaboratoryReferralController::class, 'index']);
+    Route::get(
+        '/summary',
+        [LaboratoryReferralController::class, 'summary']
+    );
+    Route::post('/', [LaboratoryReferralController::class, 'store']);
+    Route::get(
+        '/{referral}',
+        [LaboratoryReferralController::class, 'show']
+    );
+
+    Route::post(
+        '/{referral}/dispatch',
+        [LaboratoryReferralWorkflowController::class, 'dispatch']
+    );
+    Route::post(
+        '/{referral}/acknowledge',
+        [LaboratoryReferralWorkflowController::class, 'acknowledge']
+    );
+    Route::post(
+        '/{referral}/reject',
+        [LaboratoryReferralWorkflowController::class, 'reject']
+    );
+    Route::post(
+        '/{referral}/cancel',
+        [LaboratoryReferralWorkflowController::class, 'cancel']
+    );
 });
+
+Route::get(
+    '/laboratory-order-items/{laboratoryOrderItem}/referrals',
+    [LaboratoryOrderItemReferralController::class, 'index']
+);
