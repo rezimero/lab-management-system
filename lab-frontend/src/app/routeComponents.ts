@@ -79,3 +79,7 @@ export const UserForm = lazy(
 export const LandlordDashboard = lazy(
   () => import('../pages/LandlordDashboard')
 );
+
+export const ReferralLaboratories = lazy(
+  () => import('../pages/ReferralLaboratories')
+);

@@ -141,6 +141,17 @@ class TestResult extends Model
     }
 
     /**
+     * External referral evidence that originated this result.
+     */
+    public function originatingReferralResult(): HasOne
+    {
+        return $this->hasOne(
+            LaboratoryReferralResult::class,
+            'test_result_id'
+        )->ofMany('version', 'max');
+    }
+
+    /**
      * Legacy patient relationship.
      */
     public function patient(): BelongsTo

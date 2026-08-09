@@ -836,3 +836,34 @@ universal analyzer, HL7, ASTM, or FHIR compatibility without validated
 external-system testing.
 
 <!-- END MARKET-READY-BETA-HANDOVER-2026-08-01 -->
+
+<!-- BEGIN REFERRAL-LABORATORY-HANDOVER-2026-08-04 -->
+
+## Referral Laboratory Management handover
+
+Baseline:
+
+    branch: feature/referral-laboratory-management
+    commit: 6ff700a57c96b4b262c8deed111716169bd6ee02
+
+Approved contract:
+
+    docs/REFERRAL_LABORATORY_MANAGEMENT_ARCHITECTURE.md
+
+Controlled implementation sequence:
+
+    docs/REFERRAL_LABORATORY_MANAGEMENT_IMPLEMENTATION_SEQUENCE.md
+
+The approved aggregate is one referral per laboratory order item, with one
+open referral allowed at a time. External result evidence is append-only and
+must create or synchronize the existing standard test result. Approval of that
+standard result completes the referral and the order item atomically.
+
+Next action:
+
+    implement schema and commercial gates on the current feature branch
+
+Do not mix notifications, portals, analyzer integration or interoperability
+into this milestone.
+
+<!-- END REFERRAL-LABORATORY-HANDOVER-2026-08-04 -->

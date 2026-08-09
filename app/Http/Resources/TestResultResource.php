@@ -24,6 +24,13 @@ class TestResultResource extends JsonResource
         $effectiveNotes = $latest !== null
             ? $latest->corrected_notes
             : $this->notes;
+        $referralResult = $this->relationLoaded(
+            'originatingReferralResult'
+        )
+            ? $this->originatingReferralResult
+            : $this->originatingReferralResult()
+                ->with('referral')
+                ->first();
 
         return [
             'uuid' => $this->uuid,
@@ -38,6 +45,29 @@ class TestResultResource extends JsonResource
             'rejection_reason' => (
                 $this->rejection_reason
             ),
+            'referral_source' => $referralResult === null
+                ? null
+                : [
+                    'external_result_uuid' => $referralResult->uuid,
+                    'external_result_version' => (
+                        (int) $referralResult->version
+                    ),
+                    'external_report_number' => (
+                        $referralResult->external_report_number
+                    ),
+                    'referral_uuid' => (
+                        $referralResult->referral?->uuid
+                    ),
+                    'referral_number' => (
+                        $referralResult->referral?->referral_number
+                    ),
+                    'referral_status' => (
+                        $referralResult->referral?->status
+                    ),
+                    'laboratory' => (
+                        $referralResult->referral?->laboratory_snapshot
+                    ),
+                ],
 
             'order_item' => $this->when(
                 $this->relationLoaded(

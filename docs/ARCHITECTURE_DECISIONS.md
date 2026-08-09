@@ -1112,3 +1112,52 @@ current mutable source data, or universal analyzer and interoperability
 claims.
 
 <!-- END ADR-REPORT-AMENDMENT-SUPERSESSION-2026-08-01 -->
+
+<!-- BEGIN ADR-030-REFERRAL-LABORATORY-MANAGEMENT -->
+
+## ADR-030: Referral Laboratory Management Uses Order-Item Ownership and Standard Result Governance
+
+Status:
+
+    Accepted
+
+Decision:
+
+Referral laboratory workflows are tenant-scoped and belong to individual
+laboratory order items.
+
+External laboratories are tenant-owned directory records. They are not
+branches, child tenants or tenant users.
+
+External result evidence is preserved separately and append-only, but every
+referred test must still create and pass through the existing standard
+test-result workflow before the order item can complete or a report can be
+generated.
+
+One open referral per laboratory order item is enforced at service and
+database levels.
+
+Referral costs are internal operational costs and do not mutate patient
+charges or issued invoices.
+
+The binding schema, workflow, authorization, API, frontend, audit and testing
+contract is recorded in:
+
+    docs/REFERRAL_LABORATORY_MANAGEMENT_ARCHITECTURE.md
+
+Reason:
+
+A laboratory order can contain both internal and referred tests. Existing
+result approval, item completion and immutable reporting are already
+order-item scoped. Building a parallel external-result completion path would
+weaken clinical governance and duplicate core lifecycle rules.
+
+Consequence:
+
+Referral implementation must preserve current order, specimen, result and
+report status enums. Standard result approval remains the only path that
+completes a referred item. Future courier, portal and interoperability modules
+may build on the referral aggregate without changing its item-level clinical
+ownership.
+
+<!-- END ADR-030-REFERRAL-LABORATORY-MANAGEMENT -->

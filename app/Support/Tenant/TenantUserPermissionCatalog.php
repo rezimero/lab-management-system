@@ -64,6 +64,16 @@ final class TenantUserPermissionCatalog
 
     public const MANAGE_TEST_INVENTORY_REQUIREMENTS = 'manage_test_inventory_requirements';
 
+    public const VIEW_REFERRALS = 'view_referrals';
+
+    public const MANAGE_REFERRAL_LABORATORIES = 'manage_referral_laboratories';
+
+    public const CREATE_REFERRALS = 'create_referrals';
+
+    public const DISPATCH_REFERRALS = 'dispatch_referrals';
+
+    public const CAPTURE_REFERRAL_RESULTS = 'capture_referral_results';
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -92,6 +102,11 @@ final class TenantUserPermissionCatalog
             self::ADJUST_INVENTORY_STOCK,
             self::RECORD_INVENTORY_CONSUMPTION,
             self::MANAGE_TEST_INVENTORY_REQUIREMENTS,
+            self::VIEW_REFERRALS,
+            self::MANAGE_REFERRAL_LABORATORIES,
+            self::CREATE_REFERRALS,
+            self::DISPATCH_REFERRALS,
+            self::CAPTURE_REFERRAL_RESULTS,
         ],
 
         'admin' => [
@@ -116,6 +131,11 @@ final class TenantUserPermissionCatalog
             self::ADJUST_INVENTORY_STOCK,
             self::RECORD_INVENTORY_CONSUMPTION,
             self::MANAGE_TEST_INVENTORY_REQUIREMENTS,
+            self::VIEW_REFERRALS,
+            self::MANAGE_REFERRAL_LABORATORIES,
+            self::CREATE_REFERRALS,
+            self::DISPATCH_REFERRALS,
+            self::CAPTURE_REFERRAL_RESULTS,
         ],
 
         'lab_technician' => [
@@ -129,6 +149,10 @@ final class TenantUserPermissionCatalog
             self::VIEW_INVENTORY,
             self::RECEIVE_INVENTORY_STOCK,
             self::RECORD_INVENTORY_CONSUMPTION,
+            self::VIEW_REFERRALS,
+            self::CREATE_REFERRALS,
+            self::DISPATCH_REFERRALS,
+            self::CAPTURE_REFERRAL_RESULTS,
         ],
 
         'receptionist' => [
@@ -138,6 +162,7 @@ final class TenantUserPermissionCatalog
             self::VIEW_BILLING,
             self::MANAGE_BILLING,
             self::RECORD_PAYMENTS,
+            self::VIEW_REFERRALS,
         ],
 
         'doctor' => [
@@ -149,6 +174,7 @@ final class TenantUserPermissionCatalog
             self::APPROVE_LABORATORY_REPORT_AMENDMENTS,
             self::VIEW_BRANCHES,
             self::VIEW_BILLING,
+            self::VIEW_REFERRALS,
         ],
     ];
 

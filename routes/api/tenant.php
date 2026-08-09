@@ -193,6 +193,12 @@ Route::middleware([
     require __DIR__.'/tenant/inventory.php';
 
     // ============================================
+    // REFERRAL LABORATORIES
+    // ============================================
+
+    require __DIR__.'/tenant/referrals.php';
+
+    // ============================================
     // LABORATORY ORDERS
     // ============================================
 

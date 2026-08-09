@@ -756,3 +756,30 @@ hardening window follows the beta. No module may be represented by empty
 navigation, fake data, or unsupported compatibility claims.
 
 <!-- END MARKET-READY-BETA-SPRINT-2026-08-01 -->
+
+<!-- BEGIN REFERRAL-LABORATORY-MILESTONE-2026-08-04 -->
+
+## Referral Laboratory Management milestone
+
+The Inventory and Reagent Management milestone is merged in `develop` at
+`6ff700a57c96b4b262c8deed111716169bd6ee02`.
+
+Referral Laboratory Management now proceeds on:
+
+    feature/referral-laboratory-management
+
+The architecture is approved in:
+
+    docs/REFERRAL_LABORATORY_MANAGEMENT_ARCHITECTURE.md
+
+The implementation sequence is recorded in:
+
+    docs/REFERRAL_LABORATORY_MANAGEMENT_IMPLEMENTATION_SEQUENCE.md
+
+The binding design keeps referrals attached to individual laboratory order
+items and routes external results through the existing internal result review
+and report-governance workflow.
+
+Implementation has not begun at this documentation checkpoint.
+
+<!-- END REFERRAL-LABORATORY-MILESTONE-2026-08-04 -->

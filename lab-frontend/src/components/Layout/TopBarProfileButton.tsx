@@ -62,7 +62,7 @@ const TopBarProfileButton = ({
         width: 35,
         height: 35,
         color: '#FFFFFF',
-        fontSize: '0.7rem',
+        fontSize: '0.72rem',
         fontWeight: 720,
         background:
           'linear-gradient(145deg,#2563EB,#0E7490)',
@@ -77,7 +77,7 @@ const TopBarProfileButton = ({
           xs: 'none',
           lg: 'block',
         },
-        maxWidth: 155,
+        maxWidth: 170,
         ml: 1,
         textAlign: 'left',
       }}
@@ -85,8 +85,8 @@ const TopBarProfileButton = ({
       <Typography
         noWrap
         sx={{
-          fontSize: '0.72rem',
-          fontWeight: 650,
+          fontSize: '0.76rem',
+          fontWeight: 680,
         }}
       >
         {user?.name}
@@ -95,8 +95,9 @@ const TopBarProfileButton = ({
       <Typography
         noWrap
         sx={{
-          color: 'text.secondary',
-          fontSize: '0.61rem',
+          color: '#667085',
+          fontSize: '0.66rem',
+          fontWeight: 520,
         }}
       >
         {tenant?.name ??

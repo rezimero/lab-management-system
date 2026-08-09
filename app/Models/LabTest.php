@@ -49,6 +49,11 @@ class LabTest extends Model
         return $this->hasMany(LabTestInventoryRequirement::class);
     }
 
+    public function referralLaboratoryTests(): HasMany
+    {
+        return $this->hasMany(ReferralLaboratoryTest::class);
+    }
+
     // Relationship with test results
     public function test_results()
     {

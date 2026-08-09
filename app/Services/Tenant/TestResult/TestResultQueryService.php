@@ -19,6 +19,7 @@ class TestResultQueryService
         'submittedBy',
         'reviewedBy',
         'latestAmendment',
+        'originatingReferralResult.referral',
     ];
 
     /**
