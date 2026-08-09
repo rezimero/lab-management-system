@@ -67,6 +67,11 @@ export const buildNavigationGroups = (
           path: '/laboratory-reports',
           icon: <DescriptionRounded />,
         },
+        {
+          label: 'Referrals',
+          path: '/referrals',
+          icon: <AssignmentRounded />,
+        },
       ],
     },
   ];

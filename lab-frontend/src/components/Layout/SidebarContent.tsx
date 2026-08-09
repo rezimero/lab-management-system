@@ -79,9 +79,9 @@ const SidebarContent = ({
         gap: 1.25,
         borderRadius: 3.25,
         border:
-          '1px solid rgba(255,255,255,.075)',
+          '1px solid rgba(255,255,255,.10)',
         background:
-          'rgba(255,255,255,.045)',
+          'rgba(255,255,255,.055)',
       }}
     >
       <Box
@@ -93,7 +93,7 @@ const SidebarContent = ({
           borderRadius: 2.4,
           color: '#A5F3FC',
           backgroundColor:
-            'rgba(8,145,178,.13)',
+            'rgba(8,145,178,.16)',
         }}
       >
         <DomainRounded
@@ -111,8 +111,8 @@ const SidebarContent = ({
           noWrap
           sx={{
             color: '#FFFFFF',
-            fontSize: '0.78rem',
-            fontWeight: 660,
+            fontSize: '0.82rem',
+            fontWeight: 680,
           }}
         >
           {tenant?.name ??
@@ -124,8 +124,8 @@ const SidebarContent = ({
           sx={{
             mt: 0.25,
             color:
-              'rgba(255,255,255,.42)',
-            fontSize: '0.66rem',
+              'rgba(255,255,255,.62)',
+            fontSize: '0.7rem',
           }}
         >
           {tenant?.domain

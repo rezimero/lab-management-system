@@ -40,7 +40,7 @@ const SidebarNavigation = ({
           sx={{
             mt: groupIndex === 0
               ? 0
-              : 2.4,
+              : 2.25,
           }}
         >
           <Typography
@@ -48,10 +48,10 @@ const SidebarNavigation = ({
               px: 1.5,
               mb: 0.9,
               color:
-                'rgba(255,255,255,0.31)',
-              fontSize: '0.63rem',
-              fontWeight: 720,
-              letterSpacing: '0.095em',
+                'rgba(255,255,255,0.50)',
+              fontSize: '0.66rem',
+              fontWeight: 760,
+              letterSpacing: '0.09em',
               textTransform: 'uppercase',
             }}
           >
@@ -62,7 +62,7 @@ const SidebarNavigation = ({
             disablePadding
             sx={{
               display: 'grid',
-              gap: 0.4,
+              gap: 0.35,
             }}
           >
             {group.items.map((item) => {
@@ -85,17 +85,17 @@ const SidebarNavigation = ({
                     borderRadius: 2.7,
                     color: selected
                       ? '#FFFFFF'
-                      : 'rgba(255,255,255,0.57)',
+                      : 'rgba(255,255,255,0.75)',
                     '&.Mui-selected': {
                       background:
-                        'linear-gradient(135deg, rgba(59,130,246,.21), rgba(8,145,178,.09))',
+                        'linear-gradient(135deg, rgba(59,130,246,.23), rgba(8,145,178,.11))',
                     },
                     '&:hover': {
                       color: '#FFFFFF',
                       transform:
                         'translateX(2px)',
                       backgroundColor:
-                        'rgba(255,255,255,.055)',
+                        'rgba(255,255,255,.065)',
                     },
                   }}
                 >
@@ -104,7 +104,7 @@ const SidebarNavigation = ({
                       minWidth: 39,
                       color: selected
                         ? '#8EDDF0'
-                        : 'rgba(255,255,255,.42)',
+                        : 'rgba(255,255,255,.62)',
                       '& svg': {
                         fontSize: 20,
                       },
@@ -118,10 +118,10 @@ const SidebarNavigation = ({
                     slotProps={{
                       primary: {
                         sx: {
-                          fontSize: '0.8rem',
+                          fontSize: '0.82rem',
                           fontWeight: selected
-                            ? 650
-                            : 540,
+                            ? 680
+                            : 570,
                         },
                       },
                     }}

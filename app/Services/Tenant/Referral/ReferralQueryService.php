@@ -382,6 +382,7 @@ class ReferralQueryService
             'orderItem.order.processingBranch',
             'orderItem.order.priceList',
             'dispatchBranch',
+            'creator',
             'referralLaboratory',
             'referralLaboratoryTest.labTest',
             'specimens',

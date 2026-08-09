@@ -15,6 +15,7 @@ import {
   LaboratoryOrderView,
   LaboratoryProfile,
   LaboratoryReports,
+  ReferralLaboratories,
   LaboratoryReportView,
   LabTestForm,
   LabTests,
@@ -116,6 +117,10 @@ export const tenantRoutes = (
     <Route
       path="/laboratory-reports/:id"
       element={protect(<LaboratoryReportView />)}
+    />
+    <Route
+      path="/referrals"
+      element={protect(<ReferralLaboratories />)}
     />
     <Route
       path="/branches"

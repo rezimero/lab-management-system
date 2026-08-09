@@ -84,6 +84,16 @@ class LaboratoryReferralResource extends JsonResource
                         'type' => $this->dispatchBranch->type,
                     ]
             ),
+            'created_by' => $this->when(
+                $this->relationLoaded('creator'),
+                fn (): ?array => $this->creator === null
+                    ? null
+                    : [
+                        'id' => $this->creator->getKey(),
+                        'name' => $this->creator->name,
+                        'email' => $this->creator->email,
+                    ]
+            ),
             'laboratory' => $this->laboratory_snapshot,
             'test' => $this->test_snapshot,
             'quoted_cost' => $this->quoted_cost,

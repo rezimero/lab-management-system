@@ -52,6 +52,7 @@ const LayoutTopBar = ({
   onProfileOpen,
 }: Props) => {
   const theme = useTheme();
+  const hasTitle = title.trim().length > 0;
 
   return (
     <AppBar
@@ -72,7 +73,7 @@ const LayoutTopBar = ({
         borderBottom: '1px solid',
         borderColor: 'divider',
         backgroundColor:
-          alpha('#FFFFFF', 0.88),
+          alpha('#FFFFFF', 0.9),
         backdropFilter:
           'blur(18px) saturate(150%)',
         boxShadow:
@@ -113,9 +114,9 @@ const LayoutTopBar = ({
         >
           <Typography
             sx={{
-              color: 'text.secondary',
-              fontSize: '0.66rem',
-              fontWeight: 680,
+              color: '#667085',
+              fontSize: '0.7rem',
+              fontWeight: 720,
               letterSpacing: '0.075em',
               textTransform: 'uppercase',
             }}
@@ -123,21 +124,23 @@ const LayoutTopBar = ({
             Rezhel workspace
           </Typography>
 
-          <Typography
-            component="h1"
-            noWrap
-            sx={{
-              mt: 0.2,
-              color: 'text.primary',
-              fontSize: {
-                xs: '0.98rem',
-                sm: '1.08rem',
-              },
-              fontWeight: 710,
-            }}
-          >
-            {title}
-          </Typography>
+          {hasTitle ? (
+            <Typography
+              component="h1"
+              noWrap
+              sx={{
+                mt: 0.2,
+                color: 'text.primary',
+                fontSize: {
+                  xs: '0.98rem',
+                  sm: '1.08rem',
+                },
+                fontWeight: 710,
+              }}
+            >
+              {title}
+            </Typography>
+          ) : null}
         </Box>
 
         <Chip
