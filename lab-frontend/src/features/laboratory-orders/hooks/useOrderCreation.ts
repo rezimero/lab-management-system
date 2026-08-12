@@ -4,6 +4,7 @@ import type {
   OrderCreationState,
   OrderLabTestOption,
   OrderPatientOption,
+  OrderReferringClinicianOption,
 } from '../types/laboratoryOrderCreation.types';
 import type {
   LaboratoryOrderPriority,
@@ -14,7 +15,7 @@ const initialState: OrderCreationState = {
   patient: null,
   tests: [],
   priority: 'routine',
-  referringClinician: '',
+  referringClinician: null,
   clinicalNotes: '',
 };
 
@@ -46,7 +47,7 @@ export const useOrderCreation = (
       const result = await createLaboratoryOrder({
         patient_id: state.patient.id,
         priority: state.priority,
-        referring_clinician: state.referringClinician.trim() || undefined,
+        referring_clinician_uuid: state.referringClinician?.uuid,
         clinical_notes: state.clinicalNotes.trim() || undefined,
         items: state.tests.map((test) => ({ lab_test_id: test.id })),
       });
@@ -68,7 +69,7 @@ export const useOrderCreation = (
     setPatient: (patient: OrderPatientOption | null) => patch({ patient }),
     setTests: (tests: OrderLabTestOption[]) => patch({ tests }),
     setPriority: (priority: LaboratoryOrderPriority) => patch({ priority }),
-    setReferringClinician: (value: string) => patch({ referringClinician: value }),
+    setReferringClinician: (value: OrderReferringClinicianOption | null) => patch({ referringClinician: value }),
     setClinicalNotes: (value: string) => patch({ clinicalNotes: value }),
     removeTest: (id: number) => patch({
       tests: state.tests.filter((test) => test.id !== id),

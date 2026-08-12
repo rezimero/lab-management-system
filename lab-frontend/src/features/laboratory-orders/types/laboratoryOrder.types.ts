@@ -29,6 +29,17 @@ export interface OrderPatientSummary {
   full_name: string;
 }
 
+export interface OrderReferringClinicianSummary {
+  uuid: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  organisation: string | null;
+  registration_number: string | null;
+  specialty: string | null;
+  is_active: boolean;
+}
+
 export interface OrderTestResultSummary {
   uuid: string;
   status: string;
@@ -118,6 +129,7 @@ export interface LaboratoryOrderResource {
   patient?: OrderPatientSummary;
   ordered_by?: OrderUserSummary | null;
   referring_clinician: string | null;
+  referring_clinician_record?: OrderReferringClinicianSummary | null;
   priority: LaboratoryOrderPriority;
   status: LaboratoryOrderStatus;
   clinical_notes: string | null;

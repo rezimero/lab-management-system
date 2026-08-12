@@ -31,6 +31,7 @@ class LaboratoryOrder extends Model
         'collection_branch_id',
         'processing_branch_id',
         'price_list_id',
+        'referring_clinician_id',
         'referring_clinician',
         'priority',
         'status',
@@ -124,6 +125,17 @@ class LaboratoryOrder extends Model
     public function priceList(): BelongsTo
     {
         return $this->belongsTo(PriceList::class);
+    }
+
+    /**
+     * Durable tenant-owned external referring clinician relationship.
+     */
+    public function referringClinician(): BelongsTo
+    {
+        return $this->belongsTo(
+            ReferringClinician::class,
+            'referring_clinician_id'
+        );
     }
 
     /**

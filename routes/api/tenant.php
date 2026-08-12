@@ -199,6 +199,12 @@ Route::middleware([
     require __DIR__.'/tenant/referrals.php';
 
     // ============================================
+    // PORTAL ACCESS / REFERRING CLINICIANS
+    // ============================================
+
+    require __DIR__.'/tenant/portal-access.php';
+
+    // ============================================
     // LABORATORY ORDERS
     // ============================================
 

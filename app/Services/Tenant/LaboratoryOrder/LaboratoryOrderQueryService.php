@@ -28,6 +28,7 @@ class LaboratoryOrderQueryService
                 'collectionBranch',
                 'processingBranch',
                 'priceList',
+                'referringClinician',
                 'items.testResult.enteredBy',
                 'items.testResult.submittedBy',
                 'items.testResult.reviewedBy',
@@ -45,6 +46,12 @@ class LaboratoryOrderQueryService
                 function ($query) use ($search): void {
                     $query->where(function ($query) use ($search): void {
                         $query->where('order_number', 'like', "%{$search}%")
+                            ->orWhere('referring_clinician', 'like', "%{$search}%")
+                            ->orWhereHas('referringClinician', function ($query) use ($search): void {
+                                $query->where('name', 'like', "%{$search}%")
+                                    ->orWhere('organisation', 'like', "%{$search}%")
+                                    ->orWhere('registration_number', 'like', "%{$search}%");
+                            })
                             ->orWhereHas('patient', function ($query) use ($search): void {
                                 $query->where('first_name', 'like', "%{$search}%")
                                     ->orWhere('last_name', 'like', "%{$search}%")
@@ -92,6 +99,7 @@ class LaboratoryOrderQueryService
                 'collectionBranch',
                 'processingBranch',
                 'priceList',
+                'referringClinician',
                 'invoice',
                 'items.testResult.enteredBy',
                 'items.testResult.submittedBy',

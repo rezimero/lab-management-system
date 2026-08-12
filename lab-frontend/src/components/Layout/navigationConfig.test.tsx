@@ -27,6 +27,15 @@ describe('laboratory profile navigation', () => {
           path:
             '/settings/laboratory-profile',
         }),
+        expect.objectContaining({
+          label: 'Referring clinicians',
+          path:
+            '/settings/referring-clinicians',
+        }),
+        expect.objectContaining({
+          label: 'Portal access',
+          path: '/settings/portal-access',
+        }),
       ])
     );
   });

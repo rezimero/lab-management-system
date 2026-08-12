@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\PersonalAccessToken;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 
@@ -23,6 +26,48 @@ class AppServiceProvider extends ServiceProvider
     {
         Sanctum::usePersonalAccessTokenModel(
             PersonalAccessToken::class
+        );
+
+        RateLimiter::for(
+            'portal-login',
+            function (Request $request): Limit {
+                $tenantId = $request->attributes
+                    ->get('tenant')
+                    ?->getKey();
+                $email = strtolower(trim(
+                    (string) $request->input('email')
+                ));
+
+                return Limit::perMinute(6)->by(
+                    hash('sha256', implode('|', [
+                        (string) $tenantId,
+                        $request->path(),
+                        $email,
+                        (string) $request->ip(),
+                    ]))
+                );
+            }
+        );
+
+        RateLimiter::for(
+            'portal-activation',
+            function (Request $request): Limit {
+                $tenantId = $request->attributes
+                    ->get('tenant')
+                    ?->getKey();
+                $tokenFingerprint = hash(
+                    'sha256',
+                    trim((string) $request->input('token'))
+                );
+
+                return Limit::perMinute(10)->by(
+                    hash('sha256', implode('|', [
+                        (string) $tenantId,
+                        $tokenFingerprint,
+                        (string) $request->ip(),
+                    ]))
+                );
+            }
         );
 
         $this->loadMigrationsFrom(

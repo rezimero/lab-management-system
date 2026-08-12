@@ -74,6 +74,10 @@ final class TenantUserPermissionCatalog
 
     public const CAPTURE_REFERRAL_RESULTS = 'capture_referral_results';
 
+    public const VIEW_REFERRING_CLINICIANS = 'view_referring_clinicians';
+
+    public const MANAGE_PORTAL_ACCESS = 'manage_portal_access';
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -107,6 +111,8 @@ final class TenantUserPermissionCatalog
             self::CREATE_REFERRALS,
             self::DISPATCH_REFERRALS,
             self::CAPTURE_REFERRAL_RESULTS,
+            self::VIEW_REFERRING_CLINICIANS,
+            self::MANAGE_PORTAL_ACCESS,
         ],
 
         'admin' => [
@@ -136,6 +142,8 @@ final class TenantUserPermissionCatalog
             self::CREATE_REFERRALS,
             self::DISPATCH_REFERRALS,
             self::CAPTURE_REFERRAL_RESULTS,
+            self::VIEW_REFERRING_CLINICIANS,
+            self::MANAGE_PORTAL_ACCESS,
         ],
 
         'lab_technician' => [
@@ -153,6 +161,7 @@ final class TenantUserPermissionCatalog
             self::CREATE_REFERRALS,
             self::DISPATCH_REFERRALS,
             self::CAPTURE_REFERRAL_RESULTS,
+            self::VIEW_REFERRING_CLINICIANS,
         ],
 
         'receptionist' => [
@@ -163,6 +172,7 @@ final class TenantUserPermissionCatalog
             self::MANAGE_BILLING,
             self::RECORD_PAYMENTS,
             self::VIEW_REFERRALS,
+            self::VIEW_REFERRING_CLINICIANS,
         ],
 
         'doctor' => [
@@ -175,6 +185,7 @@ final class TenantUserPermissionCatalog
             self::VIEW_BRANCHES,
             self::VIEW_BILLING,
             self::VIEW_REFERRALS,
+            self::VIEW_REFERRING_CLINICIANS,
         ],
     ];
 

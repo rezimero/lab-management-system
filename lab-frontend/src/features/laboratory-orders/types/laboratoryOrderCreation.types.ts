@@ -12,6 +12,17 @@ export interface OrderPatientOption {
   is_active?: boolean;
 }
 
+export interface OrderReferringClinicianOption {
+  uuid: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  organisation: string | null;
+  registration_number: string | null;
+  specialty: string | null;
+  is_active: boolean;
+}
+
 export interface OrderLabTestOption {
   id: number;
   name: string;
@@ -23,7 +34,7 @@ export interface OrderLabTestOption {
 
 export interface CreateLaboratoryOrderPayload {
   patient_id: number;
-  referring_clinician?: string;
+  referring_clinician_uuid?: string;
   priority: LaboratoryOrderPriority;
   clinical_notes?: string;
   items: Array<{ lab_test_id: number }>;
@@ -33,7 +44,7 @@ export interface OrderCreationState {
   patient: OrderPatientOption | null;
   tests: OrderLabTestOption[];
   priority: LaboratoryOrderPriority;
-  referringClinician: string;
+  referringClinician: OrderReferringClinicianOption | null;
   clinicalNotes: string;
 }
 

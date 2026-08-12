@@ -67,6 +67,23 @@ class LaboratoryOrderResource extends JsonResource
                 ]
             ),
             'referring_clinician' => $this->referring_clinician,
+            'referring_clinician_record' => $this->when(
+                $this->relationLoaded('referringClinician'),
+                fn (): ?array => (
+                    $this->referringClinician === null
+                        ? null
+                        : [
+                            'uuid' => $this->referringClinician->uuid,
+                            'name' => $this->referringClinician->name,
+                            'email' => $this->referringClinician->email,
+                            'phone' => $this->referringClinician->phone,
+                            'organisation' => $this->referringClinician->organisation,
+                            'registration_number' => $this->referringClinician->registration_number,
+                            'specialty' => $this->referringClinician->specialty,
+                            'is_active' => (bool) $this->referringClinician->is_active,
+                        ]
+                )
+            ),
             'priority' => $this->priority,
             'status' => $this->status,
             'clinical_notes' => $this->clinical_notes,

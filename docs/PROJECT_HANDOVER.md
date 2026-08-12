@@ -867,3 +867,108 @@ Do not mix notifications, portals, analyzer integration or interoperability
 into this milestone.
 
 <!-- END REFERRAL-LABORATORY-HANDOVER-2026-08-04 -->
+
+<!-- BEGIN PATIENT-CLINICIAN-PORTALS-HANDOVER-2026-08-10 -->
+
+## Patient and Clinician Portals architecture checkpoint
+
+Current active product branch:
+
+    feature/patient-clinician-portals
+
+Current merged integration baseline:
+
+    develop
+    c6d7f42
+    Merge pull request #21 from rezimero/feature/referral-laboratory-management
+
+Referral Laboratory Management is complete and merged.
+
+The next product module is Patient and Clinician Portals.
+
+Architecture status:
+
+    approved for implementation
+
+Architecture documents:
+
+    docs/PATIENT_CLINICIAN_PORTALS_ARCHITECTURE.md
+    docs/PATIENT_CLINICIAN_PORTALS_IMPLEMENTATION_SEQUENCE.md
+
+Core ownership rule:
+
+A Patient, ReferringClinician, PatientPortalAccount and
+ClinicianPortalAccount belong to exactly one tenant.
+
+The same real-world person may exist independently in more than one tenant,
+but those records are not a shared platform identity and do not authorize
+cross-tenant access.
+
+Authentication rule:
+
+Portal authentication is a dedicated external authentication boundary. It
+must not widen the existing internal Sanctum tenant-user identity model.
+
+Tenant resolution occurs before portal credential or bearer-token lookup.
+
+Clinical visibility rule:
+
+Patient-facing result values are exposed through governed immutable laboratory
+reports. Draft, submitted and rejected internal result workflow data are not
+patient-visible.
+
+External clinician rule:
+
+The existing internal `doctor` tenant-user role remains an internal laboratory
+role. External referring clinicians receive dedicated tenant-owned clinician
+records and portal accounts.
+
+Order linkage rule:
+
+Free-text `referring_clinician` data is retained as historical display
+evidence. Portal authorization requires an explicit referring-clinician
+relationship. Historical orders are not automatically linked by clinician
+name.
+
+Notification dependency rule:
+
+Patient and Clinician Portals now precede Notifications and Critical-Result
+Escalation. Portal implementation may create notification-ready domain events
+and manual invitation activation, but message transport is deferred to the
+following module.
+
+Implementation begins with the portal identity/authentication foundation and
+must include tenant-isolation and token-boundary characterization tests before
+portal clinical-data APIs are added.
+
+Generated collectors, backups and review artifacts must be stored outside the
+repository.
+
+<!-- END PATIENT-CLINICIAN-PORTALS-HANDOVER-2026-08-10 -->
+
+<!-- BEGIN PATIENT-CLINICIAN-PORTALS-COMPLETION-HANDOVER-2026-08-11 -->
+
+## Patient and Clinician Portals completion handover
+
+Implementation is complete through P9 on
+`feature/patient-clinician-portals`. The milestone now includes the separate
+patient and clinician portal applications, tenant-scoped read APIs, governed
+report access, internal portal administration, one-time account activation,
+account/token revocation, security audit events and notification-ready domain
+events.
+
+Frontend review evidence:
+
+    typecheck passed
+    42 test files / 156 tests passed
+    production build passed
+
+All 572 PHP files also passed an independent parser syntax check. The developer
+must run the focused Laravel validation in the repository's configured test
+environment before staging. This handover does not authorize a development
+database reset, recovery script, live migration, Git staging or commit.
+
+P10 remains the only portal checkpoint. After P10 is verified and committed,
+the next product module is Notifications and Critical-Result Escalation.
+
+<!-- END PATIENT-CLINICIAN-PORTALS-COMPLETION-HANDOVER-2026-08-11 -->

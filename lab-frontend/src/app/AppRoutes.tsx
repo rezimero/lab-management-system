@@ -11,6 +11,12 @@ import {
 import AppLoadingScreen from
   '../components/feedback/AppLoadingScreen';
 
+import PatientPortalRoutes from
+  '../features/patient-portal/routes/PatientPortalRoutes';
+
+import ClinicianPortalRoutes from
+  '../features/clinician-portal/routes/ClinicianPortalRoutes';
+
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 
@@ -22,6 +28,7 @@ import {
 
 import {
   LandlordDashboard,
+  PortalActivation,
 } from './routeComponents';
 
 import {
@@ -33,6 +40,21 @@ export const AppRoutes = () => (
     fallback={<AppLoadingScreen />}
   >
     <Routes>
+      <Route
+        path="/portal/activate"
+        element={<PortalActivation />}
+      />
+
+      <Route
+        path="/patient-portal/*"
+        element={<PatientPortalRoutes />}
+      />
+
+      <Route
+        path="/clinician-portal/*"
+        element={<ClinicianPortalRoutes />}
+      />
+
       <Route
         path="/login"
         element={

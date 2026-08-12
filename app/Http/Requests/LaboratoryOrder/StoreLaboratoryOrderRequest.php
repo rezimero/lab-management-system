@@ -82,6 +82,11 @@ class StoreLaboratoryOrderRequest extends FormRequest
                 'exists:price_lists,uuid',
             ],
 
+            'referring_clinician_uuid' => [
+                'nullable',
+                'uuid',
+            ],
+
             'referring_clinician' => [
                 'nullable',
                 'string',

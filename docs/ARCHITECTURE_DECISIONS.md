@@ -1161,3 +1161,149 @@ may build on the referral aggregate without changing its item-level clinical
 ownership.
 
 <!-- END ADR-030-REFERRAL-LABORATORY-MANAGEMENT -->
+
+<!-- BEGIN ADR-031-PATIENT-CLINICIAN-PORTALS-2026-08-10 -->
+
+## ADR-031: Patient and Clinician Portals Use Tenant-Owned External Identities and Dedicated Portal Authentication
+
+Status:
+
+    Accepted for implementation
+
+Decision:
+
+Patient and clinician portals are tenant-owned external access surfaces. They
+must not reuse internal laboratory user identities as their authentication
+boundary.
+
+Every patient, referring clinician, patient portal account and clinician
+portal account belongs to exactly one tenant. The current database-per-tenant
+architecture is the primary ownership boundary.
+
+Patient clinical records remain separate from patient authentication
+identities:
+
+    Patient
+        clinical record
+
+    PatientPortalAccount
+        authentication identity linked one-to-one to Patient
+
+External referring clinicians also use a distinct tenant-owned domain model:
+
+    ReferringClinician
+        external clinician identity
+
+    ClinicianPortalAccount
+        authentication identity linked one-to-one to ReferringClinician
+
+The existing tenant-user `doctor` role remains an internal laboratory role.
+It must not be repurposed as the external clinician portal identity because it
+currently participates in internal laboratory authorization and review
+workflows.
+
+Portal authentication uses a dedicated portal token mechanism after tenant
+resolution. Portal tokens must not be accepted by the existing internal
+Sanctum tenant-user authentication path.
+
+The required request order is:
+
+    resolve X-Tenant-Domain
+        -> activate tenant database context
+        -> authenticate portal token/account inside that tenant
+        -> derive patient or clinician ownership from the authenticated account
+        -> query only tenant-owned portal-safe records
+
+The browser must never authorize access by supplying a patient ID or clinician
+ID. Ownership is derived from the authenticated portal account.
+
+Patient and clinician portal V1 are read-only clinical-access surfaces.
+Patient-visible clinical values come from issued immutable laboratory reports,
+not draft, submitted or rejected internal test-result workflow state.
+
+Current report lineage rules remain authoritative:
+
+    issued current report
+        visible
+
+    amended current report
+        visible as the current version
+
+    superseded report
+        historical lineage only when explicitly exposed
+
+The clinician portal may display orders and reports only when the laboratory
+order is durably linked to the authenticated tenant-owned referring clinician.
+Free-text clinician-name matching is not an authorization mechanism.
+
+The existing `laboratory_orders.referring_clinician` text remains a historical
+display snapshot. A new nullable referring-clinician relationship may be added
+for durable authorization.
+
+Portal account provisioning is invitation-based. Public self-registration by
+MRN, date of birth, clinician name or similar identifiers is not part of the
+initial release.
+
+Portal delivery must not depend on the Notifications module. This milestone
+may emit notification-ready domain events and expose manual activation links.
+The following Notifications and Critical-Result Escalation milestone will
+consume those events for email, SMS or supported WhatsApp delivery.
+
+Reason:
+
+Patients and external clinicians are not internal laboratory operators.
+Reusing tenant-user authentication or broad internal Sanctum routes would
+create unnecessary privilege and cross-surface authorization risk.
+
+The database-per-tenant architecture also means tenant context must exist
+before portal account lookup. The same email address may validly exist in
+multiple tenants without creating a shared platform identity.
+
+Immutable issued laboratory reports already provide the strongest governed
+clinical artifact for external consumption and preserve report amendment
+lineage.
+
+Dependency review:
+
+ADR-028 originally placed Notifications before Patient and Clinician Portals.
+The approved delivery order now places Patient and Clinician Portals before
+Notifications and Critical-Result Escalation.
+
+This dependency change is accepted because the portal milestone does not
+implement notification transport. It creates notification-ready events and
+manual activation flows only. The next milestone remains responsible for
+message delivery, retry, escalation and channel configuration.
+
+Consequence:
+
+The active sequence after Referral Laboratory Management is:
+
+1. patient and clinician portals
+2. notifications and critical-result escalation
+3. analyzer integration
+4. HL7 and ASTM foundations
+5. FHIR interoperability
+6. advanced operational and commercial analytics
+7. deployment, monitoring, backups, disaster recovery and final production hardening
+
+Portal implementation must preserve:
+
+- database-per-tenant isolation
+- current internal tenant-user authentication
+- current patient clinical records
+- immutable laboratory-report governance
+- report amendment and supersession lineage
+- UUID public identifiers
+- tenant-first request resolution
+- explicit portal-safe API resources
+- complete cross-tenant isolation tests
+
+The binding portal architecture is recorded in:
+
+    docs/PATIENT_CLINICIAN_PORTALS_ARCHITECTURE.md
+
+The implementation order is recorded in:
+
+    docs/PATIENT_CLINICIAN_PORTALS_IMPLEMENTATION_SEQUENCE.md
+
+<!-- END ADR-031-PATIENT-CLINICIAN-PORTALS-2026-08-10 -->

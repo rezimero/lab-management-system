@@ -11,6 +11,8 @@ import {
   labTestPage,
   orderPatient,
   patientPage,
+  referringClinician,
+  referringClinicianPage,
 } from './laboratory-order-test/orderCreationFixtures';
 
 vi.mock('../api/client', () => ({
@@ -53,7 +55,11 @@ describe('laboratory order creation', { timeout: 30_000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getMock.mockImplementation((url) => Promise.resolve({
-      data: url === '/patients' ? patientPage : labTestPage,
+      data: url === '/patients'
+        ? patientPage
+        : url === '/referring-clinicians'
+          ? referringClinicianPage
+          : labTestPage,
     } as never));
     postMock.mockResolvedValue({ data: createdOrderResponse } as never);
   });
@@ -62,7 +68,15 @@ describe('laboratory order creation', { timeout: 30_000 }, () => {
     const user = await choosePatientAndTest();
     await user.click(screen.getByRole('combobox', { name: 'Priority' }));
     await user.click(screen.getByRole('option', { name: 'Urgent' }));
-    await user.type(screen.getByRole('textbox', { name: 'Referring clinician' }), 'Dr Musa Bello');
+    const clinicianInput = screen.getByRole(
+      'combobox',
+      { name: 'Referring clinician' }
+    );
+    await user.click(clinicianInput);
+    await user.click(await screen.findByRole(
+      'option',
+      { name: /Dr Musa Bello/i }
+    ));
     await user.type(screen.getByRole('textbox', { name: 'Clinical notes' }), 'Persistent fatigue');
     await user.click(screen.getByRole('button', { name: 'Create order' }));
 
@@ -71,7 +85,8 @@ describe('laboratory order creation', { timeout: 30_000 }, () => {
       {
         patient_id: orderPatient.id,
         priority: 'urgent',
-        referring_clinician: 'Dr Musa Bello',
+        referring_clinician_uuid:
+          referringClinician.uuid,
         clinical_notes: 'Persistent fatigue',
         items: [{ lab_test_id: bloodCountTest.id }],
       }

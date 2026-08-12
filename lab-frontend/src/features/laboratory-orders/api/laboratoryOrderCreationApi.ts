@@ -4,6 +4,7 @@ import type {
   OrderCreationResult,
   OrderLabTestOption,
   OrderPatientOption,
+  OrderReferringClinicianOption,
 } from '../types/laboratoryOrderCreation.types';
 import type {
   LaboratoryOrderResource,
@@ -42,6 +43,29 @@ export const fetchOrderPatients = async (
     },
   });
   return activeOnly(collection<OrderPatientOption>(response.data));
+};
+
+export const fetchOrderReferringClinicians = async (
+  search: string
+): Promise<OrderReferringClinicianOption[]> => {
+  const response = await api.get(
+    '/referring-clinicians',
+    {
+      params: {
+        page: 1,
+        per_page: 50,
+        search:
+          search.trim() || undefined,
+        is_active: 1,
+      },
+    }
+  );
+
+  return activeOnly(
+    collection<OrderReferringClinicianOption>(
+      response.data
+    )
+  );
 };
 
 export const fetchOrderLabTests = async (

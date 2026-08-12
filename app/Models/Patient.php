@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\Multitenancy\Models\Concerns\UsesTenantConnection;
 
 class Patient extends Model
@@ -34,9 +35,17 @@ class Patient extends Model
         return $this->hasMany(TestResult::class);
     }
 
+    public function portalAccount(): HasOne
+    {
+        return $this->hasOne(
+            PatientPortalAccount::class,
+            'patient_id'
+        );
+    }
+
     // Accessor for full name
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 }
