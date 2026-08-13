@@ -2,13 +2,18 @@
 
 namespace Tests\Feature\Tenant\LaboratoryReport;
 
+use App\Events\Tenant\Portal\LaboratoryReportAvailableForClinician;
+use App\Events\Tenant\Portal\LaboratoryReportAvailableForPatient;
+use App\Models\ClinicianPortalAccount;
 use App\Models\Patient;
+use App\Models\PatientPortalAccount;
+use App\Models\ReferringClinician;
 use App\Models\TenantProfile;
+use Illuminate\Support\Facades\Event;
 use LogicException;
 use Tests\Support\Tenant\LaboratoryReportTestCase;
 
-class TenantLaboratoryReportGenerationTest extends
-    LaboratoryReportTestCase
+class TenantLaboratoryReportGenerationTest extends LaboratoryReportTestCase
 {
     public function test_completed_order_generates_snapshot_report(): void
     {
@@ -142,7 +147,6 @@ class TenantLaboratoryReportGenerationTest extends
             );
     }
 
-
     public function test_signatory_snapshot_remains_unchanged(): void
     {
         $context = $this->authenticatedReportContext(
@@ -235,8 +239,8 @@ class TenantLaboratoryReportGenerationTest extends
                 'ISO 15189 accredited laboratory.'
             );
     }
-    public function test_order_cannot_generate_duplicate_report(): void
 
+    public function test_order_cannot_generate_duplicate_report(): void
     {
         $context = $this->authenticatedReportContext(
             'report-duplicate'
@@ -263,6 +267,95 @@ class TenantLaboratoryReportGenerationTest extends
             ->assertJsonValidationErrors(
                 'laboratory_order'
             );
+    }
+
+    public function test_issued_report_emits_portal_availability_events(): void
+    {
+        Event::fake([
+            LaboratoryReportAvailableForPatient::class,
+            LaboratoryReportAvailableForClinician::class,
+        ]);
+
+        $context = $this->authenticatedReportContext(
+            'report-portal-events'
+        );
+        $order = $this->createReportReadyOrder(
+            $context['tenant'],
+            $context['headers']
+        );
+
+        $portalAccounts = $this->runInTenant(
+            $context['tenant'],
+            function () use ($order): array {
+                $patientAccount = PatientPortalAccount::query()
+                    ->create([
+                        'patient_id' => $order->patient_id,
+                        'email' => 'report-patient@example.test',
+                        'password' => 'PortalPassword123!',
+                        'email_verified_at' => now(),
+                        'activated_at' => now(),
+                        'is_active' => true,
+                    ]);
+
+                $clinician = ReferringClinician::query()
+                    ->create([
+                        'name' => 'Dr Report Portal',
+                        'email' => 'report-clinician@example.test',
+                        'is_active' => true,
+                    ]);
+
+                $clinicianAccount = ClinicianPortalAccount::query()
+                    ->create([
+                        'referring_clinician_id' => (
+                            $clinician->getKey()
+                        ),
+                        'email' => 'report-clinician@example.test',
+                        'password' => 'PortalPassword123!',
+                        'email_verified_at' => now(),
+                        'activated_at' => now(),
+                        'is_active' => true,
+                    ]);
+
+                $order->update([
+                    'referring_clinician_id' => (
+                        $clinician->getKey()
+                    ),
+                    'referring_clinician' => $clinician->name,
+                ]);
+
+                return [
+                    'patient' => $patientAccount,
+                    'clinician' => $clinicianAccount,
+                ];
+            }
+        );
+
+        $response = $this->generateReport(
+            $context['headers'],
+            $order
+        )->assertCreated();
+
+        $reportUuid = (string) $response->json('data.uuid');
+
+        Event::assertDispatched(
+            LaboratoryReportAvailableForPatient::class,
+            fn (LaboratoryReportAvailableForPatient $event): bool => (
+                $event->tenantId === $context['tenant']->id
+                && $event->reportUuid === $reportUuid
+                && $event->accountUuid
+                    === $portalAccounts['patient']->uuid
+            )
+        );
+
+        Event::assertDispatched(
+            LaboratoryReportAvailableForClinician::class,
+            fn (LaboratoryReportAvailableForClinician $event): bool => (
+                $event->tenantId === $context['tenant']->id
+                && $event->reportUuid === $reportUuid
+                && $event->accountUuid
+                    === $portalAccounts['clinician']->uuid
+            )
+        );
     }
 
     public function test_issued_report_model_is_immutable(): void

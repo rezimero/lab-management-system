@@ -1,5 +1,6 @@
 import {
   FormEvent,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -10,6 +11,7 @@ import BusinessRounded from '@mui/icons-material/BusinessRounded';
 import DomainRounded from '@mui/icons-material/DomainRounded';
 import EmailRounded from '@mui/icons-material/EmailRounded';
 import LockRounded from '@mui/icons-material/LockRounded';
+import ScienceRounded from '@mui/icons-material/ScienceRounded';
 import ShieldRounded from '@mui/icons-material/ShieldRounded';
 import VisibilityOffRounded from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded';
@@ -40,6 +42,9 @@ import {
 
 import AuthShell from '../components/auth/AuthShell';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  fetchPortalTenantContext,
+} from '../features/portal-access/api/portalPublicApi';
 
 type AccessMode =
   | 'laboratory'
@@ -106,6 +111,11 @@ const Login = () => {
   const [error, setError] =
     useState<string | null>(null);
 
+  const [
+    portalTenantName,
+    setPortalTenantName,
+  ] = useState<string | null>(null);
+
   const isLaboratoryAccess =
     accessMode === 'laboratory';
 
@@ -116,6 +126,76 @@ const Login = () => {
 
     return 'Use your platform administrator credentials to access tenant operations.';
   }, [isLaboratoryAccess]);
+
+  const normalizedDomain = useMemo(
+    () => form.domain
+      .trim()
+      .toLowerCase(),
+    [form.domain]
+  );
+
+  const patientPortalPath = useMemo(
+    () => (
+      normalizedDomain
+        ? `/patient-portal/login?domain=${encodeURIComponent(
+            normalizedDomain
+          )}`
+        : '/patient-portal/login'
+    ),
+    [normalizedDomain]
+  );
+
+  const clinicianPortalPath = useMemo(
+    () => (
+      normalizedDomain
+        ? `/clinician-portal/login?domain=${encodeURIComponent(
+            normalizedDomain
+          )}`
+        : '/clinician-portal/login'
+    ),
+    [normalizedDomain]
+  );
+
+  useEffect(() => {
+    if (
+      !isLaboratoryAccess
+      || normalizedDomain.length < 2
+    ) {
+      setPortalTenantName(null);
+      return;
+    }
+
+    let active = true;
+
+    const timer = window.setTimeout(
+      () => {
+        void fetchPortalTenantContext(
+          normalizedDomain
+        )
+          .then((tenant) => {
+            if (active) {
+              setPortalTenantName(
+                tenant.name
+              );
+            }
+          })
+          .catch(() => {
+            if (active) {
+              setPortalTenantName(null);
+            }
+          });
+      },
+      350
+    );
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [
+    isLaboratoryAccess,
+    normalizedDomain,
+  ]);
 
   const updateField = (
     field: keyof LoginFormState,
@@ -533,10 +613,115 @@ const Login = () => {
           </Typography>
         </Box>
 
+        <Box
+          sx={{
+            mt: 3,
+            p: 1.75,
+            border: '1px solid',
+            borderColor: 'divider',
+            borderRadius: 3,
+            backgroundColor:
+              alpha('#246BFD', 0.025),
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1.2,
+              alignItems: 'flex-start',
+            }}
+          >
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                display: 'grid',
+                placeItems: 'center',
+                flexShrink: 0,
+                borderRadius: '11px',
+                color: 'primary.main',
+                backgroundColor:
+                  alpha('#246BFD', 0.09),
+              }}
+            >
+              <ScienceRounded
+                sx={{ fontSize: 20 }}
+              />
+            </Box>
+
+            <Box sx={{ minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.82rem',
+                  fontWeight: 720,
+                  lineHeight: 1.4,
+                }}
+              >
+                {portalTenantName
+                  ? `${portalTenantName} Portals`
+                  : 'Patient and clinician portals'}
+              </Typography>
+
+              <Typography
+                sx={{
+                  mt: 0.35,
+                  color: 'text.secondary',
+                  fontSize: '0.72rem',
+                  lineHeight: 1.55,
+                }}
+              >
+                Patient and clinician access uses
+                separate security sessions from
+                laboratory staff access.
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, minmax(0, 1fr))',
+              },
+              gap: 1,
+              mt: 1.5,
+            }}
+          >
+            <Button
+              component={Link}
+              to={patientPortalPath}
+              variant="outlined"
+              size="small"
+              sx={{
+                minHeight: 40,
+              }}
+            >
+              {portalTenantName
+                ? `${portalTenantName} Patient Portal`
+                : 'Patient sign in'}
+            </Button>
+
+            <Button
+              component={Link}
+              to={clinicianPortalPath}
+              variant="outlined"
+              size="small"
+              sx={{
+                minHeight: 40,
+              }}
+            >
+              {portalTenantName
+                ? `${portalTenantName} Clinician Portal`
+                : 'Clinician sign in'}
+            </Button>
+          </Box>
+        </Box>
+
         {isLaboratoryAccess && (
           <Box
             sx={{
-              mt: 4,
+              mt: 3,
               pt: 3,
               textAlign: 'center',
               borderTop: '1px solid',

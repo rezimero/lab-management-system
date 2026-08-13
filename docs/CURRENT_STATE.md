@@ -783,3 +783,111 @@ and report-governance workflow.
 Implementation has not begun at this documentation checkpoint.
 
 <!-- END REFERRAL-LABORATORY-MILESTONE-2026-08-04 -->
+
+<!-- BEGIN PATIENT-CLINICIAN-PORTALS-MILESTONE-2026-08-10 -->
+
+## Patient and Clinician Portals milestone
+
+Referral Laboratory Management is merged into `develop` through pull request
+#21.
+
+Verified merge baseline:
+
+    merge commit:
+        c6d7f42
+
+    feature completion commit:
+        d3cf477
+        feat(referrals): complete referral laboratory management
+
+The active product branch is:
+
+    feature/patient-clinician-portals
+
+The branch was created from clean, synchronized `develop`.
+
+The Patient and Clinician Portals architecture has now been inspected and
+frozen before implementation.
+
+Binding architecture:
+
+    docs/PATIENT_CLINICIAN_PORTALS_ARCHITECTURE.md
+
+Implementation sequence:
+
+    docs/PATIENT_CLINICIAN_PORTALS_IMPLEMENTATION_SEQUENCE.md
+
+Key architecture invariants:
+
+- every patient belongs to exactly one tenant
+- every referring clinician belongs to exactly one tenant
+- portal accounts are tenant-owned and live inside the tenant domain
+- patient and clinician portal authentication is separate from internal
+  tenant-user Sanctum authentication
+- tenant context is resolved before portal authentication
+- patient ownership is derived from the authenticated patient portal account
+- clinician ownership is derived from the authenticated clinician portal
+  account
+- the internal `doctor` role is not the external clinician portal identity
+- issued immutable laboratory reports are the V1 clinical visibility boundary
+- historical clinician-name text is not an authorization mechanism
+- public portal self-registration is outside V1
+- notification transport is deferred to the next milestone
+- this milestone emits notification-ready events and supports manual
+  activation flows
+
+The dependency order exception relative to ADR-028 is documented in ADR-031.
+
+Next implementation checkpoint:
+
+    P2 - portal identity and authentication foundation
+
+Temporary collectors, backups and debug artifacts must remain outside the
+repository under `%TEMP%` or `Downloads`.
+
+<!-- END PATIENT-CLINICIAN-PORTALS-MILESTONE-2026-08-10 -->
+
+<!-- BEGIN PATIENT-CLINICIAN-PORTALS-COMPLETION-2026-08-11 -->
+
+## Patient and Clinician Portals implementation completion
+
+The portal milestone is implemented through P9 on:
+
+    feature/patient-clinician-portals
+
+Delivered scope now includes:
+
+- dedicated tenant-first patient and clinician authentication
+- tenant-owned portal accounts, invitations and access tokens
+- durable referring-clinician order linkage
+- portal-safe patient and clinician read APIs and governed report PDFs
+- separate responsive patient and clinician frontend shells
+- internal portal-access administration
+- one-time invitation create, replace, revoke and activation flows
+- account enable/disable with immediate portal-token revocation
+- immutable tenant-owned portal security audit events
+- notification-ready invitation and issued-report events
+- frontend session, invitation, activation and regression coverage
+
+No notification provider, message transport or public self-registration is
+part of this milestone.
+
+Validation captured in the review workspace:
+
+    frontend typecheck: passed
+    frontend tests: 42 files / 156 tests passed
+    frontend production build: passed
+    PHP parser check: 572 files / 0 syntax failures
+
+The focused Laravel portal, clinician-linkage and report-generation tests must
+still be run in the developer's PHP environment before P10 staging or commit.
+No development database reset or recovery operation is required.
+
+Next checkpoint:
+
+    P10 - exact-path review, local backend validation and Git completion
+
+The next product module after P10 is Notifications and Critical-Result
+Escalation.
+
+<!-- END PATIENT-CLINICIAN-PORTALS-COMPLETION-2026-08-11 -->

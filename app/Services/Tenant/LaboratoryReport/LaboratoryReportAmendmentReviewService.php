@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
 use App\Models\TestResult;
 use App\Models\TestResultAmendment;
+use App\Services\Tenant\Portal\PortalReportAvailabilityService;
 use App\Services\Tenant\TestResult\TestResultEffectiveValueService;
 use App\Support\Tenant\TenantUserPermissionCatalog;
 use Illuminate\Database\QueryException;
@@ -26,7 +27,8 @@ class LaboratoryReportAmendmentReviewService
     public function __construct(
         private readonly LaboratoryReportAmendmentActorSnapshotFactory $actorSnapshotFactory,
         private readonly TestResultEffectiveValueService $effectiveValueService,
-        private readonly LaboratoryReportMediaSnapshotService $mediaSnapshotService
+        private readonly LaboratoryReportMediaSnapshotService $mediaSnapshotService,
+        private readonly PortalReportAvailabilityService $portalAvailability
     ) {}
 
     /**
@@ -126,6 +128,11 @@ class LaboratoryReportAmendmentReviewService
             $tenant->id,
             $sourceReport->uuid,
             $targetReport->uuid
+        );
+
+        $this->portalAvailability->dispatch(
+            $tenant->id,
+            $targetReport
         );
 
         return $approved;

@@ -11,6 +11,8 @@ import HubRounded from '@mui/icons-material/HubRounded';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import ScienceRounded from '@mui/icons-material/ScienceRounded';
 import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded';
+import MedicalServicesRounded from '@mui/icons-material/MedicalServicesRounded';
+import VpnKeyRounded from '@mui/icons-material/VpnKeyRounded';
 
 export interface NavigationItem {
   label: string;
@@ -126,6 +128,16 @@ export const buildNavigationGroups = (
           label: 'Laboratory profile',
           path: '/settings/laboratory-profile',
           icon: <BusinessRounded />,
+        },
+        {
+          label: 'Referring clinicians',
+          path: '/settings/referring-clinicians',
+          icon: <MedicalServicesRounded />,
+        },
+        {
+          label: 'Portal access',
+          path: '/settings/portal-access',
+          icon: <VpnKeyRounded />,
         },
         {
           label: 'Users and access',

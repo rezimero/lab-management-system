@@ -5,6 +5,7 @@ namespace App\Services\Tenant\LaboratoryReport;
 use App\Models\LaboratoryOrder;
 use App\Models\LaboratoryReport;
 use App\Models\Tenant;
+use App\Services\Tenant\Portal\PortalReportAvailabilityService;
 use App\Services\TenantProfileService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -18,7 +19,8 @@ class LaboratoryReportGenerationService
         private readonly LaboratoryReportEligibilityService $eligibilityService,
         private readonly LaboratoryReportSnapshotService $snapshotService,
         private readonly LaboratoryReportMediaSnapshotService $mediaSnapshotService,
-        private readonly TenantProfileService $tenantProfileService
+        private readonly TenantProfileService $tenantProfileService,
+        private readonly PortalReportAvailabilityService $portalAvailability
     ) {}
 
     /**
@@ -39,7 +41,7 @@ class LaboratoryReportGenerationService
         $reportUuid = (string) Str::uuid();
 
         try {
-            return DB::connection('tenant')->transaction(
+            $report = DB::connection('tenant')->transaction(
                 function () use (
                     $orderUuid,
                     $userId,
@@ -147,6 +149,13 @@ class LaboratoryReportGenerationService
 
             throw $exception;
         }
+
+        $this->portalAvailability->dispatch(
+            $tenant->id,
+            $report
+        );
+
+        return $report;
     }
 
     /**

@@ -5,9 +5,11 @@ namespace App\Services\Tenant\LaboratoryOrder;
 use App\Models\LaboratoryOrder;
 use App\Models\LabTest;
 use App\Models\Patient;
+use App\Models\ReferringClinician;
 use App\Models\Tenant\User as TenantUser;
 use App\Services\Tenant\Billing\PriceListService;
 use App\Services\Tenant\Branch\BranchSelectionService;
+use App\Services\Tenant\Portal\PortalAuditLogger;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -19,6 +21,7 @@ class LaboratoryOrderCreationService
     public function __construct(
         protected BranchSelectionService $branches,
         protected PriceListService $priceLists,
+        protected PortalAuditLogger $portalAudit,
     ) {}
 
     /**
@@ -27,6 +30,7 @@ class LaboratoryOrderCreationService
      *     collection_branch_uuid?: string|null,
      *     processing_branch_uuid?: string|null,
      *     price_list_uuid?: string|null,
+     *     referring_clinician_uuid?: string|null,
      *     referring_clinician?: string|null,
      *     priority: string,
      *     clinical_notes?: string|null,
@@ -52,6 +56,11 @@ class LaboratoryOrderCreationService
                         ],
                     ]);
                 }
+
+                $referringClinician = $this
+                    ->resolveReferringClinician(
+                        $data['referring_clinician_uuid'] ?? null
+                    );
 
                 $labTestIds = collect($data['items'])
                     ->pluck('lab_test_id')
@@ -130,7 +139,13 @@ class LaboratoryOrderCreationService
                     'collection_branch_id' => $branchSelection['collection']->getKey(),
                     'processing_branch_id' => $branchSelection['processing']->getKey(),
                     'price_list_id' => $priceList?->getKey(),
-                    'referring_clinician' => $data['referring_clinician'] ?? null,
+                    'referring_clinician_id' => (
+                        $referringClinician?->getKey()
+                    ),
+                    'referring_clinician' => (
+                        $referringClinician?->name
+                        ?? ($data['referring_clinician'] ?? null)
+                    ),
                     'priority' => $data['priority'],
                     'status' => 'pending',
                     'clinical_notes' => $data['clinical_notes'] ?? null,
@@ -161,16 +176,55 @@ class LaboratoryOrderCreationService
                     'total_amount' => $this->formatMinorUnits($totalMinorUnits),
                 ]);
 
+                if ($referringClinician !== null) {
+                    $this->portalAudit->tenantUser(
+                        'clinician_order_linked',
+                        $user,
+                        'laboratory_order',
+                        $order,
+                        [
+                            'referring_clinician_uuid' => (
+                                $referringClinician->uuid
+                            ),
+                        ]
+                    );
+                }
+
                 return $order->fresh()->load([
                     'patient',
                     'orderedBy',
                     'collectionBranch',
                     'processingBranch',
                     'priceList',
+                    'referringClinician',
                     'items',
                 ]);
             }
         );
+    }
+
+    private function resolveReferringClinician(
+        ?string $uuid
+    ): ?ReferringClinician {
+        if (blank($uuid)) {
+            return null;
+        }
+
+        $clinician = ReferringClinician::query()
+            ->where('uuid', $uuid)
+            ->where('is_active', true)
+            ->lockForUpdate()
+            ->first();
+
+        if ($clinician === null) {
+            throw ValidationException::withMessages([
+                'referring_clinician_uuid' => [
+                    'The selected referring clinician is unavailable or inactive.',
+                ],
+            ]);
+        }
+
+        return $clinician;
     }
 
     /**

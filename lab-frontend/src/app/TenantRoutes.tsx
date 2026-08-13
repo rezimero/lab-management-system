@@ -16,6 +16,8 @@ import {
   LaboratoryProfile,
   LaboratoryReports,
   ReferralLaboratories,
+  ReferringClinicians,
+  PortalAccess,
   LaboratoryReportView,
   LabTestForm,
   LabTests,
@@ -138,6 +140,18 @@ export const tenantRoutes = (
       path="/settings/laboratory-profile"
       element={protectAdministrator(
         <LaboratoryProfile />
+      )}
+    />
+    <Route
+      path="/settings/referring-clinicians"
+      element={protectAdministrator(
+        <ReferringClinicians />
+      )}
+    />
+    <Route
+      path="/settings/portal-access"
+      element={protectAdministrator(
+        <PortalAccess />
       )}
     />
     <Route

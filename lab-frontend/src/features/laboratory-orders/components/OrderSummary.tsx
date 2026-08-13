@@ -28,7 +28,7 @@ const OrderSummary = ({ order }: Props) => (
     }}>
       <Field label="Patient" value={order.patient?.full_name ?? 'Not recorded'} />
       <Field label="Medical record number" value={order.patient?.medical_record_number ?? 'Not recorded'} />
-      <Field label="Referring clinician" value={order.referring_clinician ?? 'Not recorded'} />
+      <Field label="Referring clinician" value={order.referring_clinician_record?.name ?? order.referring_clinician ?? 'Not recorded'} />
       <Field label="Ordered by" value={order.ordered_by?.name ?? 'Not recorded'} />
       <Field label="Ordered" value={formatOrderDate(order.ordered_at)} />
       <Field label="Sample collected" value={formatOrderDate(order.sample_collected_at)} />

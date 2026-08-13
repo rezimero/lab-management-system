@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import OrderCreationDetails from '../features/laboratory-orders/components/OrderCreationDetails';
 import OrderCreationHeader from '../features/laboratory-orders/components/OrderCreationHeader';
 import OrderPatientSelector from '../features/laboratory-orders/components/OrderPatientSelector';
+import OrderReferringClinicianSelector from '../features/laboratory-orders/components/OrderReferringClinicianSelector';
 import OrderTestSelector from '../features/laboratory-orders/components/OrderTestSelector';
 import SelectedOrderTests from '../features/laboratory-orders/components/SelectedOrderTests';
 import { useOrderCatalogues } from '../features/laboratory-orders/hooks/useOrderCatalogues';
@@ -52,6 +53,14 @@ const LaboratoryOrderCreate = () => {
                     onSearch={catalogues.setPatientSearch}
                     onChange={creation.setPatient}
                   />
+                  <OrderReferringClinicianSelector
+                    options={catalogues.clinicians}
+                    value={creation.state.referringClinician}
+                    loading={catalogues.cliniciansLoading}
+                    search={catalogues.clinicianSearch}
+                    onSearch={catalogues.setClinicianSearch}
+                    onChange={creation.setReferringClinician}
+                  />
                   <OrderTestSelector
                     options={catalogues.tests}
                     value={creation.state.tests}
@@ -62,10 +71,8 @@ const LaboratoryOrderCreate = () => {
                   />
                   <OrderCreationDetails
                     priority={creation.state.priority}
-                    referringClinician={creation.state.referringClinician}
                     clinicalNotes={creation.state.clinicalNotes}
                     onPriorityChange={creation.setPriority}
-                    onReferringClinicianChange={creation.setReferringClinician}
                     onClinicalNotesChange={creation.setClinicalNotes}
                   />
                 </Stack>

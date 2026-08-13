@@ -72,6 +72,20 @@ export const Users = lazy(
   () => import('../pages/Users')
 );
 
+export const ReferringClinicians = lazy(
+  () => import('../pages/ReferringClinicians')
+);
+
+export const PortalAccess = lazy(
+  () => import('../pages/PortalAccess')
+);
+
+export const PortalActivation = lazy(
+  () => import(
+    '../features/portal-access/pages/PortalActivation'
+  )
+);
+
 export const UserForm = lazy(
   () => import('../pages/UserForm')
 );
