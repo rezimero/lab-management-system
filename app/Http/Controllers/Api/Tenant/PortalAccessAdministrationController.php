@@ -12,6 +12,7 @@ use App\Models\PortalInvitation;
 use App\Models\Tenant\User as TenantUser;
 use App\Services\Tenant\Portal\PortalAccessAdministrationQueryService;
 use App\Services\Tenant\Portal\PortalInvitationService;
+use App\Services\Tenant\Portal\PortalPasswordResetService;
 use App\Support\Tenant\TenantUserPermissionCatalog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -22,7 +23,8 @@ class PortalAccessAdministrationController extends Controller
 {
     public function __construct(
         private readonly PortalAccessAdministrationQueryService $queries,
-        private readonly PortalInvitationService $invitations
+        private readonly PortalInvitationService $invitations,
+        private readonly PortalPasswordResetService $passwordResets
     ) {}
 
     public function patients(
@@ -121,6 +123,21 @@ class PortalAccessAdministrationController extends Controller
         );
     }
 
+    public function sendPatientPasswordReset(
+        Request $request,
+        string $account
+    ): JsonResponse {
+        $this->passwordResets->requestByAdministrator(
+            PortalInvitation::ACCOUNT_PATIENT,
+            $account,
+            $this->authorizeManager($request)
+        );
+
+        return response()->json([
+            'message' => 'A secure patient password reset request was recorded for delivery.',
+        ], Response::HTTP_ACCEPTED);
+    }
+
     public function activateClinicianAccount(
         Request $request,
         string $account
@@ -143,6 +160,21 @@ class PortalAccessAdministrationController extends Controller
             $account,
             false
         );
+    }
+
+    public function sendClinicianPasswordReset(
+        Request $request,
+        string $account
+    ): JsonResponse {
+        $this->passwordResets->requestByAdministrator(
+            PortalInvitation::ACCOUNT_CLINICIAN,
+            $account,
+            $this->authorizeManager($request)
+        );
+
+        return response()->json([
+            'message' => 'A secure clinician password reset request was recorded for delivery.',
+        ], Response::HTTP_ACCEPTED);
     }
 
     public function revokeInvitation(

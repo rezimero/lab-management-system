@@ -70,6 +70,14 @@ Route::prefix('portal-access')->group(function (): void {
         ]
     );
 
+    Route::post(
+        '/patient-accounts/{account}/password-reset',
+        [
+            PortalAccessAdministrationController::class,
+            'sendPatientPasswordReset',
+        ]
+    );
+
     Route::patch(
         '/clinician-accounts/{account}/activate',
         [
@@ -83,6 +91,14 @@ Route::prefix('portal-access')->group(function (): void {
         [
             PortalAccessAdministrationController::class,
             'deactivateClinicianAccount',
+        ]
+    );
+
+    Route::post(
+        '/clinician-accounts/{account}/password-reset',
+        [
+            PortalAccessAdministrationController::class,
+            'sendClinicianPasswordReset',
         ]
     );
 

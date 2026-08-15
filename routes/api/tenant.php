@@ -205,6 +205,12 @@ Route::middleware([
     require __DIR__.'/tenant/portal-access.php';
 
     // ============================================
+    // NOTIFICATIONS / CRITICAL-RESULT ESCALATION
+    // ============================================
+
+    require __DIR__.'/tenant/notifications.php';
+
+    // ============================================
     // LABORATORY ORDERS
     // ============================================
 

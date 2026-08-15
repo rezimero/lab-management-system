@@ -2,9 +2,10 @@
 
 namespace App\Events\Tenant\Portal;
 
+use Illuminate\Contracts\Events\ShouldDispatchAfterCommit;
 use Illuminate\Foundation\Events\Dispatchable;
 
-class PatientPortalInvitationCreated
+class PatientPortalInvitationCreated implements ShouldDispatchAfterCommit
 {
     use Dispatchable;
 

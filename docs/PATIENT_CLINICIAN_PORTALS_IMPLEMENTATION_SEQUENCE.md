@@ -2,11 +2,11 @@
 
 Status:
 
-    Implemented through P9; P10 verification and Git completion pending
+    Completed through P10 and merged into develop in PR #22
 
 Branch:
 
-    feature/patient-clinician-portals
+    merged; historical branch feature/patient-clinician-portals removed
 
 ## P1 - Architecture and dependency review
 
@@ -196,6 +196,14 @@ Validate:
 - frontend typecheck/build
 
 ## P10 - Git and GitHub completion
+
+Status:
+
+    Completed 12 August 2026
+
+Verified merge baseline:
+
+    develop at d96eb5d4f35f5a8b4977cdbd8b05c0f0741a082f
 
 Required:
 

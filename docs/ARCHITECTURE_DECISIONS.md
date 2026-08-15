@@ -1307,3 +1307,66 @@ The implementation order is recorded in:
     docs/PATIENT_CLINICIAN_PORTALS_IMPLEMENTATION_SEQUENCE.md
 
 <!-- END ADR-031-PATIENT-CLINICIAN-PORTALS-2026-08-10 -->
+
+<!-- BEGIN ADR-032-NOTIFICATIONS-CRITICAL-RESULTS-2026-08-13 -->
+
+## ADR-032: Notifications Use a Tenant-Owned Durable Outbox and Explicit Critical-Result Escalation
+
+Status:
+
+    Accepted for implementation
+
+Decision:
+
+Notification inbox, preference, delivery, password-reset and critical-result
+records belong to the same tenant database as their originating clinical or
+portal aggregate. External delivery is mediated by an encrypted durable
+outbox. Delivery jobs are tenant-aware but are stored through the landlord
+queue connection so queue infrastructure is not bound to an arbitrary current
+tenant database.
+
+Report issuance, invitation/reset token creation and critical-result approval
+must record their corresponding outbox data within the same tenant transaction.
+Queue dispatch occurs after commit and scheduled recovery redispatches durable
+pending rows.
+
+Critical detection uses the existing explicit approved result-row
+`flag: critical`; the module does not infer thresholds. A record remains open
+until an authorized responder acknowledges it, and it must be acknowledged
+before resolution. Overdue open records escalate repeatedly without deleting
+or silently resolving evidence.
+
+Email messages are intentionally sparse and point recipients back to an
+authenticated secure surface. Patient identity, MRN, order/report numbers,
+result values, passwords and reset/invitation tokens are not written into
+ordinary email body text or application logs. Pending destinations and payloads
+are encrypted and redacted after terminal successful/simulated delivery.
+
+SMS and WhatsApp are disabled capabilities until a provider integration,
+credential boundary, delivery-receipt model and signed webhook contract are
+approved. An unavailable channel must never be represented as sent.
+
+Reason:
+
+Direct synchronous email is not a reliable clinical or account-security
+record. A durable tenant outbox preserves idempotency, retry state and audit
+evidence while allowing the request transaction to remain authoritative.
+Explicit critical flags preserve existing clinical validation ownership and
+avoid unreviewed reference-range inference.
+
+Consequence:
+
+- one additive tenant migration creates five module tables;
+- a queue worker and scheduler are required for asynchronous delivery and
+  escalation;
+- external mail is at-least-once at the transport boundary, so templates must
+  remain safe if a provider receives a duplicate after an ambiguous failure;
+- production configuration requires a reviewed mail transport and public HTTPS
+  frontend URL;
+- provider-specific SMS/WhatsApp and production deployment remain separate
+  decisions.
+
+Binding detail is recorded in
+`docs/NOTIFICATIONS_CRITICAL_RESULTS_ARCHITECTURE.md`.
+
+<!-- END ADR-032-NOTIFICATIONS-CRITICAL-RESULTS-2026-08-13 -->

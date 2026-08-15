@@ -2,11 +2,11 @@
 
 Status:
 
-    Approved for implementation
+    Accepted and implemented; merged in PR #22
 
 Architecture checkpoint:
 
-    P1
+    P10 complete
 
 Date:
 
@@ -14,7 +14,7 @@ Date:
 
 Branch:
 
-    feature/patient-clinician-portals
+    merged into develop at d96eb5d4f35f5a8b4977cdbd8b05c0f0741a082f
 
 ## 1. Purpose
 

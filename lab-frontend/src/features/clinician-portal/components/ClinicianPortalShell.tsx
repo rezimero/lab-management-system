@@ -21,6 +21,8 @@ import PeopleAltRounded from
   '@mui/icons-material/PeopleAltRounded';
 import AssignmentRounded from
   '@mui/icons-material/AssignmentRounded';
+import NotificationsRounded from
+  '@mui/icons-material/NotificationsRounded';
 
 import {
   AppBar,
@@ -78,6 +80,11 @@ const navItems: NavItem[] = [
     label: 'Reports',
     path: '/clinician-portal/reports',
     icon: <AssessmentRounded fontSize="small" />,
+  },
+  {
+    label: 'Notifications',
+    path: '/clinician-portal/notifications',
+    icon: <NotificationsRounded fontSize="small" />,
   },
 ];
 

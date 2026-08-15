@@ -38,6 +38,12 @@ describe('laboratory profile navigation', () => {
         }),
       ])
     );
+
+    expect(
+      groups
+        .flatMap((group) => group.items)
+        .some((item) => item.path === '/notifications')
+    ).toBe(true);
   });
 
   it('hides administration from other roles', () => {

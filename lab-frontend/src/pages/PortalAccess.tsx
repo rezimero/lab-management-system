@@ -27,6 +27,7 @@ import {
   fetchPortalAccessSubjects,
   issuePortalInvitation,
   revokePortalInvitation,
+  sendPortalPasswordReset,
   setPortalAccountActive,
 } from '../features/portal-access/api/portalAccessAdminApi';
 
@@ -72,6 +73,8 @@ const PortalAccess = () => {
   const [loading, setLoading] =
     useState(true);
   const [error, setError] =
+    useState<string | null>(null);
+  const [notice, setNotice] =
     useState<string | null>(null);
   const [search, setSearch] =
     useState('');
@@ -229,6 +232,41 @@ const PortalAccess = () => {
     }
   };
 
+  const resetPassword = async (
+    row: PortalAccessRow
+  ) => {
+    if (!row.account) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Send a one-time password reset link to ${row.account.email}? The administrator will never see or choose the password.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const identifier = rowIdentifier(row);
+    setBusyUuid(identifier);
+    setError(null);
+    setNotice(null);
+
+    try {
+      setNotice(await sendPortalPasswordReset(
+        row.subject_type,
+        row.account.uuid
+      ));
+    } catch (requestError: unknown) {
+      setError(apiErrorMessage(
+        requestError,
+        'Failed to send the portal password reset link.'
+      ));
+    } finally {
+      setBusyUuid(null);
+    }
+  };
+
   return (
     <Layout title="Portal access">
       <Stack spacing={2.5} sx={{ width: '100%' }}>
@@ -254,6 +292,15 @@ const PortalAccess = () => {
             onClose={() => setError(null)}
           >
             {error}
+          </Alert>
+        )}
+
+        {notice && (
+          <Alert
+            severity="success"
+            onClose={() => setNotice(null)}
+          >
+            {notice}
           </Alert>
         )}
 
@@ -321,11 +368,14 @@ const PortalAccess = () => {
             onRevokeInvitation={(row) => {
               void revokeInvitation(row);
             }}
+            onPasswordReset={(row) => {
+              void resetPassword(row);
+            }}
           />
         </Paper>
 
         <Alert severity="info" icon={<KeyRounded />}>
-          Activation links are displayed once for manual copying. Email, SMS and WhatsApp delivery will be owned by the notifications module.
+          Activation and password-reset links are delivered through the retry-safe notification outbox. SMS and WhatsApp remain unavailable until reviewed providers are configured.
         </Alert>
       </Stack>
 

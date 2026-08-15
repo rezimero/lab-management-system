@@ -136,6 +136,11 @@ class LaboratoryReportGenerationService
                             'generated_at' => now(),
                         ]);
 
+                    $this->portalAvailability->dispatch(
+                        $tenant->id,
+                        $report
+                    );
+
                     return $report->load(
                         'generatedBy'
                     );
@@ -149,11 +154,6 @@ class LaboratoryReportGenerationService
 
             throw $exception;
         }
-
-        $this->portalAvailability->dispatch(
-            $tenant->id,
-            $report
-        );
 
         return $report;
     }

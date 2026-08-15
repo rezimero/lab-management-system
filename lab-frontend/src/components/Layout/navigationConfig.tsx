@@ -13,6 +13,7 @@ import ScienceRounded from '@mui/icons-material/ScienceRounded';
 import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded';
 import MedicalServicesRounded from '@mui/icons-material/MedicalServicesRounded';
 import VpnKeyRounded from '@mui/icons-material/VpnKeyRounded';
+import NotificationsActiveRounded from '@mui/icons-material/NotificationsActiveRounded';
 
 export interface NavigationItem {
   label: string;
@@ -38,6 +39,11 @@ export const buildNavigationGroups = (
           label: 'Overview',
           path: '/dashboard',
           icon: <DashboardRounded />,
+        },
+        {
+          label: 'Notifications',
+          path: '/notifications',
+          icon: <NotificationsActiveRounded />,
         },
       ],
     },

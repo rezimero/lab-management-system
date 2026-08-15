@@ -3,6 +3,8 @@ import axios from 'axios';
 import type {
   PortalActivationResult,
   PortalInvitationInspection,
+  PortalPasswordResetInspection,
+  PortalPasswordResetResult,
 } from '../types/portalAccessAdmin.types';
 
 export interface PortalTenantContext {
@@ -82,6 +84,69 @@ export const activatePortalInvitation = async (
   >(
     '/portal/activation/complete',
     {
+      token,
+      password,
+      password_confirmation: passwordConfirmation,
+    },
+    {
+      headers: portalActivationHeaders(domain),
+    }
+  );
+
+  return response.data;
+};
+
+export const requestPortalPasswordReset = async (
+  domain: string,
+  accountType: 'patient' | 'clinician',
+  email: string
+): Promise<string> => {
+  const response = await portalPublicClient.post<{
+    message: string;
+  }>(
+    '/portal/password-reset/request',
+    {
+      domain,
+      account_type: accountType,
+      email,
+    },
+    {
+      headers: portalActivationHeaders(domain),
+    }
+  );
+
+  return response.data.message;
+};
+
+export const inspectPortalPasswordReset = async (
+  domain: string,
+  token: string
+): Promise<PortalPasswordResetInspection> => {
+  const response = await portalPublicClient.post<
+    PortalPasswordResetInspection
+  >(
+    '/portal/password-reset/inspect',
+    { domain, token },
+    {
+      headers: portalActivationHeaders(domain),
+    }
+  );
+
+  return response.data;
+};
+
+export const completePortalPasswordReset = async (
+  domain: string,
+  token: string,
+  password: string,
+  passwordConfirmation: string
+): Promise<PortalPasswordResetResult> => {
+  const response = await portalPublicClient.post<
+    PortalPasswordResetResult
+  >(
+    '/portal/password-reset/complete',
+    {
+      domain,
       token,
       password,
       password_confirmation: passwordConfirmation,

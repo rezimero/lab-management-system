@@ -30,6 +30,9 @@ import PatientPortalReportDetail from
 import PatientPortalReports from
   '../pages/PatientPortalReports';
 
+import PatientPortalNotifications from
+  '../pages/PatientPortalNotifications';
+
 import {
   PatientPortalAuthProvider,
 } from '../context/PatientPortalAuthContext';
@@ -76,6 +79,11 @@ const PatientPortalRoutes = () => (
       <Route
         path="reports/:reportUuid"
         element={<PatientPortalReportDetail />}
+      />
+
+      <Route
+        path="notifications"
+        element={<PatientPortalNotifications />}
       />
     </Route>
 

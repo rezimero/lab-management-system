@@ -78,6 +78,12 @@ final class TenantUserPermissionCatalog
 
     public const MANAGE_PORTAL_ACCESS = 'manage_portal_access';
 
+    public const VIEW_NOTIFICATIONS = 'view_notifications';
+
+    public const ACKNOWLEDGE_CRITICAL_RESULTS = (
+        'acknowledge_critical_results'
+    );
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -113,6 +119,8 @@ final class TenantUserPermissionCatalog
             self::CAPTURE_REFERRAL_RESULTS,
             self::VIEW_REFERRING_CLINICIANS,
             self::MANAGE_PORTAL_ACCESS,
+            self::VIEW_NOTIFICATIONS,
+            self::ACKNOWLEDGE_CRITICAL_RESULTS,
         ],
 
         'admin' => [
@@ -144,6 +152,8 @@ final class TenantUserPermissionCatalog
             self::CAPTURE_REFERRAL_RESULTS,
             self::VIEW_REFERRING_CLINICIANS,
             self::MANAGE_PORTAL_ACCESS,
+            self::VIEW_NOTIFICATIONS,
+            self::ACKNOWLEDGE_CRITICAL_RESULTS,
         ],
 
         'lab_technician' => [
@@ -162,6 +172,8 @@ final class TenantUserPermissionCatalog
             self::DISPATCH_REFERRALS,
             self::CAPTURE_REFERRAL_RESULTS,
             self::VIEW_REFERRING_CLINICIANS,
+            self::VIEW_NOTIFICATIONS,
+            self::ACKNOWLEDGE_CRITICAL_RESULTS,
         ],
 
         'receptionist' => [
@@ -173,6 +185,7 @@ final class TenantUserPermissionCatalog
             self::RECORD_PAYMENTS,
             self::VIEW_REFERRALS,
             self::VIEW_REFERRING_CLINICIANS,
+            self::VIEW_NOTIFICATIONS,
         ],
 
         'doctor' => [
@@ -186,6 +199,8 @@ final class TenantUserPermissionCatalog
             self::VIEW_BILLING,
             self::VIEW_REFERRALS,
             self::VIEW_REFERRING_CLINICIANS,
+            self::VIEW_NOTIFICATIONS,
+            self::ACKNOWLEDGE_CRITICAL_RESULTS,
         ],
     ];
 

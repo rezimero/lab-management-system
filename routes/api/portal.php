@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\Portal\ClinicianPortalReadController;
 use App\Http\Controllers\Api\Portal\PatientPortalAuthController;
 use App\Http\Controllers\Api\Portal\PatientPortalReadController;
 use App\Http\Controllers\Api\Portal\PortalInvitationActivationController;
+use App\Http\Controllers\Api\Portal\PortalNotificationController;
+use App\Http\Controllers\Api\Portal\PortalPasswordResetController;
 use App\Http\Controllers\Api\Portal\PortalTenantContextController;
 use App\Http\Middleware\AuthenticatePortalAccessToken;
 use App\Http\Middleware\SetTenantContext;
@@ -35,6 +37,27 @@ Route::prefix('portal')->group(function (): void {
                 PortalInvitationActivationController::class,
                 'activate',
             ]);
+        });
+
+    Route::prefix('password-reset')
+        ->middleware([
+            SetTenantContext::class.':required',
+        ])
+        ->group(function (): void {
+            Route::post('/request', [
+                PortalPasswordResetController::class,
+                'request',
+            ])->middleware('throttle:portal-password-reset-request');
+
+            Route::post('/inspect', [
+                PortalPasswordResetController::class,
+                'inspect',
+            ])->middleware('throttle:portal-password-reset-complete');
+
+            Route::post('/complete', [
+                PortalPasswordResetController::class,
+                'complete',
+            ])->middleware('throttle:portal-password-reset-complete');
         });
 
     Route::prefix('patient')
@@ -85,6 +108,39 @@ Route::prefix('portal')->group(function (): void {
                 Route::get('/reports/{report}', [
                     PatientPortalReadController::class,
                     'report',
+                ]);
+
+                Route::get('/notifications', [
+                    PortalNotificationController::class,
+                    'index',
+                ]);
+
+                Route::get('/notifications/unread-count', [
+                    PortalNotificationController::class,
+                    'unreadCount',
+                ]);
+
+                Route::patch('/notifications/read-all', [
+                    PortalNotificationController::class,
+                    'markAllRead',
+                ]);
+
+                Route::patch(
+                    '/notifications/{notification}/read',
+                    [
+                        PortalNotificationController::class,
+                        'markRead',
+                    ]
+                );
+
+                Route::get('/notification-preferences', [
+                    PortalNotificationController::class,
+                    'preferences',
+                ]);
+
+                Route::put('/notification-preferences', [
+                    PortalNotificationController::class,
+                    'updatePreference',
                 ]);
             });
         });
@@ -142,6 +198,39 @@ Route::prefix('portal')->group(function (): void {
                 Route::get('/reports/{report}', [
                     ClinicianPortalReadController::class,
                     'report',
+                ]);
+
+                Route::get('/notifications', [
+                    PortalNotificationController::class,
+                    'index',
+                ]);
+
+                Route::get('/notifications/unread-count', [
+                    PortalNotificationController::class,
+                    'unreadCount',
+                ]);
+
+                Route::patch('/notifications/read-all', [
+                    PortalNotificationController::class,
+                    'markAllRead',
+                ]);
+
+                Route::patch(
+                    '/notifications/{notification}/read',
+                    [
+                        PortalNotificationController::class,
+                        'markRead',
+                    ]
+                );
+
+                Route::get('/notification-preferences', [
+                    PortalNotificationController::class,
+                    'preferences',
+                ]);
+
+                Route::put('/notification-preferences', [
+                    PortalNotificationController::class,
+                    'updatePreference',
                 ]);
             });
         });
