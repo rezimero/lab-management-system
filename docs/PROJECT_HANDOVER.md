@@ -661,8 +661,8 @@ Planned sequence status:
 18. barcode labels and specimen chain of custody - pending
 19. reagents, consumables and inventory - pending
 20. referral laboratory and send-out workflow - pending
-21. notifications and critical-result escalation - pending
-22. patient and clinician portals - pending
+21. patient and clinician portals - completed and merged in PR #22
+22. notifications and critical-result escalation - implementation candidate; N8 validation and Git completion pending
 23. analyzer integration framework - pending
 24. HL7, ASTM, FHIR and external-system interoperability - pending
 25. operational and commercial analytics - pending
@@ -972,3 +972,50 @@ P10 remains the only portal checkpoint. After P10 is verified and committed,
 the next product module is Notifications and Critical-Result Escalation.
 
 <!-- END PATIENT-CLINICIAN-PORTALS-COMPLETION-HANDOVER-2026-08-11 -->
+
+<!-- BEGIN NOTIFICATIONS-CRITICAL-RESULTS-HANDOVER-2026-08-13 -->
+
+## Notifications and Critical-Result Escalation handover
+
+Portal pull request #22 is merged and verified on `develop` at
+`d96eb5d4f35f5a8b4977cdbd8b05c0f0741a082f`. The next branch is
+`feature/notifications-critical-results`.
+
+The implementation candidate includes tenant-scoped internal and portal
+inboxes, user preferences, an encrypted email outbox, tenant-aware queued
+delivery, portal invitation/report-ready mail, secure patient/clinician
+password reset and a governed critical-result escalation lifecycle.
+
+Clinical and security boundaries:
+
+- tenant context is established before every message, reset or escalation
+  query;
+- one-time tokens are hashed in their authoritative table and occur only in
+  encrypted pending delivery payloads;
+- external email excludes patient identifiers and result/report content;
+- administrators send a reset link and never set, receive or view a portal
+  password;
+- password completion revokes active portal sessions;
+- critical-result email is only a prompt to sign in to the secure workspace;
+- critical escalation is mandatory for authorized responders and cannot be
+  disabled by a preference;
+- SMS and WhatsApp are unavailable rather than simulated as successful.
+
+The sole development tenant remains `development` (ID 12) in
+`tenant_s4d0mhau_development`, owned by landlord `lab_saas_landlord`. Only the
+single reviewed additive migration may be applied there. Automated validation
+must use `lab_saas_landlord_test` and dynamically created test tenants.
+
+Read these module documents before continuation:
+
+1. `docs/NOTIFICATIONS_CRITICAL_RESULTS_ARCHITECTURE.md`;
+2. `docs/NOTIFICATIONS_CRITICAL_RESULTS_IMPLEMENTATION_SEQUENCE.md`;
+3. this handover entry;
+4. ADR-032 in `docs/ARCHITECTURE_DECISIONS.md`.
+
+Next action is N8: source preview/apply, additive development migration,
+complete automated validation, concise browser acceptance, then one reviewed
+GitHub PR/CI/merge completion. No production deployment is authorized because
+no reviewed deployment workflow or target exists.
+
+<!-- END NOTIFICATIONS-CRITICAL-RESULTS-HANDOVER-2026-08-13 -->

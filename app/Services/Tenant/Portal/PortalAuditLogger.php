@@ -14,6 +14,27 @@ class PortalAuditLogger
     /**
      * @param  array<string, mixed>  $metadata
      */
+    public function system(
+        string $event,
+        string $subjectType,
+        Model $subject,
+        array $metadata = []
+    ): PortalAuditEvent {
+        return $this->record(
+            event: $event,
+            actorType: 'system',
+            actorId: null,
+            actorUuid: null,
+            actorSnapshot: null,
+            subjectType: $subjectType,
+            subject: $subject,
+            metadata: $metadata,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
     public function tenantUser(
         string $event,
         TenantUser $actor,

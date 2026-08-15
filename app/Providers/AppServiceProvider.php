@@ -70,6 +70,51 @@ class AppServiceProvider extends ServiceProvider
             }
         );
 
+        RateLimiter::for(
+            'portal-password-reset-request',
+            function (Request $request): Limit {
+                $tenantId = $request->attributes
+                    ->get('tenant')
+                    ?->getKey();
+                $email = strtolower(trim(
+                    (string) $request->input('email')
+                ));
+                $accountType = strtolower(trim(
+                    (string) $request->input('account_type')
+                ));
+
+                return Limit::perMinute(3)->by(
+                    hash('sha256', implode('|', [
+                        (string) $tenantId,
+                        $accountType,
+                        $email,
+                        (string) $request->ip(),
+                    ]))
+                );
+            }
+        );
+
+        RateLimiter::for(
+            'portal-password-reset-complete',
+            function (Request $request): Limit {
+                $tenantId = $request->attributes
+                    ->get('tenant')
+                    ?->getKey();
+                $tokenFingerprint = hash(
+                    'sha256',
+                    trim((string) $request->input('token'))
+                );
+
+                return Limit::perMinute(10)->by(
+                    hash('sha256', implode('|', [
+                        (string) $tenantId,
+                        $tokenFingerprint,
+                        (string) $request->ip(),
+                    ]))
+                );
+            }
+        );
+
         $this->loadMigrationsFrom(
             database_path(
                 'migrations/landlord'

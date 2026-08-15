@@ -29,6 +29,7 @@ import {
 import {
   LandlordDashboard,
   PortalActivation,
+  PortalPasswordReset,
 } from './routeComponents';
 
 import {
@@ -43,6 +44,11 @@ export const AppRoutes = () => (
       <Route
         path="/portal/activate"
         element={<PortalActivation />}
+      />
+
+      <Route
+        path="/portal/reset-password"
+        element={<PortalPasswordReset />}
       />
 
       <Route

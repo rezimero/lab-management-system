@@ -8,6 +8,7 @@ use App\Models\LaboratoryReferralEvent;
 use App\Models\LaboratoryReferralResult;
 use App\Models\Tenant\User as TenantUser;
 use App\Models\TestResult;
+use App\Services\Tenant\Notification\CriticalResultEscalationService;
 use App\Services\Tenant\Referral\ReferralActorSnapshotFactory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +31,8 @@ class TestResultWorkflowService
 
     public function __construct(
         private readonly TestResultSubmissionValidator $submissionValidator,
-        private readonly ReferralActorSnapshotFactory $actorSnapshots
+        private readonly ReferralActorSnapshotFactory $actorSnapshots,
+        private readonly CriticalResultEscalationService $criticalEscalations
     ) {}
 
     /**
@@ -112,6 +114,23 @@ class TestResultWorkflowService
                     $userId,
                     $reviewedAt
                 );
+
+                $criticalCount = collect($result->results_data ?? [])
+                    ->filter(
+                        static fn (mixed $row): bool => (
+                            is_array($row)
+                            && strtolower((string) ($row['flag'] ?? ''))
+                                === 'critical'
+                        )
+                    )
+                    ->count();
+
+                if ($criticalCount > 0) {
+                    $this->criticalEscalations->recordApproved(
+                        $result->uuid,
+                        $criticalCount
+                    );
+                }
 
                 return $this->refreshResult($result);
             },

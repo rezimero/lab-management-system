@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
 use App\Models\TestResult;
 use App\Models\TestResultAmendment;
+use App\Services\Tenant\Notification\CriticalResultEscalationService;
 use App\Services\Tenant\Portal\PortalReportAvailabilityService;
 use App\Services\Tenant\TestResult\TestResultEffectiveValueService;
 use App\Support\Tenant\TenantUserPermissionCatalog;
@@ -28,7 +29,8 @@ class LaboratoryReportAmendmentReviewService
         private readonly LaboratoryReportAmendmentActorSnapshotFactory $actorSnapshotFactory,
         private readonly TestResultEffectiveValueService $effectiveValueService,
         private readonly LaboratoryReportMediaSnapshotService $mediaSnapshotService,
-        private readonly PortalReportAvailabilityService $portalAvailability
+        private readonly PortalReportAvailabilityService $portalAvailability,
+        private readonly CriticalResultEscalationService $criticalEscalations
     ) {}
 
     /**
@@ -41,6 +43,7 @@ class LaboratoryReportAmendmentReviewService
         $this->assertReviewerPermission($reviewer);
 
         $tenant = $this->currentTenant();
+        $tenantId = (int) $tenant->getKey();
         $reviewerSnapshot = $this
             ->actorSnapshotFactory
             ->make($reviewer);
@@ -56,13 +59,15 @@ class LaboratoryReportAmendmentReviewService
                         $amendmentUuid,
                         $reviewer,
                         $reviewerSnapshot,
-                        $targetReportUuid
+                        $targetReportUuid,
+                        $tenantId
                     ): LaboratoryReportAmendment {
                         return $this->approveLocked(
                             $amendmentUuid,
                             $reviewer,
                             $reviewerSnapshot,
-                            $targetReportUuid
+                            $targetReportUuid,
+                            $tenantId
                         );
                     },
                     1
@@ -128,11 +133,6 @@ class LaboratoryReportAmendmentReviewService
             $tenant->id,
             $sourceReport->uuid,
             $targetReport->uuid
-        );
-
-        $this->portalAvailability->dispatch(
-            $tenant->id,
-            $targetReport
         );
 
         return $approved;
@@ -224,7 +224,8 @@ class LaboratoryReportAmendmentReviewService
         string $amendmentUuid,
         TenantUser $reviewer,
         array $reviewerSnapshot,
-        string $targetReportUuid
+        string $targetReportUuid,
+        int $tenantId
     ): LaboratoryReportAmendment {
         $amendment = LaboratoryReportAmendment::query()
             ->where('uuid', $amendmentUuid)
@@ -439,7 +440,7 @@ class LaboratoryReportAmendmentReviewService
 
             $resultAmendmentUuid = (string) Str::uuid();
 
-            TestResultAmendment::query()->create([
+            $resultAmendment = TestResultAmendment::query()->create([
                 'uuid' => $resultAmendmentUuid,
                 'laboratory_report_amendment_id' => (
                     $amendment->id
@@ -472,6 +473,27 @@ class LaboratoryReportAmendmentReviewService
                 'approved_at' => $approvedAt,
                 'created_at' => $approvedAt,
             ]);
+
+            $criticalCount = collect(
+                $resultAmendment->corrected_results_data ?? []
+            )
+                ->filter(
+                    static fn (mixed $row): bool => (
+                        is_array($row)
+                        && strtolower((string) ($row['flag'] ?? ''))
+                            === 'critical'
+                    )
+                )
+                ->count();
+
+            if ($criticalCount > 0) {
+                $this->criticalEscalations->recordApproved(
+                    $result->uuid,
+                    $criticalCount,
+                    'test-result-amendment:'
+                        .$resultAmendment->uuid
+                );
+            }
 
             $targetItem['result_amendment_uuid'] = (
                 $resultAmendmentUuid
@@ -539,6 +561,11 @@ class LaboratoryReportAmendmentReviewService
             'reviewed_at' => $approvedAt,
             'rejection_reason' => null,
         ])->save();
+
+        $this->portalAvailability->dispatch(
+            $tenantId,
+            $targetReport
+        );
 
         return $amendment->fresh();
     }

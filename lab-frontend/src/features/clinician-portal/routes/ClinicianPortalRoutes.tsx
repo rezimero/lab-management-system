@@ -33,6 +33,9 @@ import ClinicianPortalReportDetail from
 import ClinicianPortalReports from
   '../pages/ClinicianPortalReports';
 
+import ClinicianPortalNotifications from
+  '../pages/ClinicianPortalNotifications';
+
 import {
   ClinicianPortalAuthProvider,
 } from '../context/ClinicianPortalAuthContext';
@@ -84,6 +87,11 @@ const ClinicianPortalRoutes = () => (
       <Route
         path="reports/:reportUuid"
         element={<ClinicianPortalReportDetail />}
+      />
+
+      <Route
+        path="notifications"
+        element={<ClinicianPortalNotifications />}
       />
     </Route>
 

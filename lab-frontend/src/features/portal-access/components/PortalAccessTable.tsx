@@ -3,6 +3,7 @@ import {
   CheckCircleRounded,
   ContentCopyRounded,
   LinkRounded,
+  LockResetRounded,
 } from '@mui/icons-material';
 
 import {
@@ -38,6 +39,7 @@ interface Props {
   onInvite: (row: PortalAccessRow) => void;
   onToggleAccount: (row: PortalAccessRow) => void;
   onRevokeInvitation: (row: PortalAccessRow) => void;
+  onPasswordReset: (row: PortalAccessRow) => void;
 }
 
 const invitationColor = (
@@ -80,6 +82,7 @@ const PortalAccessTable = ({
   onInvite,
   onToggleAccount,
   onRevokeInvitation,
+  onPasswordReset,
 }: Props) => (
   <>
     <TableContainer>
@@ -260,6 +263,19 @@ const PortalAccessTable = ({
                     )}
 
                     {account && (
+                      <>
+                        {account.is_active && account.activated_at && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            startIcon={<LockResetRounded />}
+                            disabled={busy}
+                            onClick={() => onPasswordReset(row)}
+                          >
+                            Send reset link
+                          </Button>
+                        )}
+
                       <Button
                         size="small"
                         color={account.is_active
@@ -270,6 +286,7 @@ const PortalAccessTable = ({
                       >
                         {account.is_active ? 'Disable' : 'Enable'}
                       </Button>
+                      </>
                     )}
                   </Box>
                 </TableCell>

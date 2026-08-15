@@ -81,3 +81,14 @@ export interface PortalActivationResult {
   account_type: PortalAccountType;
   email: string;
 }
+
+export interface PortalPasswordResetInspection {
+  account_type: PortalAccountType;
+  email_hint: string;
+  expires_at: string | null;
+}
+
+export interface PortalPasswordResetResult {
+  message: string;
+  account_type: PortalAccountType;
+}

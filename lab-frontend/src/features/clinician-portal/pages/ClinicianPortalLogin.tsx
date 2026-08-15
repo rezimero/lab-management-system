@@ -473,6 +473,16 @@ const ClinicianPortalLogin = () => {
               />
 
               <Button
+                component={Link}
+                type="button"
+                to={`/portal/reset-password?tenant=${encodeURIComponent(normalizedDomain)}&type=clinician`}
+                disabled={!normalizedDomain}
+                sx={{ justifySelf: 'end' }}
+              >
+                Forgot password?
+              </Button>
+
+              <Button
                 fullWidth
                 type="submit"
                 size="large"

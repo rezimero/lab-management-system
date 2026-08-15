@@ -15,6 +15,7 @@ import {
   LaboratoryOrderView,
   LaboratoryProfile,
   LaboratoryReports,
+  Notifications,
   ReferralLaboratories,
   ReferringClinicians,
   PortalAccess,
@@ -59,6 +60,10 @@ export const tenantRoutes = (
     <Route
       path="/dashboard"
       element={protect(<Dashboard />)}
+    />
+    <Route
+      path="/notifications"
+      element={protect(<Notifications />)}
     />
     <Route
       path="/patients"

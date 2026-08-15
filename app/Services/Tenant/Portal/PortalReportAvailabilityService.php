@@ -7,9 +7,14 @@ use App\Events\Tenant\Portal\LaboratoryReportAvailableForPatient;
 use App\Models\ClinicianPortalAccount;
 use App\Models\LaboratoryReport;
 use App\Models\PatientPortalAccount;
+use App\Services\Tenant\Notification\ReportReadyNotificationService;
 
 class PortalReportAvailabilityService
 {
+    public function __construct(
+        private readonly ReportReadyNotificationService $notifications
+    ) {}
+
     public function dispatch(
         int $tenantId,
         LaboratoryReport $report
@@ -30,6 +35,11 @@ class PortalReportAvailabilityService
             && $patientAccount->activated_at !== null
             && $order->patient?->is_active
         ) {
+            $this->notifications->patient(
+                $patientAccount,
+                $report->uuid
+            );
+
             LaboratoryReportAvailableForPatient::dispatch(
                 $tenantId,
                 $report->uuid,
@@ -48,6 +58,11 @@ class PortalReportAvailabilityService
             && $clinicianAccount->activated_at !== null
             && $order->referringClinician?->is_active
         ) {
+            $this->notifications->clinician(
+                $clinicianAccount,
+                $report->uuid
+            );
+
             LaboratoryReportAvailableForClinician::dispatch(
                 $tenantId,
                 $report->uuid,

@@ -19,6 +19,8 @@ import ScienceRounded from
   '@mui/icons-material/ScienceRounded';
 import AssignmentRounded from
   '@mui/icons-material/AssignmentRounded';
+import NotificationsRounded from
+  '@mui/icons-material/NotificationsRounded';
 
 import {
   AppBar,
@@ -71,6 +73,11 @@ const navItems: NavItem[] = [
     label: 'Reports',
     path: '/patient-portal/reports',
     icon: <AssessmentRounded fontSize="small" />,
+  },
+  {
+    label: 'Notifications',
+    path: '/patient-portal/notifications',
+    icon: <NotificationsRounded fontSize="small" />,
   },
 ];
 

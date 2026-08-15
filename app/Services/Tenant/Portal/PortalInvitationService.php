@@ -12,6 +12,7 @@ use App\Models\PortalInvitation;
 use App\Models\ReferringClinician;
 use App\Models\Tenant;
 use App\Models\Tenant\User as TenantUser;
+use App\Services\Tenant\Notification\PortalAccessNotificationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,7 +22,8 @@ use LogicException;
 class PortalInvitationService
 {
     public function __construct(
-        private readonly PortalAuditLogger $audit
+        private readonly PortalAuditLogger $audit,
+        private readonly PortalAccessNotificationService $notifications
     ) {}
 
     /**
@@ -287,7 +289,8 @@ class PortalInvitationService
                 $accountType,
                 $subject,
                 $email,
-                $actor
+                $actor,
+                $tenant
             ): array {
                 $subject = $subject instanceof Patient
                     ? Patient::query()
@@ -325,7 +328,7 @@ class PortalInvitationService
                 if ($account !== null && $account->activated_at !== null) {
                     throw ValidationException::withMessages([
                         'account' => [
-                            'This portal account is already activated. Password reset is deferred to the notifications milestone.',
+                            'This portal account is already activated. Use the secure password-reset action instead.',
                         ],
                     ]);
                 }
@@ -451,6 +454,30 @@ class PortalInvitationService
                     ]
                 );
 
+                $this->notifications->invitation(
+                    accountType: $accountType,
+                    account: $account,
+                    invitationUuid: $invitation->uuid,
+                    plainTextToken: $plainTextToken,
+                    tenantDomain: $tenant->domain,
+                );
+
+                if ($accountType === PortalInvitation::ACCOUNT_PATIENT) {
+                    PatientPortalInvitationCreated::dispatch(
+                        $tenant->id,
+                        $invitation->uuid,
+                        $account->uuid,
+                        $account->email
+                    );
+                } else {
+                    ClinicianPortalInvitationCreated::dispatch(
+                        $tenant->id,
+                        $invitation->uuid,
+                        $account->uuid,
+                        $account->email
+                    );
+                }
+
                 return [
                     'account' => $account
                         ->load('latestInvitation'),
@@ -463,22 +490,6 @@ class PortalInvitationService
 
         $account = $issued['account'];
         $invitation = $issued['invitation'];
-
-        if ($accountType === PortalInvitation::ACCOUNT_PATIENT) {
-            PatientPortalInvitationCreated::dispatch(
-                $tenant->id,
-                $invitation->uuid,
-                $account->uuid,
-                $account->email
-            );
-        } else {
-            ClinicianPortalInvitationCreated::dispatch(
-                $tenant->id,
-                $invitation->uuid,
-                $account->uuid,
-                $account->email
-            );
-        }
 
         return [
             'account' => $account,

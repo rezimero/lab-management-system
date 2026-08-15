@@ -891,3 +891,43 @@ The next product module after P10 is Notifications and Critical-Result
 Escalation.
 
 <!-- END PATIENT-CLINICIAN-PORTALS-COMPLETION-2026-08-11 -->
+
+<!-- BEGIN NOTIFICATIONS-CRITICAL-RESULTS-IMPLEMENTATION-2026-08-13 -->
+
+## Notifications and Critical-Result Escalation implementation candidate
+
+Patient and Clinician Portals are merged into `develop` through pull request
+#22 at merge commit `d96eb5d4f35f5a8b4977cdbd8b05c0f0741a082f`.
+
+The Notifications and Critical-Result Escalation implementation candidate is
+prepared for:
+
+    feature/notifications-critical-results
+
+Delivered candidate scope:
+
+- tenant-owned in-app inboxes and preferences for internal, patient and
+  clinician recipients;
+- encrypted, idempotent email outbox records with bounded retry and stale-job
+  recovery;
+- tenant-aware delivery jobs stored through the landlord queue connection;
+- invitation and governed report-ready delivery;
+- secure administrator-assisted and self-service portal password reset;
+- explicit approved-critical-result detection, acknowledgement, resolution
+  and repeated escalation;
+- internal and portal frontend surfaces;
+- one additive five-table tenant migration and focused automated tests.
+
+SMS and WhatsApp remain explicitly unavailable until a provider, credentials,
+delivery receipts and webhook verification are separately reviewed.
+
+Binding documents:
+
+    docs/NOTIFICATIONS_CRITICAL_RESULTS_ARCHITECTURE.md
+    docs/NOTIFICATIONS_CRITICAL_RESULTS_IMPLEMENTATION_SEQUENCE.md
+
+Developer-environment database finalization, complete Laravel regression
+validation, concise browser acceptance and GitHub integration remain pending.
+No deployment target has been approved.
+
+<!-- END NOTIFICATIONS-CRITICAL-RESULTS-IMPLEMENTATION-2026-08-13 -->

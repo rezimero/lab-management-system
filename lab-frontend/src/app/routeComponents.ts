@@ -80,9 +80,19 @@ export const PortalAccess = lazy(
   () => import('../pages/PortalAccess')
 );
 
+export const Notifications = lazy(
+  () => import('../pages/Notifications')
+);
+
 export const PortalActivation = lazy(
   () => import(
     '../features/portal-access/pages/PortalActivation'
+  )
+);
+
+export const PortalPasswordReset = lazy(
+  () => import(
+    '../features/portal-access/pages/PortalPasswordReset'
   )
 );
 

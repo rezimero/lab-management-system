@@ -81,3 +81,20 @@ export const revokePortalInvitation = async (
     `/portal-access/invitations/${invitationUuid}`
   );
 };
+
+export const sendPortalPasswordReset = async (
+  accountType: PortalAccountType,
+  accountUuid: string
+): Promise<string> => {
+  const collection = accountType === 'patient'
+    ? 'patient-accounts'
+    : 'clinician-accounts';
+
+  const response = await api.post<{
+    message: string;
+  }>(
+    `/portal-access/${collection}/${accountUuid}/password-reset`
+  );
+
+  return response.data.message;
+};
