@@ -4,7 +4,7 @@ This document records decisions that should not be reopened without a clear tech
 
 Updated:
 
-    30 July 2026
+    15 August 2026
 
 ---
 
@@ -463,6 +463,14 @@ Verified merged milestones include:
     core roadmap and CI baseline:
         pull request #15
         merge commit d0321d66b263f435711a9f58f6d4697a08373c7f
+
+    patient and clinician portals:
+        pull request #22
+        merge commit d96eb5d4f35f5a8b4977cdbd8b05c0f0741a082f
+
+    notifications and critical-result escalation:
+        pull request #23
+        merge commit f2c054060a9e964324b4564d0cd3a97e573bf92e
 
 New product implementation work must begin from updated `develop` on a separate feature or milestone branch.
 
@@ -1314,7 +1322,7 @@ The implementation order is recorded in:
 
 Status:
 
-    Accepted for implementation
+    Implemented and merged in pull request #23
 
 Decision:
 
@@ -1370,3 +1378,86 @@ Binding detail is recorded in
 `docs/NOTIFICATIONS_CRITICAL_RESULTS_ARCHITECTURE.md`.
 
 <!-- END ADR-032-NOTIFICATIONS-CRITICAL-RESULTS-2026-08-13 -->
+
+---
+
+<!-- BEGIN ADR-033-POST-NOTIFICATIONS-ROADMAP-2026-08-15 -->
+
+## ADR-033: Post-Notifications Remaining Module Roadmap and Launch-Recovery Discipline
+
+Status:
+
+    Accepted
+
+Context:
+
+Patient and Clinician Portals are merged through PR #22. Notifications and
+Critical-Result Escalation is merged through PR #23 at
+`f2c054060a9e964324b4564d0cd3a97e573bf92e`, with complete backend/frontend
+validation, N01-N03 browser smoke, PR CI and post-merge `develop` CI passing.
+The original 2026-08-08 commercial-beta target is historical and was not met.
+
+The product requirements remaining after the Referral Laboratories milestone
+also include analyzer integration, external laboratory interoperability,
+courier/specimen dispatch, referral financial settlement, an external referral
+laboratory portal, and insurance/claims workflows.
+
+Decision:
+
+The remaining product sequence after the completed Portal and Notifications
+milestones is:
+
+1. Analyzer Integration.
+2. External Laboratory Interoperability — HL7, ASTM, FHIR, external laboratory
+   APIs and automated electronic result exchange.
+3. Courier and Specimen Dispatch Management — dispatch manifests, grouped
+   shipments, courier details, barcode dispatch tracking, chain of custody,
+   aliquot and specimen-volume tracking.
+4. Referral Laboratory Financial Settlement — supplier invoices, accounts
+   payable, payment records, cost reconciliation and referral-laboratory
+   balances.
+5. External Referral Laboratory Portal — external laboratory login,
+   acknowledgement, direct result submission, external accounts and permissions.
+6. Insurance and Claims — insurer claim submission, claim status,
+   reconciliation and payer integrations.
+7. Remaining advanced operational, clinical and commercial analytics required
+   by the commercial roadmap.
+8. Deployment, monitoring, backup/restore, disaster recovery and production
+   hardening.
+
+Analyzer Integration is the immediate next product milestone. It must begin
+with one focused read-only architecture assessment before a product branch is
+created. The analyzer milestone may define transport/protocol adapter
+boundaries needed by instruments, but it must not prematurely absorb the later
+External Laboratory Interoperability module.
+
+Notifications consequence:
+
+The Notifications infrastructure milestone is complete. The broader product
+requirements still include referral-overdue alerts, approval notifications and
+additional operational notifications. These are incremental producers/use cases
+on the existing durable Notifications platform. They must not introduce a
+second message/outbox/preference subsystem.
+
+Launch-recovery consequence:
+
+Schedule pressure is handled by reducing repeated collection, packaging and
+handover overhead and by using larger controlled milestones. It does not waive:
+
+- database-per-tenant isolation;
+- authorization and separation of duties;
+- immutable clinical history;
+- safe additive/reversible migration design;
+- focused and complete automated validation;
+- GitHub PR/develop CI gates;
+- backup/restore and rollback rehearsal;
+- honest analyzer/interoperability compatibility claims;
+- production-readiness checks.
+
+Planning estimate:
+
+The working project-completion estimate after PR #23 is approximately
+68 percent. This is a planning estimate only, not a code-derived metric or a
+production-readiness assertion.
+
+<!-- END ADR-033-POST-NOTIFICATIONS-ROADMAP-2026-08-15 -->

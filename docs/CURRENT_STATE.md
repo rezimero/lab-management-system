@@ -2,7 +2,7 @@
 
 Updated:
 
-    30 July 2026
+    15 August 2026
 
 This document is the current repository handover snapshot.
 
@@ -10,6 +10,91 @@ Update it before every milestone commit, push, merge, tag or transfer to another
 
 ---
 
+## 0. Authoritative Post-Notifications Baseline — 15 August 2026
+
+This section supersedes older "current", "next milestone", branch and validation wording elsewhere in this document where they conflict. Older milestone sections are retained as chronology only.
+
+Repository state:
+
+    branch: develop
+    HEAD: f2c054060a9e964324b4564d0cd3a97e573bf92e
+    pull request: #23
+    feature commit: c93503fc0ffdb5460dd5914f9a2fac1299f462d5
+    merge commit: f2c054060a9e964324b4564d0cd3a97e573bf92e
+    working tree: clean
+    active product feature branch: none
+
+Materially completed product milestones before the current checkpoint include report amendment/supersession, multi-branch/collection-centre foundations, subscription/entitlement and commercial foundations, inventory/reagents, Referral Laboratory Management, Patient and Clinician Portals, and Notifications/Critical-Result Escalation.
+
+Completed immediately before this documentation closeout:
+
+- Patient and Clinician Portals are complete and merged through PR #22.
+- Notifications and Critical-Result Escalation is complete and merged through PR #23.
+- The Notifications development-tenant migration is already applied and verified; do not rerun it.
+- Notifications source-apply/repair/lifecycle packages are historical evidence and must not be reapplied to merged `develop`.
+- Notifications PR Backend and Frontend CI passed.
+- Post-merge `develop` CI passed.
+- No production deployment was performed.
+
+Latest complete validation evidence for the Notifications milestone:
+
+    focused Notifications backend:
+        7 tests passed
+        178 assertions
+
+    complete backend:
+        255 tests passed
+        6,655 assertions
+
+    complete frontend:
+        44 test files passed
+        160 tests passed
+
+    TypeScript:
+        passed
+
+    production Vite build:
+        passed
+
+    essential browser smoke:
+        N01-N03 passed
+        3 passed / 0 failed
+
+The long elapsed durations observed during validation runs that crossed laptop hibernation are wall-clock artifacts and must not be interpreted as application-performance regressions without a fresh performance-specific measurement.
+
+Next product milestone:
+
+    Analyzer Integration
+
+Analyzer Integration must begin with a read-only architecture assessment from the current merged `develop` branch. The architecture checkpoint must freeze instrument ownership, analyzer/test mapping, idempotent ingestion, result provenance, validation-queue behavior, error/retry handling, tenant isolation, authorization, audit evidence, and integration with the existing result/critical-notification workflows before implementation begins.
+
+Remaining mandatory product roadmap after Analyzer Integration:
+
+1. External Laboratory Interoperability — HL7, ASTM, FHIR, external laboratory APIs and automated electronic result exchange.
+2. Courier and Specimen Dispatch Management — manifests, grouped shipments, courier details, barcode dispatch tracking, chain of custody, aliquot and specimen-volume tracking.
+3. Referral Laboratory Financial Settlement — supplier invoices, accounts payable, payments, reconciliation and referral-laboratory balances.
+4. External Referral Laboratory Portal — external-laboratory login, acknowledgement, direct result submission, external accounts and permissions.
+5. Insurance and Claims — insurer claim submission, claim status, reconciliation and payer integrations.
+6. Remaining advanced operational/clinical/commercial analytics required by the commercial roadmap.
+7. Deployment, monitoring, backup/restore, disaster recovery and production hardening.
+
+Notifications infrastructure is complete, but the broader product requirements still include referral-overdue alerts, approval notifications and additional operational notifications. Those use cases must extend the existing notification platform; they must not create a second notification subsystem.
+
+Known non-blocking cleanup carried forward:
+
+- the historical `feature/referral-laboratory-management` branch still appears in local/remote refs after its merged milestone; it is not the active product branch and may be removed only after a guarded merged-ancestor check;
+- clinician portal tenant-context lookup can emit expected `404` console noise while a partial tenant domain is being typed;
+- `NotificationList` has an invalid HTML nesting warning observed in frontend tests;
+- SMS and WhatsApp remain unavailable until reviewed providers, credentials, receipt semantics and webhook verification are approved.
+
+Planning status:
+
+- the original 2026-08-08 commercial-beta target is historical and was not achieved;
+- the project is now in launch-recovery mode;
+- the working project-completion estimate after PR #23 is approximately 68 percent and is a planning estimate, not a code-derived metric;
+- schedule recovery must not bypass tenant-isolation, clinical-integrity, migration, CI, backup/restore or deployment quality gates.
+
+---
 ## 1. Current Git Context
 
 Repository:
@@ -20,56 +105,37 @@ Canonical integration branch:
 
     develop
 
-Latest merged architecture and operations milestone:
+Current merged baseline:
 
     Pull request:
-        #15
+        #23
+
+    Feature commit:
+        c93503fc0ffdb5460dd5914f9a2fac1299f462d5
 
     Merge commit:
-        d0321d66b263f435711a9f58f6d4697a08373c7f
-        Merge pull request #15 from rezimero/chore/core-roadmap-ci-baseline
+        f2c054060a9e964324b4564d0cd3a97e573bf92e
 
-Merged milestone commits:
+    Milestone:
+        Notifications and Critical-Result Escalation
 
-    eead0c8c20906907e4604f8acfcc8284f5be3308
-    chore add continuous integration baseline
-
-    803c2b7582c83e0dc7d313589775453ea5d61c70
-    docs define core roadmap and CI baseline
-
-Milestone result:
-
-    Backend CI passed
-    Frontend CI passed
-    normal merge commit verified
-    local develop synchronized
-    origin/develop synchronized
-    milestone branch removed locally
-    milestone branch removed remotely
-
-Product feature branch:
+Current product-feature branch:
 
     none
 
-Next product milestone:
+Documentation consistency branch for this revision:
 
-    Controlled laboratory-report amendment and supersession
-
-Documentation synchronization branch used for this revision:
-
-    docs/close-out-core-roadmap-ci-baseline
+    docs/post-notifications-consistency
 
 Documentation revision base:
 
-    d0321d66b263f435711a9f58f6d4697a08373c7f
+    f2c054060a9e964324b4564d0cd3a97e573bf92e
 
-Historical frontend recovery tags remain available:
+Next product milestone:
 
-    frontend-vite-baseline
-    frontend-auth-refactor-wave-1
-    frontend-tenant-management-wave-1
-    frontend-tenant-management-wave-2
-    frontend-vite-foundation-complete
+    Analyzer Integration
+
+Do not create the Analyzer Integration product branch until the read-only architecture assessment and contract freeze are complete.
 
 ---
 
@@ -168,10 +234,11 @@ Completed and validated backend capabilities include:
 - sanitized PDF attachment filenames
 - tenant-authorized PDF download endpoint
 
-Latest confirmed backend baseline:
+Latest confirmed complete backend baseline:
 
-    148 tests passed
-    3,979 assertions
+    255 tests passed
+    6,655 assertions
+    validated 15 August 2026
 
 ---
 
@@ -369,11 +436,11 @@ Completed and validated on the active feature branch:
 - focused download success and failure tests
 - newly issued PDF smoke validation with logo and director signature
 
-Product checkpoint:
+Historical product checkpoint:
 
     218ac1f
 
-GitHub closeout remains pending.
+This PDF milestone was subsequently merged and is retained here as chronology only.
 
 ---
 
@@ -566,6 +633,8 @@ Known but non-blocking technical-debt items:
 - the historical role-and-permission seeder does not describe the active tenant authorization path
 - some test-support and orchestration files exceed the preferred line-count target
 - legacy reports issued before immutable report-media copying are not backfilled and may omit logo or signature images in server-generated PDFs
+- clinician portal tenant-context lookup may emit `404` console noise while a partial domain is typed; this is a non-blocking portal UX/code cleanup item
+- `NotificationList` has an invalid HTML nesting warning observed during frontend testing; this is non-blocking cleanup
 
 Known presentation exclusions:
 
@@ -603,17 +672,17 @@ No known frontend test failure exists.
 
 No known frontend typecheck or build failure exists.
 
-No CI failure exists for the merged roadmap and CI milestone.
+No CI failure exists for the merged Notifications milestone or its post-merge `develop` validation.
 
 No uncommitted product-code change exists.
 
-The next product milestone is intentionally blocked from implementation until its architecture contract is inspected and frozen. This is a design gate, not a defect.
+Analyzer Integration is intentionally gated on a read-only architecture inspection and contract freeze. This is a design gate, not a product-code defect.
 
 ---
 
-## 15. Current Milestone Status
+## 15. Historical Core-Roadmap/CI Milestone Status
 
-Completed milestone:
+Historical completed milestone:
 
     Core roadmap, documentation correction and CI baseline
 
@@ -652,9 +721,11 @@ Documentation-closeout purpose:
 
 ---
 
-## 16. Immediate Next Task
+## 16. Historical Next-Task Record
 
-After this documentation-only revision is integrated:
+The following sequence described the PR #15-era next task and is retained only as chronology. The authoritative next task is the Analyzer Integration assessment in Section 0.
+
+Historical sequence:
 
 1. update local `develop` with `--ff-only`
 2. verify a clean worktree
@@ -926,8 +997,10 @@ Binding documents:
     docs/NOTIFICATIONS_CRITICAL_RESULTS_ARCHITECTURE.md
     docs/NOTIFICATIONS_CRITICAL_RESULTS_IMPLEMENTATION_SEQUENCE.md
 
-Developer-environment database finalization, complete Laravel regression
-validation, concise browser acceptance and GitHub integration remain pending.
-No deployment target has been approved.
+Historical note: the text above described the pre-N8 implementation candidate.
+N8 is now complete: the development migration was verified current, complete
+backend/frontend validation passed, N01-N03 browser smoke passed, PR #23 merged,
+PR Backend/Frontend CI passed, post-merge `develop` CI passed, and the feature
+branch was removed locally and remotely. No production deployment was performed.
 
 <!-- END NOTIFICATIONS-CRITICAL-RESULTS-IMPLEMENTATION-2026-08-13 -->

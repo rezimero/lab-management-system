@@ -8,6 +8,91 @@ Your responsibility is to preserve the current architecture, complete the active
 
 ---
 
+## 0. Authoritative Post-Notifications Baseline — 15 August 2026
+
+This section supersedes older "current", "next milestone", branch and validation wording elsewhere in this document where they conflict. Older milestone sections are retained as chronology only.
+
+Repository state:
+
+    branch: develop
+    HEAD: f2c054060a9e964324b4564d0cd3a97e573bf92e
+    pull request: #23
+    feature commit: c93503fc0ffdb5460dd5914f9a2fac1299f462d5
+    merge commit: f2c054060a9e964324b4564d0cd3a97e573bf92e
+    working tree: clean
+    active product feature branch: none
+
+Materially completed product milestones before the current checkpoint include report amendment/supersession, multi-branch/collection-centre foundations, subscription/entitlement and commercial foundations, inventory/reagents, Referral Laboratory Management, Patient and Clinician Portals, and Notifications/Critical-Result Escalation.
+
+Completed immediately before this documentation closeout:
+
+- Patient and Clinician Portals are complete and merged through PR #22.
+- Notifications and Critical-Result Escalation is complete and merged through PR #23.
+- The Notifications development-tenant migration is already applied and verified; do not rerun it.
+- Notifications source-apply/repair/lifecycle packages are historical evidence and must not be reapplied to merged `develop`.
+- Notifications PR Backend and Frontend CI passed.
+- Post-merge `develop` CI passed.
+- No production deployment was performed.
+
+Latest complete validation evidence for the Notifications milestone:
+
+    focused Notifications backend:
+        7 tests passed
+        178 assertions
+
+    complete backend:
+        255 tests passed
+        6,655 assertions
+
+    complete frontend:
+        44 test files passed
+        160 tests passed
+
+    TypeScript:
+        passed
+
+    production Vite build:
+        passed
+
+    essential browser smoke:
+        N01-N03 passed
+        3 passed / 0 failed
+
+The long elapsed durations observed during validation runs that crossed laptop hibernation are wall-clock artifacts and must not be interpreted as application-performance regressions without a fresh performance-specific measurement.
+
+Next product milestone:
+
+    Analyzer Integration
+
+Analyzer Integration must begin with a read-only architecture assessment from the current merged `develop` branch. The architecture checkpoint must freeze instrument ownership, analyzer/test mapping, idempotent ingestion, result provenance, validation-queue behavior, error/retry handling, tenant isolation, authorization, audit evidence, and integration with the existing result/critical-notification workflows before implementation begins.
+
+Remaining mandatory product roadmap after Analyzer Integration:
+
+1. External Laboratory Interoperability — HL7, ASTM, FHIR, external laboratory APIs and automated electronic result exchange.
+2. Courier and Specimen Dispatch Management — manifests, grouped shipments, courier details, barcode dispatch tracking, chain of custody, aliquot and specimen-volume tracking.
+3. Referral Laboratory Financial Settlement — supplier invoices, accounts payable, payments, reconciliation and referral-laboratory balances.
+4. External Referral Laboratory Portal — external-laboratory login, acknowledgement, direct result submission, external accounts and permissions.
+5. Insurance and Claims — insurer claim submission, claim status, reconciliation and payer integrations.
+6. Remaining advanced operational/clinical/commercial analytics required by the commercial roadmap.
+7. Deployment, monitoring, backup/restore, disaster recovery and production hardening.
+
+Notifications infrastructure is complete, but the broader product requirements still include referral-overdue alerts, approval notifications and additional operational notifications. Those use cases must extend the existing notification platform; they must not create a second notification subsystem.
+
+Known non-blocking cleanup carried forward:
+
+- the historical `feature/referral-laboratory-management` branch still appears in local/remote refs after its merged milestone; it is not the active product branch and may be removed only after a guarded merged-ancestor check;
+- clinician portal tenant-context lookup can emit expected `404` console noise while a partial tenant domain is being typed;
+- `NotificationList` has an invalid HTML nesting warning observed in frontend tests;
+- SMS and WhatsApp remain unavailable until reviewed providers, credentials, receipt semantics and webhook verification are approved.
+
+Planning status:
+
+- the original 2026-08-08 commercial-beta target is historical and was not achieved;
+- the project is now in launch-recovery mode;
+- the working project-completion estimate after PR #23 is approximately 68 percent and is a planning estimate, not a code-derived metric;
+- schedule recovery must not bypass tenant-isolation, clinical-integrity, migration, CI, backup/restore or deployment quality gates.
+
+---
 ## Required Reading Order
 
 Before proposing changes, read:
@@ -281,6 +366,14 @@ Completed and validated product milestones include:
 10. immutable report-owned media preservation
 11. server-generated laboratory-report PDF export
 12. authenticated frontend PDF download
+13. controlled laboratory-report amendment and supersession
+14. multi-branch and collection-centre foundation
+15. SaaS plans, subscriptions and feature entitlements
+16. pricing, invoices, payments, receipts and corporate-account billing foundation
+17. inventory and reagent management
+18. referral laboratory management and external-result integration
+19. patient and clinician portals
+20. notifications and critical-result escalation
 
 The complete Rezhel LIMS product includes all of the following core areas:
 
@@ -290,10 +383,14 @@ The complete Rezhel LIMS product includes all of the following core areas:
 - multi-branch and collection-centre operations
 - SaaS plans, subscriptions and feature entitlements
 - test pricing, quotations, invoices, payments and receipts
-- corporate and insurance billing
+- corporate billing
+- insurance and claims, including payer integrations
 - barcode labels and specimen chain of custody
 - reagents, consumables and inventory
 - referral laboratories and send-out testing
+- courier and specimen dispatch management
+- referral laboratory financial settlement
+- external referral laboratory portal
 - notifications and critical-result escalation
 - patient and clinician portals
 - analyzer and instrument integration
@@ -303,22 +400,32 @@ The complete Rezhel LIMS product includes all of the following core areas:
 
 Commercial and integration modules are mandatory core product features. They must never be described as optional enhancements.
 
-Current delivery order:
+Current delivery state and remaining order:
+
+Completed before the current checkpoint:
 
 1. core roadmap, documentation and CI baseline
 2. laboratory-report amendment and supersession
 3. multi-branch and collection-centre foundation
 4. SaaS plans, subscriptions and feature entitlements
-5. pricing, invoices, payments, receipts, corporate and insurance billing
-6. barcode labels and specimen chain of custody
-7. reagents, consumables and inventory
-8. referral laboratories and send-out testing
+5. pricing, invoices, payments, receipts and corporate-account billing foundation
+6. reagents, consumables and inventory
+7. referral laboratories and send-out testing
+8. patient and clinician portals
 9. notifications and critical-result escalation
-10. patient and clinician portals
-11. analyzer integration framework
-12. HL7, ASTM, FHIR and external health-system interoperability
-13. operational and commercial analytics
-14. deployment and production hardening
+
+Remaining order governed by ADR-033:
+
+10. Analyzer Integration
+11. External Laboratory Interoperability
+12. Courier and Specimen Dispatch Management
+13. Referral Laboratory Financial Settlement
+14. External Referral Laboratory Portal
+15. Insurance and Claims
+16. remaining advanced analytics
+17. deployment and production hardening
+
+Residual referral-overdue, approval and operational notification use cases extend the existing Notifications platform; they are not a second notification module.
 
 This dependency order may be changed only through an explicit architecture decision.
 
@@ -356,96 +463,78 @@ Canonical integration branch:
 
     develop
 
-Latest merged architecture and operations milestone:
+Latest merged product milestone:
 
     Pull request:
-        #15
+        #23
+
+    Feature commit:
+        c93503fc0ffdb5460dd5914f9a2fac1299f462d5
 
     Merge commit:
-        d0321d66b263f435711a9f58f6d4697a08373c7f
-        Merge pull request #15 from rezimero/chore/core-roadmap-ci-baseline
+        f2c054060a9e964324b4564d0cd3a97e573bf92e
 
-Merged milestone commits:
+Milestone:
 
-    eead0c8c20906907e4604f8acfcc8284f5be3308
-    chore add continuous integration baseline
-
-    803c2b7582c83e0dc7d313589775453ea5d61c70
-    docs define core roadmap and CI baseline
+    Notifications and Critical-Result Escalation
 
 Milestone result:
 
-- the GitHub Actions CI baseline is merged
-- commercial and integration modules are recorded as mandatory core scope
-- the dependency-driven product roadmap is recorded
-- stale repository and milestone documentation was corrected
-- backend CI passed
-- frontend CI passed
-- the milestone branch was removed locally and remotely
-
-Verified GitHub Actions run:
-
-    workflow:
-        Continuous Integration
-
-    run:
-        30633924711
-
-    event:
-        pull_request
-
-    head:
-        803c2b7582c83e0dc7d313589775453ea5d61c70
-
-    conclusion:
-        success
-
-    jobs:
-        Backend - passed
-        Frontend - passed
+- exact reviewed Notifications source merged
+- complete automated validation passed
+- N01-N03 essential browser smoke passed
+- PR Backend and Frontend CI passed
+- post-merge `develop` CI passed
+- local `develop` synchronized
+- feature branch removed locally and remotely
+- no deployment performed
 
 Current product-feature state:
 
     No product feature branch is active.
 
-Documentation synchronization branch used for this revision:
+Documentation consistency branch for this closeout:
 
-    docs/close-out-core-roadmap-ci-baseline
+    docs/post-notifications-consistency
 
 Documentation revision base:
 
-    d0321d66b263f435711a9f58f6d4697a08373c7f
+    f2c054060a9e964324b4564d0cd3a97e573bf92e
 
 Next product milestone:
 
-    Controlled laboratory-report amendment and supersession
+    Analyzer Integration
 
-The amendment implementation branch must not be created until a read-only architecture inspection is completed and the following contract is frozen:
+Before creating the Analyzer Integration feature branch, perform one read-only architecture assessment and freeze:
 
-- amendment eligibility
-- immutable original-report preservation
-- version and sequence rules
-- supersession relationships
-- amendment reasons
-- authorization boundaries
-- audit-event requirements
-- PDF and browser presentation
-- legacy-report behaviour
-- tenant-isolation requirements
-- notification consequences
-- downstream integration consequences
-
-The documentation-closeout revision changes project memory only. It does not alter clinical, commercial or integration behaviour.
+- analyzer/instrument ownership and tenant boundary
+- device/test-code mapping
+- transport-neutral adapter boundary
+- idempotent message/result ingestion
+- raw-message and result provenance
+- specimen/order/result reconciliation
+- validation queue and state transitions
+- units/reference/flag preservation
+- malformed/unmapped/duplicate/error handling
+- retry and dead-letter/review behavior
+- authorization and audit evidence
+- integration with existing result approval and critical-result notifications
+- simulator/reference-adapter test strategy
+- boundary with the later external-laboratory interoperability module
 
 Current validation baseline:
 
-    backend:
-        148 tests passed
-        3,979 assertions
+    focused Notifications backend:
+        7 tests passed
+        178 assertions
+
+    complete backend:
+        255 tests passed
+        6,655 assertions
 
     frontend:
-        32 test files passed
-        121 tests passed
+        44 test files passed
+        160 tests passed
 
     typecheck:
         passed
@@ -453,9 +542,13 @@ Current validation baseline:
     production build:
         passed
 
+    browser smoke:
+        N01-N03 passed
+
     GitHub Actions:
-        Backend passed
-        Frontend passed
+        PR Backend passed
+        PR Frontend passed
+        post-merge develop CI passed
 
 Legacy compatibility:
 
@@ -547,9 +640,11 @@ Use this prompt when transferring the project to another ChatGPT account:
 
 <!-- BEGIN ACCELERATED-BETA-ENGINEERING-2026-08-01 -->
 
-## Accelerated beta execution constraints
+## Accelerated launch-recovery execution constraints
 
-The project is operating under a seven-day commercial-beta deadline.
+The original seven-day commercial-beta target is historical and was missed.
+The project is now operating in launch-recovery mode. Schedule recovery must
+reduce coordination overhead, not quality gates.
 
 Engineering work must be packaged into larger controlled milestones rather
 than repeated broad inspections. Each milestone must still preserve:
@@ -563,9 +658,9 @@ than repeated broad inspections. Each milestone must still preserve:
 - full backend and frontend gates before release;
 - honest integration capability statements.
 
-Broad architecture inspection is complete for report amendment and
-supersession. Do not repeat it unless implementation reveals a concrete
-contradiction. Begin product implementation after this accepted decision is
-merged into `develop`.
+Broad architecture inspection is complete for previously delivered milestones.
+Do not repeat completed inspections without a concrete contradiction. The next
+required inspection is the focused, read-only Analyzer Integration architecture
+assessment described in the current baseline above.
 
 <!-- END ACCELERATED-BETA-ENGINEERING-2026-08-01 -->

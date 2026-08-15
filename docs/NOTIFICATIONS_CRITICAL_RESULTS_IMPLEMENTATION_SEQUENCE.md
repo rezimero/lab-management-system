@@ -1,7 +1,7 @@
 # Notifications and Critical-Result Escalation Implementation Sequence
 
-Status: implemented candidate; developer-environment validation and Git
-integration remain pending.
+Status: completed and merged into `develop` through pull request #23 on
+15 August 2026.
 
 Baseline: `develop` at
 `d96eb5d4f35f5a8b4977cdbd8b05c0f0741a082f`.
@@ -55,16 +55,24 @@ lifecycle behavior. Full backend/frontend regression validation is mandatory.
 
 ## N8 — Development migration, acceptance and GitHub completion
 
-Pending in the developer environment. Required order:
+Completed.
 
-1. preview and apply the reviewed source package;
-2. preview and apply only the additive development-tenant migration;
-3. run the complete automated validation script against test-only databases;
-4. run concise browser acceptance in the sole development tenant;
-5. review the exact Git scope;
-6. create one local feature commit, publish the branch, create a PR, require
-   Backend and Frontend CI, merge to `develop`, require post-merge CI, then
-   synchronize local `develop` and remove the merged feature branch.
+Final evidence:
 
-No deployment/CD action is part of N8 because this repository has no reviewed
-deployment target or workflow. That boundary must remain explicit.
+- development tenant migration already applied and verified current;
+- focused Notifications backend: 7 tests / 178 assertions passed;
+- complete backend: 255 tests / 6,655 assertions passed;
+- complete frontend: 44 test files / 160 tests passed;
+- TypeScript validation passed;
+- production Vite build passed;
+- essential browser smoke N01-N03 passed;
+- pull request #23 Backend and Frontend CI passed;
+- pull request #23 merged normally;
+- post-merge `develop` CI run 31871444220 passed;
+- local `develop` synchronized;
+- local and remote feature branches removed;
+- no production deployment performed.
+
+Historical source-apply, repair, lifecycle and migration packages must not be
+rerun against the merged `develop` branch. No deployment/CD action was part of
+N8 because no reviewed production target or deployment workflow was approved.

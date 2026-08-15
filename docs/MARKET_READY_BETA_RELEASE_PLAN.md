@@ -1,5 +1,13 @@
 # Seven-Day Market-Ready Commercial Beta Plan
 
+> **Status — 15 August 2026:** Historical sprint plan. The original 2026-08-08
+> beta target was not achieved. Rezhel is now in launch-recovery mode. This
+> document remains useful as scope and release-gate history, but its Day 1-Day 7
+> dates are no longer an active execution schedule. The current next product
+> milestone is Analyzer Integration, followed by the remaining order in ADR-033.
+> No replacement launch date is asserted here until the remaining module and
+> production-readiness assessment is complete.
+
 **Sprint start:** 2026-08-01
 **Beta target:** 2026-08-08
 **Hardening window:** one to two weeks after the beta release candidate
@@ -91,6 +99,23 @@ and an honest statement of supported scope.
 The beta must be marketed as integration-ready with validated reference
 connectors, not universally compatible with untested devices or external
 systems.
+
+### Remaining post-Notifications product modules
+
+The authoritative remaining product sequence is maintained in ADR-033:
+
+- Analyzer Integration
+- External Laboratory Interoperability
+- Courier and Specimen Dispatch Management
+- Referral Laboratory Financial Settlement
+- External Referral Laboratory Portal
+- Insurance and Claims
+- remaining advanced analytics
+- deployment and production hardening
+
+Notifications core infrastructure is complete, while referral-overdue,
+approval and additional operational notification use cases remain product
+requirements to be implemented on the existing notification platform.
 
 ### Analytics
 

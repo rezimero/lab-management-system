@@ -2,8 +2,93 @@
 
 Updated:
 
-    30 July 2026
+    15 August 2026
 
+## 0. Authoritative Post-Notifications Baseline — 15 August 2026
+
+This section supersedes older "current", "next milestone", branch and validation wording elsewhere in this document where they conflict. Older milestone sections are retained as chronology only.
+
+Repository state:
+
+    branch: develop
+    HEAD: f2c054060a9e964324b4564d0cd3a97e573bf92e
+    pull request: #23
+    feature commit: c93503fc0ffdb5460dd5914f9a2fac1299f462d5
+    merge commit: f2c054060a9e964324b4564d0cd3a97e573bf92e
+    working tree: clean
+    active product feature branch: none
+
+Materially completed product milestones before the current checkpoint include report amendment/supersession, multi-branch/collection-centre foundations, subscription/entitlement and commercial foundations, inventory/reagents, Referral Laboratory Management, Patient and Clinician Portals, and Notifications/Critical-Result Escalation.
+
+Completed immediately before this documentation closeout:
+
+- Patient and Clinician Portals are complete and merged through PR #22.
+- Notifications and Critical-Result Escalation is complete and merged through PR #23.
+- The Notifications development-tenant migration is already applied and verified; do not rerun it.
+- Notifications source-apply/repair/lifecycle packages are historical evidence and must not be reapplied to merged `develop`.
+- Notifications PR Backend and Frontend CI passed.
+- Post-merge `develop` CI passed.
+- No production deployment was performed.
+
+Latest complete validation evidence for the Notifications milestone:
+
+    focused Notifications backend:
+        7 tests passed
+        178 assertions
+
+    complete backend:
+        255 tests passed
+        6,655 assertions
+
+    complete frontend:
+        44 test files passed
+        160 tests passed
+
+    TypeScript:
+        passed
+
+    production Vite build:
+        passed
+
+    essential browser smoke:
+        N01-N03 passed
+        3 passed / 0 failed
+
+The long elapsed durations observed during validation runs that crossed laptop hibernation are wall-clock artifacts and must not be interpreted as application-performance regressions without a fresh performance-specific measurement.
+
+Next product milestone:
+
+    Analyzer Integration
+
+Analyzer Integration must begin with a read-only architecture assessment from the current merged `develop` branch. The architecture checkpoint must freeze instrument ownership, analyzer/test mapping, idempotent ingestion, result provenance, validation-queue behavior, error/retry handling, tenant isolation, authorization, audit evidence, and integration with the existing result/critical-notification workflows before implementation begins.
+
+Remaining mandatory product roadmap after Analyzer Integration:
+
+1. External Laboratory Interoperability — HL7, ASTM, FHIR, external laboratory APIs and automated electronic result exchange.
+2. Courier and Specimen Dispatch Management — manifests, grouped shipments, courier details, barcode dispatch tracking, chain of custody, aliquot and specimen-volume tracking.
+3. Referral Laboratory Financial Settlement — supplier invoices, accounts payable, payments, reconciliation and referral-laboratory balances.
+4. External Referral Laboratory Portal — external-laboratory login, acknowledgement, direct result submission, external accounts and permissions.
+5. Insurance and Claims — insurer claim submission, claim status, reconciliation and payer integrations.
+6. Remaining advanced operational/clinical/commercial analytics required by the commercial roadmap.
+7. Deployment, monitoring, backup/restore, disaster recovery and production hardening.
+
+Notifications infrastructure is complete, but the broader product requirements still include referral-overdue alerts, approval notifications and additional operational notifications. Those use cases must extend the existing notification platform; they must not create a second notification subsystem.
+
+Known non-blocking cleanup carried forward:
+
+- the historical `feature/referral-laboratory-management` branch still appears in local/remote refs after its merged milestone; it is not the active product branch and may be removed only after a guarded merged-ancestor check;
+- clinician portal tenant-context lookup can emit expected `404` console noise while a partial tenant domain is being typed;
+- `NotificationList` has an invalid HTML nesting warning observed in frontend tests;
+- SMS and WhatsApp remain unavailable until reviewed providers, credentials, receipt semantics and webhook verification are approved.
+
+Planning status:
+
+- the original 2026-08-08 commercial-beta target is historical and was not achieved;
+- the project is now in launch-recovery mode;
+- the working project-completion estimate after PR #23 is approximately 68 percent and is a planning estimate, not a code-derived metric;
+- schedule recovery must not bypass tenant-isolation, clinical-integrity, migration, CI, backup/restore or deployment quality gates.
+
+---
 ## 1. Safety Principle
 
 Automated tests must never connect to the real development landlord database.
@@ -207,10 +292,18 @@ Do not document guessed profile route paths.
 
 Latest confirmed complete backend result:
 
-    148 tests passed
-    3,979 assertions
-    duration 2,279.04 seconds
-    validated 30 July 2026
+    255 tests passed
+    6,655 assertions
+    validated 15 August 2026
+
+Focused Notifications result:
+
+    7 tests passed
+    178 assertions
+
+Do not use elapsed durations from validation sessions that crossed laptop
+hibernation as performance evidence. Hibernation inflates wall-clock timing
+without demonstrating application slowdown.
 
 Relevant profile, reporting and PDF coverage includes:
 
@@ -294,11 +387,11 @@ The build command executes:
 
 Latest confirmed frontend baseline:
 
-    32 test files passed
-    121 tests passed
+    44 test files passed
+    160 tests passed
     TypeScript validation passed
     production build passed
-    validated 30 July 2026
+    validated 15 August 2026
 
 Relevant profile and report test files include:
 
@@ -636,70 +729,44 @@ Canonical integration branch:
 
     develop
 
-Latest merged architecture and operations milestone:
+Current merged baseline:
 
     Pull request:
-        #15
+        #23
+
+    Feature commit:
+        c93503fc0ffdb5460dd5914f9a2fac1299f462d5
 
     Merge commit:
-        d0321d66b263f435711a9f58f6d4697a08373c7f
+        f2c054060a9e964324b4564d0cd3a97e573bf92e
 
-Documentation synchronization branch used for this revision:
+Current milestone:
 
-    docs/close-out-core-roadmap-ci-baseline
+    Notifications and Critical-Result Escalation — completed
+
+Verified closeout:
+
+    complete backend: 255 tests / 6,655 assertions passed
+    complete frontend: 44 files / 160 tests passed
+    TypeScript: passed
+    production build: passed
+    browser smoke N01-N03: passed
+    PR Backend/Frontend CI: passed
+    develop CI run 31871444220: passed
+    feature branch cleanup: complete
+    deployment: not performed
+
+Documentation consistency branch:
+
+    docs/post-notifications-consistency
 
 Documentation revision base:
 
-    d0321d66b263f435711a9f58f6d4697a08373c7f
+    f2c054060a9e964324b4564d0cd3a97e573bf92e
 
-Merged CI workflow:
+Next product milestone:
 
-    .github/workflows/ci.yml
-
-Verified GitHub Actions run:
-
-    workflow:
-        Continuous Integration
-
-    run:
-        30633924711
-
-    event:
-        pull_request
-
-    head:
-        803c2b7582c83e0dc7d313589775453ea5d61c70
-
-    status:
-        completed
-
-    conclusion:
-        success
-
-    Backend:
-        passed
-
-    Frontend:
-        passed
-
-Previous local validation baseline:
-
-    backend:
-        148 tests passed
-        3,979 assertions
-
-    frontend:
-        32 test files passed
-        121 tests passed
-
-    typecheck:
-        passed
-
-    production build:
-        passed
-
-    browser PDF smoke:
-        passed with logo and director signature
+    Analyzer Integration
 
 No product tests need to be rerun solely for this documentation-only revision because no source code, workflow, configuration, migration or dependency file is being changed.
 
@@ -931,6 +998,28 @@ First remote validation:
 
 The continuous-integration baseline is operational and is now a required merge gate.
 
+Current Notifications milestone CI evidence:
+
+    pull request:
+        #23
+
+    feature commit:
+        c93503fc0ffdb5460dd5914f9a2fac1299f462d5
+
+    merge commit:
+        f2c054060a9e964324b4564d0cd3a97e573bf92e
+
+    PR Backend:
+        passed
+
+    PR Frontend:
+        passed
+
+    post-merge develop run:
+        31871444220
+        passed
+
+
 Temporary CI inspection and review artifacts belong under:
 
     $env:TEMP\lab-management-system\core-roadmap-ci-baseline
@@ -939,9 +1028,10 @@ Temporary CI inspection and review artifacts belong under:
 
 <!-- BEGIN COMMERCIAL-BETA-QUALITY-GATES-2026-08-01 -->
 
-## Commercial-beta release quality gates
+## Commercial-beta / launch-recovery quality gates
 
-The seven-day beta is not releasable until all applicable gates pass:
+The original seven-day beta target is historical. Any beta or launch candidate
+remains blocked until all applicable gates pass:
 
 1. Clean-database tenant migrations.
 2. Existing-data migration and backfill rehearsal.
