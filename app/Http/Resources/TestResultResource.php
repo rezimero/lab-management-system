@@ -32,6 +32,14 @@ class TestResultResource extends JsonResource
                 ->with('referral')
                 ->first();
 
+        $analyzerImport = $this->relationLoaded(
+            'originatingAnalyzerImport'
+        )
+            ? $this->originatingAnalyzerImport
+            : $this->originatingAnalyzerImport()
+                ->with(['instrument', 'message'])
+                ->first();
+
         return [
             'uuid' => $this->uuid,
             'status' => $this->status,
@@ -66,6 +74,43 @@ class TestResultResource extends JsonResource
                     ),
                     'laboratory' => (
                         $referralResult->referral?->laboratory_snapshot
+                    ),
+                ],
+
+            'analyzer_source' => $analyzerImport === null
+                ? null
+                : [
+                    'import_uuid' => $analyzerImport->uuid,
+                    'message_uuid' => (
+                        $analyzerImport->message?->uuid
+                    ),
+                    'external_message_id' => (
+                        $analyzerImport->message?->external_message_id
+                    ),
+                    'sample_identifier' => (
+                        $analyzerImport->source_sample_identifier
+                    ),
+                    'instrument_test_code' => (
+                        $analyzerImport->instrument_test_code
+                    ),
+                    'received_at' => (
+                        $analyzerImport->message?->received_at
+                            ?->toISOString()
+                    ),
+                    'instrument' => (
+                        $analyzerImport->instrument === null
+                            ? null
+                            : [
+                                'uuid' => (
+                                    $analyzerImport->instrument->uuid
+                                ),
+                                'code' => (
+                                    $analyzerImport->instrument->code
+                                ),
+                                'name' => (
+                                    $analyzerImport->instrument->name
+                                ),
+                            ]
                     ),
                 ],
 

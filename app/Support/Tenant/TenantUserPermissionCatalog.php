@@ -84,6 +84,30 @@ final class TenantUserPermissionCatalog
         'acknowledge_critical_results'
     );
 
+    public const VIEW_ANALYZERS = 'view_analyzers';
+
+    public const MANAGE_ANALYZERS = 'manage_analyzers';
+
+    public const MANAGE_ANALYZER_MAPPINGS = (
+        'manage_analyzer_mappings'
+    );
+
+    public const VIEW_ANALYZER_IMPORTS = (
+        'view_analyzer_imports'
+    );
+
+    public const REVIEW_ANALYZER_IMPORTS = (
+        'review_analyzer_imports'
+    );
+
+    public const REPROCESS_ANALYZER_IMPORTS = (
+        'reprocess_analyzer_imports'
+    );
+
+    public const ROTATE_ANALYZER_CREDENTIALS = (
+        'rotate_analyzer_credentials'
+    );
+
     /**
      * Permissions enforced by tenant clinical workflows.
      *
@@ -121,6 +145,13 @@ final class TenantUserPermissionCatalog
             self::MANAGE_PORTAL_ACCESS,
             self::VIEW_NOTIFICATIONS,
             self::ACKNOWLEDGE_CRITICAL_RESULTS,
+            self::VIEW_ANALYZERS,
+            self::MANAGE_ANALYZERS,
+            self::MANAGE_ANALYZER_MAPPINGS,
+            self::VIEW_ANALYZER_IMPORTS,
+            self::REVIEW_ANALYZER_IMPORTS,
+            self::REPROCESS_ANALYZER_IMPORTS,
+            self::ROTATE_ANALYZER_CREDENTIALS,
         ],
 
         'admin' => [
@@ -154,6 +185,13 @@ final class TenantUserPermissionCatalog
             self::MANAGE_PORTAL_ACCESS,
             self::VIEW_NOTIFICATIONS,
             self::ACKNOWLEDGE_CRITICAL_RESULTS,
+            self::VIEW_ANALYZERS,
+            self::MANAGE_ANALYZERS,
+            self::MANAGE_ANALYZER_MAPPINGS,
+            self::VIEW_ANALYZER_IMPORTS,
+            self::REVIEW_ANALYZER_IMPORTS,
+            self::REPROCESS_ANALYZER_IMPORTS,
+            self::ROTATE_ANALYZER_CREDENTIALS,
         ],
 
         'lab_technician' => [
@@ -174,6 +212,10 @@ final class TenantUserPermissionCatalog
             self::VIEW_REFERRING_CLINICIANS,
             self::VIEW_NOTIFICATIONS,
             self::ACKNOWLEDGE_CRITICAL_RESULTS,
+            self::VIEW_ANALYZERS,
+            self::VIEW_ANALYZER_IMPORTS,
+            self::REVIEW_ANALYZER_IMPORTS,
+            self::REPROCESS_ANALYZER_IMPORTS,
         ],
 
         'receptionist' => [
@@ -201,6 +243,8 @@ final class TenantUserPermissionCatalog
             self::VIEW_REFERRING_CLINICIANS,
             self::VIEW_NOTIFICATIONS,
             self::ACKNOWLEDGE_CRITICAL_RESULTS,
+            self::VIEW_ANALYZERS,
+            self::VIEW_ANALYZER_IMPORTS,
         ],
     ];
 

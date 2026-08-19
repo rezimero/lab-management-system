@@ -138,4 +138,52 @@ describe('laboratory profile navigation', () => {
     ).toBe(false);
   });
 
+
+  it('shows analyzer workspaces only when entitlement and role allow them', () => {
+    const enabled = buildNavigationGroups(
+      false,
+      'lab_technician',
+      false,
+      true
+    );
+
+    const disabled = buildNavigationGroups(
+      false,
+      'lab_technician',
+      false,
+      false
+    );
+
+    const receptionist = buildNavigationGroups(
+      false,
+      'receptionist',
+      false,
+      true
+    );
+
+    expect(
+      enabled
+        .flatMap((group) => group.items)
+        .some((item) => item.path === '/analyzers')
+    ).toBe(true);
+
+    expect(
+      enabled
+        .flatMap((group) => group.items)
+        .some((item) => item.path === '/analyzer-imports')
+    ).toBe(true);
+
+    expect(
+      disabled
+        .flatMap((group) => group.items)
+        .some((item) => item.path === '/analyzers')
+    ).toBe(false);
+
+    expect(
+      receptionist
+        .flatMap((group) => group.items)
+        .some((item) => item.path === '/analyzer-imports')
+    ).toBe(false);
+  });
+
 });

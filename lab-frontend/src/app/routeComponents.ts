@@ -104,6 +104,19 @@ export const LandlordDashboard = lazy(
   () => import('../pages/LandlordDashboard')
 );
 
+
+export const Analyzers = lazy(
+  () => import(
+    '../features/analyzers/pages/Analyzers'
+  )
+);
+
+export const AnalyzerImports = lazy(
+  () => import(
+    '../features/analyzers/pages/AnalyzerImports'
+  )
+);
+
 export const ReferralLaboratories = lazy(
   () => import('../pages/ReferralLaboratories')
 );

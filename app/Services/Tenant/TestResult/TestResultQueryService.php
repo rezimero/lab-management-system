@@ -20,6 +20,8 @@ class TestResultQueryService
         'reviewedBy',
         'latestAmendment',
         'originatingReferralResult.referral',
+        'originatingAnalyzerImport.instrument',
+        'originatingAnalyzerImport.message',
     ];
 
     /**

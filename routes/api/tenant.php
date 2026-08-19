@@ -211,6 +211,12 @@ Route::middleware([
     require __DIR__.'/tenant/notifications.php';
 
     // ============================================
+    // ANALYZER INTEGRATION
+    // ============================================
+
+    require __DIR__.'/tenant/analyzers.php';
+
+    // ============================================
     // LABORATORY ORDERS
     // ============================================
 

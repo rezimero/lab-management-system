@@ -27,6 +27,8 @@ class TestResultWorkflowService
         'reviewedBy',
         'latestAmendment',
         'originatingReferralResult.referral',
+        'originatingAnalyzerImport.instrument',
+        'originatingAnalyzerImport.message',
     ];
 
     public function __construct(
