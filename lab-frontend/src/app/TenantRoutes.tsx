@@ -4,8 +4,11 @@ import { Route } from 'react-router-dom';
 import PrivateRoute from '../components/PrivateRoute';
 import TenantAdminRoute from '../components/TenantAdminRoute';
 import InventoryAccessRoute from '../components/InventoryAccessRoute';
+import AnalyzerAccessRoute from '../features/analyzers/components/AnalyzerAccessRoute';
 
 import {
+  AnalyzerImports,
+  Analyzers,
   Billing,
   Branches,
   Dashboard,
@@ -42,6 +45,18 @@ const protectInventory = (
     <InventoryAccessRoute>
       {element}
     </InventoryAccessRoute>
+  </PrivateRoute>
+);
+
+
+const protectAnalyzer = (
+  element: ReactElement,
+  mode: 'instruments' | 'imports'
+) => (
+  <PrivateRoute>
+    <AnalyzerAccessRoute mode={mode}>
+      {element}
+    </AnalyzerAccessRoute>
   </PrivateRoute>
 );
 
@@ -128,6 +143,21 @@ export const tenantRoutes = (
     <Route
       path="/referrals"
       element={protect(<ReferralLaboratories />)}
+    />
+
+    <Route
+      path="/analyzers"
+      element={protectAnalyzer(
+        <Analyzers />,
+        'instruments'
+      )}
+    />
+    <Route
+      path="/analyzer-imports"
+      element={protectAnalyzer(
+        <AnalyzerImports />,
+        'imports'
+      )}
     />
     <Route
       path="/branches"

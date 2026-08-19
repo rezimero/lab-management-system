@@ -1461,3 +1461,45 @@ The working project-completion estimate after PR #23 is approximately
 production-readiness assertion.
 
 <!-- END ADR-033-POST-NOTIFICATIONS-ROADMAP-2026-08-15 -->
+
+---
+
+# ADR-034: Analyzer Integration Domain, Ingestion and Validation Boundary
+
+**Status:** Proposed for acceptance at implementation start
+
+## Context
+
+Rezhel has completed the core order/specimen/result/report, referral, portal, and notification milestones. Analyzer Integration is the next product milestone.
+
+The existing result system is order-item driven, preserves order-time parameter snapshots, requires received specimens and active processing, allows one result per order item, and requires human submission/approval. Critical-result escalation starts on approval.
+
+A cloud-hosted LIMS also cannot assume direct access to a serial or LAN-attached analyzer.
+
+## Decision
+
+Rezhel will implement Analyzer Integration as a tenant-owned instrument domain with secure machine authentication, immutable raw-message evidence, versioned canonical ingestion, idempotent processing, analyzer/test/parameter mappings, accession-based specimen/order-item matching, a validation queue, automatic draft population, explicit analyzer provenance, and audited review/reprocess actions.
+
+Analyzer machine identities will not use human Sanctum tokens.
+
+The central server contract is a versioned canonical analyzer envelope. Device-specific serial/TCP/ASTM/HL7/vendor communication is placed behind an analyzer gateway/adapter boundary.
+
+Automatic import may populate a draft result only when all mapping, specimen, branch, workflow, referral, unit, parameter, idempotency, and conflict guards pass.
+
+Automatic approval is not part of the initial Analyzer Integration milestone.
+
+`TestResultWorkflowService` remains authoritative for submission, approval, rejection, order-item completion, and critical-result escalation.
+
+Generic external-laboratory HL7/FHIR/API interoperability remains a separate later module.
+
+## Consequences
+
+- analyzer clinical data remains tenant-local;
+- raw analyzer messages become durable audit evidence;
+- duplicates cannot create duplicate results;
+- machine failures and ambiguous matches are visible in a validation queue;
+- analyzer data cannot silently overwrite manual, submitted, approved, rejected, or referral-origin results;
+- branch ownership is explicit;
+- result provenance is visible without replacing the existing result model;
+- named-device compatibility requires device-specific acceptance evidence;
+- commercial entitlement stays disabled until acceptance.

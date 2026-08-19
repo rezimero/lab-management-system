@@ -151,6 +151,18 @@ class TestResult extends Model
         )->ofMany('version', 'max');
     }
 
+
+    /**
+     * Analyzer import evidence that originated this draft/result.
+     */
+    public function originatingAnalyzerImport(): HasOne
+    {
+        return $this->hasOne(
+            AnalyzerResultImport::class,
+            'test_result_id'
+        )->latestOfMany();
+    }
+
     /**
      * Legacy patient relationship.
      */

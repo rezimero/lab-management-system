@@ -76,12 +76,16 @@ const Layout = ({
       auth.user?.role,
       Boolean(
         entitlements.data?.features.inventory?.enabled
+      ),
+      Boolean(
+        entitlements.data?.features.analyzer_integration?.enabled
       )
     ),
     [
       auth.user?.role,
       canManageUsers,
       entitlements.data?.features.inventory?.enabled,
+      entitlements.data?.features.analyzer_integration?.enabled,
     ]
   );
 

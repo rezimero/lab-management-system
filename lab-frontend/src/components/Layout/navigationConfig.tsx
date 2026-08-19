@@ -14,6 +14,8 @@ import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded';
 import MedicalServicesRounded from '@mui/icons-material/MedicalServicesRounded';
 import VpnKeyRounded from '@mui/icons-material/VpnKeyRounded';
 import NotificationsActiveRounded from '@mui/icons-material/NotificationsActiveRounded';
+import PrecisionManufacturingRounded from '@mui/icons-material/PrecisionManufacturingRounded';
+import RuleRounded from '@mui/icons-material/RuleRounded';
 
 export interface NavigationItem {
   label: string;
@@ -29,8 +31,29 @@ export interface NavigationGroup {
 export const buildNavigationGroups = (
   canManageUsers: boolean,
   role?: string,
-  inventoryEnabled = false
+  inventoryEnabled = false,
+  analyzerEnabled = false
 ): NavigationGroup[] => {
+  const canViewInventory = inventoryEnabled && [
+    'superadmin',
+    'admin',
+    'lab_technician',
+  ].includes(role ?? '');
+
+  const canViewBilling = [
+    'superadmin',
+    'admin',
+    'receptionist',
+    'doctor',
+  ].includes(role ?? '');
+
+  const canViewAnalyzers = analyzerEnabled && [
+    'superadmin',
+    'admin',
+    'lab_technician',
+    'doctor',
+  ].includes(role ?? '');
+
   const groups: NavigationGroup[] = [
     {
       label: 'Workspace',
@@ -80,23 +103,23 @@ export const buildNavigationGroups = (
           path: '/referrals',
           icon: <AssignmentRounded />,
         },
+        ...(canViewAnalyzers
+          ? [
+              {
+                label: 'Analyzer instruments',
+                path: '/analyzers',
+                icon: <PrecisionManufacturingRounded />,
+              },
+              {
+                label: 'Analyzer validation',
+                path: '/analyzer-imports',
+                icon: <RuleRounded />,
+              },
+            ]
+          : []),
       ],
     },
   ];
-
-  const canViewInventory = inventoryEnabled && [
-    'superadmin',
-    'admin',
-    'lab_technician',
-  ].includes(role ?? '');
-
-  const canViewBilling = [
-    'superadmin',
-    'admin',
-    'receptionist',
-    'doctor',
-  ].includes(role ?? '');
-
   groups.push({
     label: 'Commercial operations',
     items: [

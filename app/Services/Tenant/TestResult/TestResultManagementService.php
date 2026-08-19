@@ -22,6 +22,8 @@ class TestResultManagementService
         'reviewedBy',
         'latestAmendment',
         'originatingReferralResult.referral',
+        'originatingAnalyzerImport.instrument',
+        'originatingAnalyzerImport.message',
     ];
 
     /**

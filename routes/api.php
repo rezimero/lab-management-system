@@ -3,6 +3,7 @@
 require __DIR__.'/api/auth.php';
 require __DIR__.'/api/portal.php';
 require __DIR__.'/api/landlord.php';
+require __DIR__.'/api/analyzer-machine.php';
 require __DIR__.'/api/tenant.php';
 
 if (app()->environment('local')) {
